@@ -1,7 +1,7 @@
 [project]
 name = "sof-poc1-n8n-fiches"
 version = "0.1.0"
-description = "Add your description here"
+description = "no comment"
 readme = "README.md"
 authors = [
     { name = "Christian Martiny", email = "christian.martiny@outlook.com" }
