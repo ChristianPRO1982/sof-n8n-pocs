@@ -104,7 +104,7 @@ graph LR
   llm[/OpenAI/]:::openai
 
   sw --> crud
-  crud -.->|🔄 qualification manielle| URLs_json
+  crud -.->|🔄 qualification manuelle| URLs_json
   am ==> crud
 
   am ==> scraping
