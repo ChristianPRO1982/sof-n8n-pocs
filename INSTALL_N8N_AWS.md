@@ -147,10 +147,6 @@ graph LR
 * HTTP port 80 sur 0.0.0.0/0
 * HTTPS port 443 sur 0.0.0.0/0
 
----
----
----
-
 ## 💻 Commandes bash pour  l'installation de *Docker* 
 
 ### 🔹 1️⃣ Connexion SSH
