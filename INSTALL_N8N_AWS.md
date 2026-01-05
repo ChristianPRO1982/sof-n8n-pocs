@@ -21,6 +21,9 @@ Ce guide permet de déployer rapidement **n8n** (version fixe) et **n9n** (versi
 ---
 ---
 
+# PoCs
+## PoC 1
+> version avec enchainement de fiches et génération de pdf pour les collaborateurs
 ```mermaid
 graph LR
   subgraph auto [Automatisation]
@@ -63,6 +66,65 @@ graph LR
   chat -.->|👁️| ft_json
 ```
 
+## PoC 2
+> version avec scrapping des sources brutes + RAG
+```mermaid
+graph LR
+  subgraph api [FastAPI]
+    style api fill:#089, stroke:#fff, color:#fff
+
+    healthcheck:::get
+    html_to_pdf:::post
+  end
+
+  subgraph scrapping [Scrapping]
+    style scrapping fill:#e48, stroke:#724, color:#FFF
+
+    scraping
+    sb_json:::json
+    sb_json@{ shape: docs, label: "📄 SB.json" }
+  end
+
+  subgraph RAG [RAG]
+    style RAG fill:#e48, stroke:#724, color:#FFF
+
+    chat([Chatbot])
+  end
+
+  subgraph sgURLs [Liste des URLs à scrapper]
+    style sgURLs fill:#4A90E2, stroke:#2E5C8A, color:#FFF
+
+    crud[[C.R.U.D.]]:::n8n
+    URLs_json:::json
+    URLs_json@{ shape: doc, label: "📄 URLs.json" }
+  end
+
+  sw(((sites web))):::website
+  am[\ 🫳 actions manuels /]
+  llm[/OpenAI/]:::openai
+
+  sw --> crud
+  crud -.->|🔄 qualification manuelle| URLs_json
+  am ==> crud
+
+  am ==> scraping
+  scraping -.->|👁️| URLs_json
+  scraping --> sb_json
+
+  am ==> chat
+  chat <--> llm
+  chat -.->|👁️| URLs_json
+
+  am ~~~ html_to_pdf
+
+  classDef website fill:#4A90E2, stroke:#2E5C8A, color:#FFF;
+  classDef n8n fill:#e48, stroke:#724, color:#FFF;
+  classDef json fill:#f84, stroke:#f42, color:#000;
+  classDef openai fill:#000, stroke:#fff, color:#fff;
+  classDef get fill:#68f, stroke:#fff, color:#fff;
+  classDef post fill:#4a8, stroke:#fff, color:#fff;
+```
+
 ---
 ---
 ---
@@ -84,10 +146,6 @@ graph LR
 * SSH port 22 sur 0.0.0.0/0
 * HTTP port 80 sur 0.0.0.0/0
 * HTTPS port 443 sur 0.0.0.0/0
-
----
----
----
 
 ## 💻 Commandes bash pour  l'installation de *Docker* 
 
