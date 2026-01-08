@@ -6,8 +6,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY requirements.txt pyproject.toml ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml ./
+
+RUN python - <<'PY'
+import subprocess
+import tomllib
+
+with open("pyproject.toml", "rb") as f:
+    data = tomllib.load(f)
+
+deps = data.get("project", {}).get("dependencies", [])
+if not deps:
+    raise SystemExit("No dependencies found in pyproject.toml")
+
+subprocess.check_call(["pip", "install", "--no-cache-dir", "--upgrade", "pip"])
+subprocess.check_call(["pip", "install", "--no-cache-dir", *deps])
+PY
 
 COPY ./app ./app
 
