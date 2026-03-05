@@ -1,5 +1,7 @@
 FROM python:3.12-slim-bookworm
 
+ENV DOCLING_DISABLE_OCR=1
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wkhtmltopdf \
     && rm -rf /var/lib/apt/lists/*
