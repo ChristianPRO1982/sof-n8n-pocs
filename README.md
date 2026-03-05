@@ -4,6 +4,15 @@
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![Docker Compose](https://img.shields.io/badge/docker--compose-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 
+## .env
+```
+export API_AUTH_USERNAME="admin"
+export API_AUTH_PASSWORD_HASH="$xxxxxxxxxxxyyyyyyyyyyyyyyy"
+export API_JWT_SECRET="xxxxx-yyyyy-zzzzz-00000-11111"
+export API_JWT_ALGORITHM="HS256"
+export API_JWT_EXPIRE_MINUTES="1440"
+```
+
 ## command examples
 
 ```bash
