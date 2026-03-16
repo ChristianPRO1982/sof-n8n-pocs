@@ -57,15 +57,15 @@ services:
     restart: unless-stopped
 
   fastapi:
-    profiles:
-      - docling
     build:
       context: .
       dockerfile: Dockerfile
     container_name: fastapi
     restart: unless-stopped
-    ports:
-      - "8000:8000"
+#    ports:
+#      - "8000:8000"
+    volumes:
+      - ./n8n_files:/app/n8n_files
 #      - "443:8000"
 
 volumes:

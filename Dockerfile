@@ -1,32 +1,23 @@
-FROM python:3.12-slim-bookworm
+FROM python:3.11-slim-bookworm
 
 ENV DOCLING_DISABLE_OCR=1
+ENV UV_PROJECT_ENVIRONMENT=/usr/local
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
     wkhtmltopdf \
     && rm -rf /var/lib/apt/lists/*
 
+RUN pip install --no-cache-dir uv
+
 WORKDIR /app
 
-COPY pyproject.toml ./
+COPY pyproject.toml uv.lock ./
 
-RUN python - <<'PY'
-import subprocess
-import tomllib
-
-with open("pyproject.toml", "rb") as f:
-    data = tomllib.load(f)
-
-deps = data.get("project", {}).get("dependencies", [])
-if not deps:
-    raise SystemExit("No dependencies found in pyproject.toml")
-
-subprocess.check_call(["pip", "install", "--no-cache-dir", "--upgrade", "pip"])
-subprocess.check_call(["pip", "install", "--no-cache-dir", *deps])
-PY
+RUN uv sync --frozen --no-dev --no-install-project
 
 RUN pip uninstall -y rapidocr rapidocr-onnxruntime rapidocr-paddle torch torchvision torchaudio || true
 
 COPY ./app ./app
 
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
