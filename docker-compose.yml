@@ -2,8 +2,6 @@ services:
   n8n:
     image: n8nio/n8n:2.9.3
     container_name: n8n
-    ports:
-      - "80:5678"
     environment:
       - GENERIC_TIMEZONE=Europe/Paris
 
@@ -19,10 +17,11 @@ services:
       - N8N_HOST=<PUBLIC_HOST>
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
+      - N8N_PATH=/n8n/
 
       # ✅ Force external URLs generation
-      - WEBHOOK_URL=http://<PUBLIC_HOST>/
-      - N8N_EDITOR_BASE_URL=http://<PUBLIC_HOST>/
+      - WEBHOOK_URL=http://<PUBLIC_HOST>/n8n/
+      - N8N_EDITOR_BASE_URL=http://<PUBLIC_HOST>/n8n/
 
       # Allow AI / community nodes
       - N8N_ENABLE_COMMUNITY_NODES=true
@@ -67,6 +66,17 @@ services:
     volumes:
       - ./n8n_files:/app/n8n_files
 #      - "443:8000"
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx_front
+    container_name: nginx_front
+    ports:
+      - "80:80"
+    depends_on:
+      - n8n
+    restart: unless-stopped
 
 volumes:
   pgdata:
