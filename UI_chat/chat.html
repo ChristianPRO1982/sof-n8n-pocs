@@ -41,10 +41,21 @@
     }
 
     .app {
-      max-width: 940px;
+      max-width: 1240px;
       margin: 0 auto;
       display: grid;
       gap: 16px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .layout.debug-active {
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
     }
 
     .panel {
@@ -244,6 +255,12 @@
       box-shadow: 0 7px 18px rgba(11, 72, 141, 0.09);
     }
 
+    .step.done {
+      border-color: #c8dbf6;
+      color: #2b4f7a;
+      background: #f9fcff;
+    }
+
     .composer {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -324,6 +341,43 @@
       line-height: 1.45;
     }
 
+    .debug-panel {
+      display: none;
+      background: #0d1f38;
+      border: 1px solid #223e63;
+      border-radius: var(--radius-lg);
+      color: #dcecff;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      min-height: 520px;
+    }
+
+    .debug-panel.visible {
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .debug-head {
+      padding: 12px 14px;
+      border-bottom: 1px solid #274976;
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: 0.01em;
+      color: #e7f2ff;
+      background: #102846;
+    }
+
+    .debug-body {
+      margin: 0;
+      padding: 12px 14px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: "IBM Plex Mono", "SFMono-Regular", ui-monospace, monospace;
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+
     @keyframes spin {
       to {
         transform: rotate(360deg);
@@ -367,53 +421,66 @@
         max-width: 100%;
       }
     }
+
+    @media (max-width: 1100px) {
+      .layout.debug-active {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
   </style>
 </head>
 <body>
   <main class="app">
-    <section class="panel">
-      <header class="header">
-        <img src="./logo-sofinco.png" alt="Sofinco" class="logo" />
-        <div>
-          <h1>Assistant MaPrimeRenov'</h1>
-          <p>Démonstrateur interne pour les conseillers clientèle.</p>
-        </div>
-      </header>
-
-      <div class="main">
-        <div id="status" class="status" aria-live="polite"></div>
-
-        <section id="chatZone" class="chat-zone" aria-live="polite">
-          <p id="placeholder" class="placeholder">
-            Posez une question sur MaPrimeRenov', MaPrimeAdapt' ou les aides ANAH.
-            Le chatbot retourne une réponse unique avec ses sources.
-          </p>
-        </section>
-
-        <section id="processing" class="processing" aria-live="polite">
-          <div class="processing-head">
-            <span class="snake" aria-hidden="true"></span>
-            <span>Traitement en cours</span>
+    <div id="layout" class="layout">
+      <section class="panel">
+        <header class="header">
+          <img src="./logo-sofinco.png" alt="Sofinco" class="logo" />
+          <div>
+            <h1>Assistant MaPrimeRenov'</h1>
+            <p>Démonstrateur interne pour les conseillers clientèle.</p>
           </div>
-          <ol id="processingSteps" class="steps">
-            <li class="step">Compréhension de la question</li>
-            <li class="step">Recherche dans la documentation</li>
-            <li class="step">Rédaction de la réponse</li>
-          </ol>
-        </section>
+        </header>
 
-        <form id="chatForm" class="composer">
-          <label for="messageInput" class="sr-only" style="position:absolute;left:-9999px;">Question</label>
-          <textarea id="messageInput" placeholder="Ex: Mon client est copropriétaire, quelle aide MaPrimeRenov' est mobilisable ?" required></textarea>
-          <button id="sendBtn" class="btn btn-primary" type="submit">Envoyer</button>
-        </form>
+        <div class="main">
+          <div id="status" class="status" aria-live="polite"></div>
 
-        <div class="secondary-actions">
-          <button id="retryBtn" class="btn btn-secondary" type="button">Relancer</button>
-          <button id="resetBtn" class="btn btn-secondary" type="button">Nouvelle question</button>
+          <section id="chatZone" class="chat-zone" aria-live="polite">
+            <p id="placeholder" class="placeholder">
+              Posez une question sur MaPrimeRenov', MaPrimeAdapt' ou les aides ANAH.
+              Le chatbot retourne une réponse unique avec ses sources.
+            </p>
+          </section>
+
+          <section id="processing" class="processing" aria-live="polite">
+            <div class="processing-head">
+              <span class="snake" aria-hidden="true"></span>
+              <span>Traitement en cours</span>
+            </div>
+            <ol id="processingSteps" class="steps">
+              <li class="step">Compréhension de la question</li>
+              <li class="step">Recherche dans la documentation</li>
+              <li class="step">Rédaction de la réponse</li>
+            </ol>
+          </section>
+
+          <form id="chatForm" class="composer">
+            <label for="messageInput" class="sr-only" style="position:absolute;left:-9999px;">Question</label>
+            <textarea id="messageInput" placeholder="Ex: Mon client est copropriétaire, quelle aide MaPrimeRenov' est mobilisable ?" required></textarea>
+            <button id="sendBtn" class="btn btn-primary" type="submit">Envoyer</button>
+          </form>
+
+          <div class="secondary-actions">
+            <button id="retryBtn" class="btn btn-secondary" type="button">Relancer</button>
+            <button id="resetBtn" class="btn btn-secondary" type="button">Nouvelle question</button>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <aside id="debugPanel" class="debug-panel" aria-live="polite">
+        <div class="debug-head">Mode debug n8n stream</div>
+        <pre id="debugOutput" class="debug-body">En attente de requête...</pre>
+      </aside>
+    </div>
 
     <aside class="disclaimer">
       Ce chatbot est un démonstrateur.
@@ -423,8 +490,7 @@
   </main>
 
   <script>
-    const TYPEWRITER_DELAY_MS = 12;
-    const STEP_ANIMATION_INTERVAL_MS = 1050;
+    const DEFAULT_TYPEWRITER_DELAY_MS = 4;
     const GENERIC_ERROR_MESSAGE = "Une erreur est survenue. Veuillez réessayer.";
 
     const state = {
@@ -433,7 +499,10 @@
       inFlight: false,
       lastQuestion: "",
       hasActiveQuestion: false,
-      stepTimer: null
+      processingIndex: -1,
+      debugMode: false,
+      animationEnabled: true,
+      typewriterDelayMs: DEFAULT_TYPEWRITER_DELAY_MS
     };
 
     const dom = {
@@ -446,7 +515,10 @@
       processingSteps: Array.from(document.querySelectorAll("#processingSteps .step")),
       status: document.getElementById("status"),
       retryBtn: document.getElementById("retryBtn"),
-      resetBtn: document.getElementById("resetBtn")
+      resetBtn: document.getElementById("resetBtn"),
+      layout: document.getElementById("layout"),
+      debugPanel: document.getElementById("debugPanel"),
+      debugOutput: document.getElementById("debugOutput")
     };
 
     init().catch(() => {
@@ -458,6 +530,10 @@
       if (!isValidWebhookUrl(state.config.WEBHOOK_URL)) {
         throw new Error("Invalid WEBHOOK_URL");
       }
+      state.debugMode = isTruthy(state.config.DEBUG_MODE);
+      state.animationEnabled = parseBooleanConfig(state.config.ANIMATION, true);
+      state.typewriterDelayMs = parseTypewriterDelay(state.config.TYPEWRITER_SPEED_MS, DEFAULT_TYPEWRITER_DELAY_MS);
+      setDebugModeUi(state.debugMode);
 
       dom.chatForm.addEventListener("submit", onSubmitQuestion);
       dom.retryBtn.addEventListener("click", onRetry);
@@ -508,6 +584,7 @@
           sessionId: state.sessionId,
           message: state.lastQuestion
         };
+        debugWrite("REQUEST\n" + JSON.stringify(payload, null, 2));
 
         const response = await fetch(state.config.WEBHOOK_URL, {
           method: "POST",
@@ -517,14 +594,14 @@
           },
           body: JSON.stringify(payload)
         });
-
-        const rawText = await response.text();
+        debugWrite(`HTTP ${response.status} ${response.statusText}\n\n`);
+        const { rawText, streamItems } = await readResponsePayload(response);
 
         if (!response.ok) {
           throw new Error(`HTTP_${response.status}`);
         }
 
-        const answerText = extractAnswerText(rawText);
+        const answerText = extractAnswerText(rawText, streamItems);
         if (!answerText) {
           throw new Error("INVALID_PAYLOAD");
         }
@@ -534,7 +611,11 @@
 
         const assistantEl = ensureAssistantMessageContainer();
         const renderedHtml = renderMarkdown(answerText);
-        await typewriterHtml(assistantEl, renderedHtml, TYPEWRITER_DELAY_MS);
+        if (state.animationEnabled) {
+          await typewriterHtml(assistantEl, renderedHtml, state.typewriterDelayMs);
+        } else {
+          assistantEl.innerHTML = renderedHtml;
+        }
 
         lockComposer();
         showButton(dom.resetBtn);
@@ -544,6 +625,7 @@
       } catch (error) {
         hideProcessing();
         setStatus(GENERIC_ERROR_MESSAGE, true);
+        debugWrite(`ERROR\n${String(error)}`);
         showButton(dom.retryBtn);
         showButton(dom.resetBtn);
       } finally {
@@ -552,7 +634,7 @@
     }
 
     function resetUi() {
-      stopStepAnimation();
+      resetProcessingSteps();
       state.sessionId = null;
       state.lastQuestion = "";
       state.hasActiveQuestion = false;
@@ -605,37 +687,31 @@
 
     function showProcessing() {
       dom.processing.classList.add("visible");
-      startStepAnimation();
+      resetProcessingSteps();
       dom.processing.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
     function hideProcessing() {
       dom.processing.classList.remove("visible");
-      stopStepAnimation();
+      resetProcessingSteps();
     }
 
-    function startStepAnimation() {
-      stopStepAnimation();
-      let current = 0;
-      applyActiveStep(current);
-
-      state.stepTimer = setInterval(() => {
-        current = (current + 1) % dom.processingSteps.length;
-        applyActiveStep(current);
-      }, STEP_ANIMATION_INTERVAL_MS);
+    function resetProcessingSteps() {
+      state.processingIndex = -1;
+      dom.processingSteps.forEach((step) => {
+        step.classList.remove("active");
+        step.classList.remove("done");
+      });
     }
 
-    function stopStepAnimation() {
-      if (state.stepTimer) {
-        clearInterval(state.stepTimer);
-        state.stepTimer = null;
-      }
-      dom.processingSteps.forEach((step) => step.classList.remove("active"));
-    }
+    function setProcessingStep(index) {
+      if (index < 0 || index > dom.processingSteps.length - 1) return;
+      if (index <= state.processingIndex) return;
+      state.processingIndex = index;
 
-    function applyActiveStep(index) {
       dom.processingSteps.forEach((step, stepIndex) => {
         step.classList.toggle("active", stepIndex === index);
+        step.classList.toggle("done", stepIndex < index);
       });
     }
 
@@ -699,6 +775,139 @@
       return config;
     }
 
+    function isTruthy(value) {
+      if (typeof value !== "string") return false;
+      return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+    }
+
+    function parseBooleanConfig(value, defaultValue) {
+      if (typeof value !== "string") return defaultValue;
+      const normalized = value.trim().toLowerCase();
+      if (["1", "true", "yes", "on"].includes(normalized)) return true;
+      if (["0", "false", "no", "off"].includes(normalized)) return false;
+      return defaultValue;
+    }
+
+    function parseTypewriterDelay(value, defaultValue) {
+      if (typeof value !== "string" || !value.trim()) return defaultValue;
+      const parsed = Number.parseInt(value.trim(), 10);
+      if (!Number.isFinite(parsed)) return defaultValue;
+      return Math.max(0, parsed);
+    }
+
+    function setDebugModeUi(enabled) {
+      dom.debugPanel.classList.toggle("visible", enabled);
+      dom.layout.classList.toggle("debug-active", enabled);
+    }
+
+    function debugWrite(text) {
+      if (!state.debugMode) return;
+      dom.debugOutput.textContent = text;
+    }
+
+    function debugAppend(text) {
+      if (!state.debugMode) return;
+      dom.debugOutput.textContent += text;
+    }
+
+    function normalizeProgressText(text) {
+      return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function updateProcessingFromStreamText(text) {
+      const normalized = normalizeProgressText(text);
+      if (normalized.includes("comprehension de la question")) {
+        setProcessingStep(0);
+        return;
+      }
+      if (normalized.includes("recherche dans la documentation")) {
+        setProcessingStep(1);
+        return;
+      }
+      if (normalized.includes("redaction de la reponse")) {
+        setProcessingStep(2);
+      }
+    }
+
+    function parseStreamEventLine(line) {
+      const eventObj = safeJsonParse(line);
+      if (!eventObj || eventObj.type !== "item" || typeof eventObj.content !== "string") {
+        return null;
+      }
+
+      const contentObj = safeJsonParse(eventObj.content);
+      if (!contentObj || typeof contentObj.text !== "string") {
+        return null;
+      }
+
+      return normalizeIncomingText(contentObj.text);
+    }
+
+    function consumeStreamBuffer(buffer, streamItems) {
+      let pending = buffer;
+
+      while (true) {
+        const newlineIndex = pending.indexOf("\n");
+        if (newlineIndex === -1) break;
+
+        const line = pending.slice(0, newlineIndex).trim();
+        pending = pending.slice(newlineIndex + 1);
+        if (!line) continue;
+
+        const streamText = parseStreamEventLine(line);
+        if (!streamText) continue;
+        streamItems.push(streamText);
+        updateProcessingFromStreamText(streamText);
+      }
+
+      return pending;
+    }
+
+    async function readResponsePayload(response) {
+      if (!response.body || typeof response.body.getReader !== "function") {
+        const rawText = await response.text();
+        debugAppend(rawText);
+        return { rawText, streamItems: [] };
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      const streamItems = [];
+      let rawText = "";
+      let lineBuffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        rawText += chunk;
+        debugAppend(chunk);
+        lineBuffer += chunk;
+        lineBuffer = consumeStreamBuffer(lineBuffer, streamItems);
+      }
+
+      const tail = decoder.decode();
+      if (tail) {
+        rawText += tail;
+        debugAppend(tail);
+        lineBuffer += tail;
+      }
+
+      const finalLine = lineBuffer.trim();
+      if (finalLine) {
+        const streamText = parseStreamEventLine(finalLine);
+        if (streamText) {
+          streamItems.push(streamText);
+          updateProcessingFromStreamText(streamText);
+        }
+      }
+
+      return { rawText, streamItems };
+    }
+
     function safeJsonParse(text) {
       try {
         return JSON.parse(text);
@@ -729,7 +938,7 @@
           continue;
         }
 
-        textParts.push(contentObj.text);
+        textParts.push(normalizeIncomingText(contentObj.text));
       }
 
       if (!textParts.length) return null;
@@ -742,12 +951,20 @@
         .sort((a, b) => b.length - a.length)[0] || null;
     }
 
-    function extractAnswerText(rawText) {
+    function extractAnswerText(rawText, streamItems = []) {
+      if (Array.isArray(streamItems) && streamItems.length) {
+        const longest = streamItems
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .sort((a, b) => b.length - a.length)[0];
+        if (longest) return longest;
+      }
+
       const parsed = safeJsonParse(rawText);
 
       // Legacy payload contract: { "answer": "..." }
       if (parsed && typeof parsed === "object" && typeof parsed.answer === "string") {
-        return parsed.answer.trim();
+        return normalizeIncomingText(parsed.answer).trim();
       }
 
       // n8n streaming payload: NDJSON events, sometimes wrapped as a JSON string.
@@ -756,6 +973,18 @@
       if (streamAnswer) return streamAnswer;
 
       return null;
+    }
+
+    function normalizeIncomingText(text) {
+      let normalized = String(text);
+
+      // Handle escaped new lines from double-encoded payloads.
+      normalized = normalized.replace(/\\\\n/g, "\n");
+      normalized = normalized.replace(/\\n/g, "\n");
+
+      // Normalize CRLF variants after replacement.
+      normalized = normalized.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      return normalized;
     }
 
     function isValidWebhookUrl(url) {
@@ -800,9 +1029,10 @@
         return token;
       });
 
-      text = text.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, label, url) => {
+      text = text.replace(/\[([\s\S]+?)\]\(([^)\s]+)\)/g, (_, label, url) => {
         const safeHref = sanitizeUrl(url.replace(/&amp;/g, "&"));
-        return `<a href="${escapeHtml(safeHref)}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+        const normalizedLabel = label.replace(/\s*\n\s*/g, " ").trim();
+        return `<a href="${escapeHtml(safeHref)}" target="_blank" rel="noopener noreferrer">${normalizedLabel}</a>`;
       });
 
       text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
@@ -897,7 +1127,7 @@
           i += 1;
         }
 
-        const paragraphText = parseInline(paragraph.join(" "));
+        const paragraphText = parseInline(paragraph.join("\n")).replace(/\n/g, "<br>");
         htmlParts.push(`<p>${paragraphText}</p>`);
       }
 
