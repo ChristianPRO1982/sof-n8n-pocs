@@ -63,7 +63,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow);
-      overflow: hidden;
+      overflow: visible;
     }
 
     .header {
@@ -110,6 +110,81 @@
     .status.error {
       color: var(--danger);
       font-weight: 600;
+    }
+
+    .response-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .links-panel {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: linear-gradient(180deg, #f9fcff 0%, #f5faff 100%);
+      position: sticky;
+      top: 14px;
+      max-height: calc(100vh - 28px);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+    }
+
+    .links-head {
+      padding: 11px 12px;
+      border-bottom: 1px solid #d9e6f8;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #1a467d;
+      background: #eef5ff;
+    }
+
+    .links-empty {
+      margin: 0;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.4;
+      border-bottom: 1px solid #e1ecfa;
+    }
+
+    .links-list {
+      margin: 0;
+      padding: 8px 8px 10px;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      overflow: auto;
+    }
+
+    .links-item {
+      background: #ffffff;
+      border: 1px solid #d9e6f8;
+      border-radius: 9px;
+      padding: 8px 9px;
+      display: grid;
+      gap: 5px;
+    }
+
+    .links-anchor {
+      color: #0f3f79;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 0.88rem;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .links-anchor:hover {
+      text-decoration: underline;
+    }
+
+    .links-url {
+      color: #567199;
+      font-size: 0.76rem;
+      word-break: break-all;
+      line-height: 1.3;
     }
 
     .chat-zone {
@@ -421,6 +496,17 @@
       .message {
         max-width: 100%;
       }
+
+    }
+
+    @media (max-width: 900px) {
+      .response-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .links-panel {
+        display: none;
+      }
     }
 
     @media (max-width: 1100px) {
@@ -445,23 +531,31 @@
         <div class="main">
           <div id="status" class="status" aria-live="polite"></div>
 
-          <section id="chatZone" class="chat-zone" aria-live="polite">
-            <p id="placeholder" class="placeholder">
-              Posez une question sur MaPrimeRenov', MaPrimeAdapt' ou les aides ANAH.
-              Le chatbot retourne une réponse unique avec ses sources.
-            </p>
-          </section>
+          <section class="response-layout">
+            <aside id="linksPanel" class="links-panel" aria-live="polite">
+              <div class="links-head">Links</div>
+              <p id="linksEmpty" class="links-empty">Les liens trouvés dans la réponse apparaîtront ici.</p>
+              <ul id="linksList" class="links-list"></ul>
+            </aside>
 
-          <section id="processing" class="processing" aria-live="polite">
-            <div class="processing-head">
-              <span class="snake" aria-hidden="true"></span>
-              <span>Traitement en cours</span>
-            </div>
-            <ol id="processingSteps" class="steps">
-              <li class="step">Compréhension de la question</li>
-              <li class="step">Recherche dans la documentation</li>
-              <li class="step">Rédaction de la réponse</li>
-            </ol>
+            <section id="chatZone" class="chat-zone" aria-live="polite">
+              <p id="placeholder" class="placeholder">
+                Posez une question sur MaPrimeRenov', MaPrimeAdapt' ou les aides ANAH.
+                Le chatbot retourne une réponse unique avec ses sources.
+              </p>
+
+              <section id="processing" class="processing" aria-live="polite">
+                <div class="processing-head">
+                  <span class="snake" aria-hidden="true"></span>
+                  <span>Traitement en cours</span>
+                </div>
+                <ol id="processingSteps" class="steps">
+                  <li class="step">Compréhension de la question</li>
+                  <li class="step">Recherche dans la documentation</li>
+                  <li class="step">Rédaction de la réponse</li>
+                </ol>
+              </section>
+            </section>
           </section>
 
           <form id="chatForm" class="composer">
@@ -517,6 +611,8 @@
       status: document.getElementById("status"),
       retryBtn: document.getElementById("retryBtn"),
       resetBtn: document.getElementById("resetBtn"),
+      linksList: document.getElementById("linksList"),
+      linksEmpty: document.getElementById("linksEmpty"),
       layout: document.getElementById("layout"),
       debugPanel: document.getElementById("debugPanel"),
       debugOutput: document.getElementById("debugOutput")
@@ -569,6 +665,7 @@
       state.sessionId = generateSessionId();
       state.hasActiveQuestion = true;
       dom.messageInput.value = "";
+      clearLinksPanel();
 
       hidePlaceholder();
       appendUserMessage(question);
@@ -613,6 +710,7 @@
 
         const assistantEl = ensureAssistantMessageContainer();
         const renderedHtml = renderMarkdown(answerText);
+        renderLinksFromHtml(renderedHtml);
         if (state.animationEnabled) {
           await typewriterHtml(assistantEl, renderedHtml, state.typewriterDelayMs);
         } else {
@@ -644,16 +742,65 @@
 
       dom.chatZone.innerHTML = "";
       dom.chatZone.appendChild(dom.placeholder);
+      dom.chatZone.appendChild(dom.processing);
       dom.placeholder.style.display = "block";
 
       dom.messageInput.value = "";
       dom.messageInput.disabled = false;
       dom.sendBtn.disabled = false;
+      clearLinksPanel();
 
       hideProcessing();
       hideSecondaryActions();
       setStatus("Nouvelle session prête.");
       dom.messageInput.focus();
+    }
+
+    function clearLinksPanel() {
+      dom.linksList.innerHTML = "";
+      dom.linksEmpty.style.display = "block";
+    }
+
+    function renderLinksFromHtml(html) {
+      const template = document.createElement("template");
+      template.innerHTML = html;
+      const anchors = Array.from(template.content.querySelectorAll("a[href]"));
+      const dedupMap = new Map();
+
+      for (const anchor of anchors) {
+        const href = (anchor.getAttribute("href") || "").trim();
+        if (!href) continue;
+        if (dedupMap.has(href)) continue;
+        const label = (anchor.textContent || "").replace(/\s+/g, " ").trim() || href;
+        dedupMap.set(href, { href, label });
+      }
+
+      dom.linksList.innerHTML = "";
+      if (!dedupMap.size) {
+        dom.linksEmpty.style.display = "block";
+        return;
+      }
+
+      dom.linksEmpty.style.display = "none";
+      for (const { href, label } of dedupMap.values()) {
+        const item = document.createElement("li");
+        item.className = "links-item";
+
+        const link = document.createElement("a");
+        link.className = "links-anchor";
+        link.href = href;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = label;
+
+        const url = document.createElement("div");
+        url.className = "links-url";
+        url.textContent = href;
+
+        item.appendChild(link);
+        item.appendChild(url);
+        dom.linksList.appendChild(item);
+      }
     }
 
     function lockComposer() {
@@ -688,6 +835,8 @@
     }
 
     function showProcessing() {
+      // Keep processing block right after latest user message.
+      dom.chatZone.appendChild(dom.processing);
       dom.processing.classList.add("visible");
       resetProcessingSteps();
       dom.processing.scrollIntoView({ behavior: "smooth", block: "nearest" });
