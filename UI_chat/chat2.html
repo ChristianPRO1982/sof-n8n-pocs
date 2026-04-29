@@ -1,0 +1,1188 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assistant MaPrimeRenov' - Sofinco</title>
+  <style>
+    :root {
+      --bg-1: #f4f8ff;
+      --bg-2: #edf3ff;
+      --panel: #ffffff;
+      --panel-soft: #f8fbff;
+      --border: #d2e0f4;
+      --text: #0d223d;
+      --muted: #4e6485;
+      --primary: #005bbb;
+      --primary-soft: #dbeaff;
+      --accent: #ff7a00;
+      --assistant: #f7faff;
+      --user: #005bbb;
+      --danger: #b42318;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --shadow: 0 20px 55px rgba(7, 34, 74, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(0, 91, 187, 0.1) 0%, transparent 32%),
+        radial-gradient(circle at 88% 22%, rgba(255, 122, 0, 0.08) 0%, transparent 30%),
+        linear-gradient(140deg, var(--bg-1), var(--bg-2));
+      min-height: 100vh;
+      padding: 28px 16px 40px;
+    }
+
+    .app {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .layout.debug-active {
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 20px 24px 14px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      width: 170px;
+      height: auto;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      letter-spacing: 0.01em;
+    }
+
+    .header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .main {
+      padding: 18px 20px 20px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .status {
+      min-height: 24px;
+      font-size: 0.93rem;
+      color: var(--muted);
+      padding: 0 4px;
+    }
+
+    .status.error {
+      color: var(--danger);
+      font-weight: 600;
+    }
+
+    .chat-zone {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+      min-height: 220px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .placeholder {
+      margin: auto;
+      color: var(--muted);
+      text-align: center;
+      max-width: 560px;
+      line-height: 1.5;
+      font-size: 0.97rem;
+    }
+
+    .message {
+      max-width: min(90%, 700px);
+      border-radius: 14px;
+      padding: 12px 14px;
+      line-height: 1.52;
+      font-size: 0.98rem;
+      animation: pop-in 220ms ease-out;
+    }
+
+    .message.user {
+      margin-left: auto;
+      background: var(--user);
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+      white-space: pre-wrap;
+    }
+
+    .message.assistant {
+      margin-right: auto;
+      background: var(--assistant);
+      border: 1px solid #d5e4fa;
+      border-bottom-left-radius: 4px;
+      color: var(--text);
+    }
+
+    .message.assistant h1,
+    .message.assistant h2,
+    .message.assistant h3,
+    .message.assistant h4,
+    .message.assistant h5,
+    .message.assistant h6 {
+      margin: 0.7em 0 0.35em;
+      line-height: 1.32;
+      color: #092b53;
+    }
+
+    .message.assistant h1 { font-size: 1.2rem; }
+    .message.assistant h2 { font-size: 1.11rem; }
+    .message.assistant h3 { font-size: 1.03rem; }
+    .message.assistant p { margin: 0.5em 0; }
+    .message.assistant ul,
+    .message.assistant ol { margin: 0.45em 0 0.6em 1.25em; }
+    .message.assistant li:empty { display: none; }
+    .message.assistant a { color: var(--primary); }
+    .message.assistant code {
+      font-family: "IBM Plex Mono", "SFMono-Regular", ui-monospace, monospace;
+      background: #e8f1ff;
+      border-radius: 5px;
+      padding: 0.08em 0.33em;
+      font-size: 0.95em;
+    }
+
+    .message.assistant pre {
+      background: #0f233f;
+      color: #f1f7ff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 0.6em 0;
+    }
+
+    .message.assistant pre code {
+      background: transparent;
+      padding: 0;
+      color: inherit;
+    }
+
+    .processing {
+      border: 1px solid #c5d9f7;
+      border-radius: var(--radius-md);
+      background: linear-gradient(180deg, #f7fbff 0%, #f2f8ff 100%);
+      padding: 12px 12px;
+      display: none;
+      gap: 8px;
+      animation: pop-in 220ms ease-out;
+    }
+
+    .processing.visible {
+      display: grid;
+    }
+
+    .processing-head {
+      font-weight: 600;
+      font-size: 0.92rem;
+      color: #173f73;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .snake {
+      width: 18px;
+      height: 18px;
+      border: 3px solid #9fc1ef;
+      border-top-color: var(--primary);
+      border-radius: 999px;
+      animation: spin 850ms linear infinite;
+    }
+
+    .steps {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 6px;
+    }
+
+    .step {
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--muted);
+      background: #ffffffa6;
+      transition: all 220ms ease;
+    }
+
+    .step.active {
+      border-color: #b2cdf4;
+      color: #0a315f;
+      background: #ffffff;
+      transform: translateX(4px);
+      box-shadow: 0 7px 18px rgba(11, 72, 141, 0.09);
+    }
+
+    .step.done {
+      border-color: #c8dbf6;
+      color: #2b4f7a;
+      background: #f9fcff;
+    }
+
+    .composer {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .composer textarea {
+      resize: vertical;
+      min-height: 76px;
+      max-height: 220px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      font: inherit;
+      color: var(--text);
+      background: #ffffff;
+      transition: border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .composer textarea:focus {
+      outline: none;
+      border-color: #9fc1ef;
+      box-shadow: 0 0 0 4px rgba(0, 91, 187, 0.12);
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 11px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 11px 16px;
+      transition: transform 130ms ease, opacity 160ms ease, box-shadow 160ms ease;
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, #0b66cf 0%, #005bbb 100%);
+      color: #ffffff;
+      box-shadow: 0 8px 18px rgba(0, 91, 187, 0.22);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    .secondary-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      background: #eaf2ff;
+      color: #0d3b73;
+      border: 1px solid #c5d9f7;
+      display: none;
+    }
+
+    .btn-secondary.visible {
+      display: inline-block;
+    }
+
+    .disclaimer {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--panel-soft);
+      padding: 12px 14px;
+      color: #314c70;
+      font-size: 0.91rem;
+      line-height: 1.45;
+    }
+
+    .debug-panel {
+      display: none;
+      background: #0d1f38;
+      border: 1px solid #223e63;
+      border-radius: var(--radius-lg);
+      color: #dcecff;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      min-height: 520px;
+    }
+
+    .debug-panel.visible {
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .debug-head {
+      padding: 12px 14px;
+      border-bottom: 1px solid #274976;
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: 0.01em;
+      color: #e7f2ff;
+      background: #102846;
+    }
+
+    .debug-body {
+      margin: 0;
+      padding: 12px 14px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: "IBM Plex Mono", "SFMono-Regular", ui-monospace, monospace;
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes pop-in {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 700px) {
+      body {
+        padding: 10px 10px 24px;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .logo {
+        width: 145px;
+      }
+
+      .composer {
+        grid-template-columns: 1fr;
+      }
+
+      .btn-primary {
+        width: 100%;
+      }
+
+      .message {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .layout.debug-active {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div id="layout" class="layout">
+      <section class="panel">
+        <header class="header">
+          <img src="./logo-sofinco.png" alt="Sofinco" class="logo" />
+          <div>
+            <h1>Assistant MaPrimeRenov'</h1>
+            <p>Démonstrateur interne pour les conseillers clientèle.</p>
+          </div>
+        </header>
+
+        <div class="main">
+          <div id="status" class="status" aria-live="polite"></div>
+
+          <section id="chatZone" class="chat-zone" aria-live="polite">
+            <p id="placeholder" class="placeholder">
+              Posez une question sur MaPrimeRenov', MaPrimeAdapt' ou les aides ANAH.
+              Le chatbot retourne une réponse unique avec ses sources.
+            </p>
+          </section>
+
+          <section id="processing" class="processing" aria-live="polite">
+            <div class="processing-head">
+              <span class="snake" aria-hidden="true"></span>
+              <span>Traitement en cours</span>
+            </div>
+            <ol id="processingSteps" class="steps">
+              <li class="step">Compréhension de la question</li>
+              <li class="step">Recherche dans la documentation</li>
+              <li class="step">Rédaction de la réponse</li>
+            </ol>
+          </section>
+
+          <form id="chatForm" class="composer">
+            <label for="messageInput" class="sr-only" style="position:absolute;left:-9999px;">Question</label>
+            <textarea id="messageInput" placeholder="Ex: Mon client est copropriétaire, quelle aide MaPrimeRenov' est mobilisable ?" required></textarea>
+            <button id="sendBtn" class="btn btn-primary" type="submit">Envoyer</button>
+          </form>
+
+          <div class="secondary-actions">
+            <button id="retryBtn" class="btn btn-secondary" type="button">Relancer</button>
+            <button id="resetBtn" class="btn btn-secondary" type="button">Nouvelle question</button>
+          </div>
+        </div>
+      </section>
+
+      <aside id="debugPanel" class="debug-panel" aria-live="polite">
+        <div class="debug-head">Mode debug n8n stream</div>
+        <pre id="debugOutput" class="debug-body">En attente de requête...</pre>
+      </aside>
+    </div>
+
+    <aside class="disclaimer">
+      Ce chatbot est un démonstrateur.
+      Les échanges peuvent être enregistrés à des fins d’analyse et d’amélioration.
+      Merci de ne pas saisir de données personnelles ou confidentielles.
+    </aside>
+  </main>
+
+  <script>
+    const DEFAULT_TYPEWRITER_DELAY_MS = 4;
+    const GENERIC_ERROR_MESSAGE = "Une erreur est survenue. Veuillez réessayer.";
+
+    const state = {
+      config: null,
+      sessionId: null,
+      inFlight: false,
+      lastQuestion: "",
+      hasActiveQuestion: false,
+      processingIndex: -1,
+      debugMode: false,
+      animationEnabled: true,
+      typewriterDelayMs: DEFAULT_TYPEWRITER_DELAY_MS
+    };
+
+    const dom = {
+      chatForm: document.getElementById("chatForm"),
+      messageInput: document.getElementById("messageInput"),
+      sendBtn: document.getElementById("sendBtn"),
+      chatZone: document.getElementById("chatZone"),
+      placeholder: document.getElementById("placeholder"),
+      processing: document.getElementById("processing"),
+      processingSteps: Array.from(document.querySelectorAll("#processingSteps .step")),
+      status: document.getElementById("status"),
+      retryBtn: document.getElementById("retryBtn"),
+      resetBtn: document.getElementById("resetBtn"),
+      layout: document.getElementById("layout"),
+      debugPanel: document.getElementById("debugPanel"),
+      debugOutput: document.getElementById("debugOutput")
+    };
+
+    init().catch(() => {
+      showBlockingError("Configuration invalide. Vérifiez UI_chat/config.ini.");
+    });
+
+    async function init() {
+      state.config = await loadConfig("./config.ini");
+      if (!isValidWebhookUrl(state.config.WEBHOOK_URL)) {
+        throw new Error("Invalid WEBHOOK_URL");
+      }
+      state.debugMode = isTruthy(state.config.DEBUG_MODE);
+      state.animationEnabled = parseBooleanConfig(state.config.ANIMATION, true);
+      state.typewriterDelayMs = parseTypewriterDelay(state.config.TYPEWRITER_SPEED_MS, DEFAULT_TYPEWRITER_DELAY_MS);
+      setDebugModeUi(state.debugMode);
+
+      dom.chatForm.addEventListener("submit", onSubmitQuestion);
+      dom.retryBtn.addEventListener("click", onRetry);
+      dom.resetBtn.addEventListener("click", resetUi);
+      setStatus("Webhook configuré. Vous pouvez poser une question.");
+      dom.messageInput.focus();
+    }
+
+    async function onSubmitQuestion(event) {
+      event.preventDefault();
+      if (state.inFlight) return;
+
+      const message = dom.messageInput.value.trim();
+      if (!message) {
+        setStatus("Le message est obligatoire.", true);
+        return;
+      }
+
+      startConversation(message);
+      await fetchAnswer({ isRetry: false });
+    }
+
+    async function onRetry() {
+      if (state.inFlight || !state.hasActiveQuestion || !state.lastQuestion) return;
+      hideSecondaryActions();
+      setStatus("Relance en cours...");
+      await fetchAnswer({ isRetry: true });
+    }
+
+    function startConversation(question) {
+      state.lastQuestion = question;
+      state.sessionId = generateSessionId();
+      state.hasActiveQuestion = true;
+      dom.messageInput.value = "";
+
+      hidePlaceholder();
+      appendUserMessage(question);
+      lockComposer();
+      hideSecondaryActions();
+      setStatus("Question envoyée. Analyse en cours...");
+    }
+
+    async function fetchAnswer({ isRetry }) {
+      state.inFlight = true;
+      showProcessing();
+
+      try {
+        const payload = {
+          sessionId: state.sessionId,
+          message: state.lastQuestion
+        };
+        debugWrite("REQUEST\n" + JSON.stringify(payload, null, 2));
+
+        const response = await fetch(state.config.WEBHOOK_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/plain, */*"
+          },
+          body: JSON.stringify(payload)
+        });
+        debugWrite(`HTTP ${response.status} ${response.statusText}\n\n`);
+        const { rawText, streamItems } = await readResponsePayload(response);
+
+        if (!response.ok) {
+          throw new Error(`HTTP_${response.status}`);
+        }
+
+        const answerText = extractAnswerText(rawText, streamItems);
+        if (!answerText) {
+          throw new Error("INVALID_PAYLOAD");
+        }
+
+        hideProcessing();
+        setStatus("Réponse reçue.");
+
+        const assistantEl = ensureAssistantMessageContainer();
+        const renderedHtml = renderMarkdown(answerText);
+        if (state.animationEnabled) {
+          await typewriterHtml(assistantEl, renderedHtml, state.typewriterDelayMs);
+        } else {
+          assistantEl.innerHTML = renderedHtml;
+        }
+
+        lockComposer();
+        showButton(dom.resetBtn);
+        if (isRetry) {
+          setStatus("Réponse reçue après relance.");
+        }
+      } catch (error) {
+        hideProcessing();
+        setStatus(GENERIC_ERROR_MESSAGE, true);
+        debugWrite(`ERROR\n${String(error)}`);
+        showButton(dom.retryBtn);
+        showButton(dom.resetBtn);
+      } finally {
+        state.inFlight = false;
+      }
+    }
+
+    function resetUi() {
+      resetProcessingSteps();
+      state.sessionId = null;
+      state.lastQuestion = "";
+      state.hasActiveQuestion = false;
+      state.inFlight = false;
+
+      dom.chatZone.innerHTML = "";
+      dom.chatZone.appendChild(dom.placeholder);
+      dom.placeholder.style.display = "block";
+
+      dom.messageInput.value = "";
+      dom.messageInput.disabled = false;
+      dom.sendBtn.disabled = false;
+
+      hideProcessing();
+      hideSecondaryActions();
+      setStatus("Nouvelle session prête.");
+      dom.messageInput.focus();
+    }
+
+    function lockComposer() {
+      dom.messageInput.disabled = true;
+      dom.sendBtn.disabled = true;
+    }
+
+    function hidePlaceholder() {
+      dom.placeholder.style.display = "none";
+    }
+
+    function appendUserMessage(text) {
+      const bubble = document.createElement("article");
+      bubble.className = "message user";
+      bubble.textContent = text;
+      dom.chatZone.appendChild(bubble);
+      bubble.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+
+    function ensureAssistantMessageContainer() {
+      const existing = dom.chatZone.querySelector(".message.assistant");
+      if (existing) {
+        existing.innerHTML = "";
+        return existing;
+      }
+
+      const bubble = document.createElement("article");
+      bubble.className = "message assistant";
+      dom.chatZone.appendChild(bubble);
+      bubble.scrollIntoView({ behavior: "smooth", block: "end" });
+      return bubble;
+    }
+
+    function showProcessing() {
+      dom.processing.classList.add("visible");
+      resetProcessingSteps();
+      dom.processing.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function hideProcessing() {
+      dom.processing.classList.remove("visible");
+      resetProcessingSteps();
+    }
+
+    function resetProcessingSteps() {
+      state.processingIndex = -1;
+      dom.processingSteps.forEach((step) => {
+        step.classList.remove("active");
+        step.classList.remove("done");
+      });
+    }
+
+    function setProcessingStep(index) {
+      if (index < 0 || index > dom.processingSteps.length - 1) return;
+      if (index <= state.processingIndex) return;
+      state.processingIndex = index;
+
+      dom.processingSteps.forEach((step, stepIndex) => {
+        step.classList.toggle("active", stepIndex === index);
+        step.classList.toggle("done", stepIndex < index);
+      });
+    }
+
+    function setStatus(message, isError = false) {
+      dom.status.textContent = message;
+      dom.status.classList.toggle("error", Boolean(isError));
+    }
+
+    function showBlockingError(message) {
+      setStatus(message, true);
+      dom.messageInput.disabled = true;
+      dom.sendBtn.disabled = true;
+    }
+
+    function showButton(button) {
+      button.classList.add("visible");
+    }
+
+    function hideSecondaryActions() {
+      dom.retryBtn.classList.remove("visible");
+      dom.resetBtn.classList.remove("visible");
+    }
+
+    function generateSessionId() {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+      }
+      return `session-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+    }
+
+    async function loadConfig(path) {
+      const response = await fetch(path, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error("CONFIG_NOT_FOUND");
+      }
+
+      const text = await response.text();
+      return parseIni(text);
+    }
+
+    function parseIni(content) {
+      const config = {};
+      const lines = content.split(/\r?\n/);
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith("#") || line.startsWith(";")) {
+          continue;
+        }
+
+        const separatorIndex = line.indexOf("=");
+        if (separatorIndex < 1) continue;
+
+        const key = line.slice(0, separatorIndex).trim();
+        const value = line.slice(separatorIndex + 1).trim();
+        if (key) {
+          config[key] = value;
+        }
+      }
+
+      return config;
+    }
+
+    function isTruthy(value) {
+      if (typeof value !== "string") return false;
+      return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+    }
+
+    function parseBooleanConfig(value, defaultValue) {
+      if (typeof value !== "string") return defaultValue;
+      const normalized = value.trim().toLowerCase();
+      if (["1", "true", "yes", "on"].includes(normalized)) return true;
+      if (["0", "false", "no", "off"].includes(normalized)) return false;
+      return defaultValue;
+    }
+
+    function parseTypewriterDelay(value, defaultValue) {
+      if (typeof value !== "string" || !value.trim()) return defaultValue;
+      const parsed = Number.parseInt(value.trim(), 10);
+      if (!Number.isFinite(parsed)) return defaultValue;
+      return Math.max(0, parsed);
+    }
+
+    function setDebugModeUi(enabled) {
+      dom.debugPanel.classList.toggle("visible", enabled);
+      dom.layout.classList.toggle("debug-active", enabled);
+    }
+
+    function debugWrite(text) {
+      if (!state.debugMode) return;
+      dom.debugOutput.textContent = text;
+    }
+
+    function debugAppend(text) {
+      if (!state.debugMode) return;
+      dom.debugOutput.textContent += text;
+    }
+
+    function normalizeProgressText(text) {
+      return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function updateProcessingFromStreamText(text) {
+      const normalized = normalizeProgressText(text);
+      if (normalized.includes("comprehension de la question")) {
+        setProcessingStep(0);
+        return;
+      }
+      if (normalized.includes("recherche dans la documentation")) {
+        setProcessingStep(1);
+        return;
+      }
+      if (normalized.includes("redaction de la reponse")) {
+        setProcessingStep(2);
+      }
+    }
+
+    function parseStreamEventLine(line) {
+      const eventObj = safeJsonParse(line);
+      if (!eventObj || eventObj.type !== "item" || typeof eventObj.content !== "string") {
+        return null;
+      }
+
+      const contentObj = safeJsonParse(eventObj.content);
+      if (!contentObj || typeof contentObj.text !== "string") {
+        return null;
+      }
+
+      return normalizeIncomingText(contentObj.text);
+    }
+
+    function consumeStreamBuffer(buffer, streamItems) {
+      let pending = buffer;
+
+      while (true) {
+        const newlineIndex = pending.indexOf("\n");
+        if (newlineIndex === -1) break;
+
+        const line = pending.slice(0, newlineIndex).trim();
+        pending = pending.slice(newlineIndex + 1);
+        if (!line) continue;
+
+        const streamText = parseStreamEventLine(line);
+        if (!streamText) continue;
+        streamItems.push(streamText);
+        updateProcessingFromStreamText(streamText);
+      }
+
+      return pending;
+    }
+
+    async function readResponsePayload(response) {
+      if (!response.body || typeof response.body.getReader !== "function") {
+        const rawText = await response.text();
+        debugAppend(rawText);
+        return { rawText, streamItems: [] };
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      const streamItems = [];
+      let rawText = "";
+      let lineBuffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        rawText += chunk;
+        debugAppend(chunk);
+        lineBuffer += chunk;
+        lineBuffer = consumeStreamBuffer(lineBuffer, streamItems);
+      }
+
+      const tail = decoder.decode();
+      if (tail) {
+        rawText += tail;
+        debugAppend(tail);
+        lineBuffer += tail;
+      }
+
+      const finalLine = lineBuffer.trim();
+      if (finalLine) {
+        const streamText = parseStreamEventLine(finalLine);
+        if (streamText) {
+          streamItems.push(streamText);
+          updateProcessingFromStreamText(streamText);
+        }
+      }
+
+      return { rawText, streamItems };
+    }
+
+    function safeJsonParse(text) {
+      try {
+        return JSON.parse(text);
+      } catch {
+        return null;
+      }
+    }
+
+    function toLinesFromPossiblyQuotedPayload(rawText) {
+      const firstParse = safeJsonParse(rawText);
+      if (typeof firstParse === "string") {
+        return firstParse.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+      }
+      return rawText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    }
+
+    function extractAnswerFromNdjsonLines(lines) {
+      const textParts = [];
+
+      for (const line of lines) {
+        const eventObj = safeJsonParse(line);
+        if (!eventObj || eventObj.type !== "item" || typeof eventObj.content !== "string") {
+          continue;
+        }
+
+        const contentObj = safeJsonParse(eventObj.content);
+        if (!contentObj || typeof contentObj.text !== "string") {
+          continue;
+        }
+
+        textParts.push(normalizeIncomingText(contentObj.text));
+      }
+
+      if (!textParts.length) return null;
+
+      // In n8n streaming mode, intermediary progress messages can also be emitted as items.
+      // Keep the longest text block, which corresponds to the final answer payload.
+      return textParts
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .sort((a, b) => b.length - a.length)[0] || null;
+    }
+
+    function extractAnswerText(rawText, streamItems = []) {
+      if (Array.isArray(streamItems) && streamItems.length) {
+        const longest = streamItems
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .sort((a, b) => b.length - a.length)[0];
+        if (longest) return longest;
+      }
+
+      const parsed = safeJsonParse(rawText);
+
+      // Legacy payload contract: { "answer": "..." }
+      if (parsed && typeof parsed === "object" && typeof parsed.answer === "string") {
+        return normalizeIncomingText(parsed.answer).trim();
+      }
+
+      // n8n streaming payload: NDJSON events, sometimes wrapped as a JSON string.
+      const lines = toLinesFromPossiblyQuotedPayload(rawText);
+      const streamAnswer = extractAnswerFromNdjsonLines(lines);
+      if (streamAnswer) return streamAnswer;
+
+      return null;
+    }
+
+    function normalizeIncomingText(text) {
+      let normalized = String(text);
+
+      // Handle escaped new lines from double-encoded payloads.
+      normalized = normalized.replace(/\\\\n/g, "\n");
+      normalized = normalized.replace(/\\n/g, "\n");
+
+      // Normalize CRLF variants after replacement.
+      normalized = normalized.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      return normalized;
+    }
+
+    function isValidWebhookUrl(url) {
+      if (!url) return false;
+      try {
+        const parsed = new URL(url);
+        return parsed.protocol === "http:" || parsed.protocol === "https:";
+      } catch {
+        return false;
+      }
+    }
+
+    function escapeHtml(value) {
+      return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function sanitizeUrl(url) {
+      const cleaned = url.trim();
+      try {
+        const parsed = new URL(cleaned, window.location.href);
+        if (["http:", "https:", "mailto:"].includes(parsed.protocol)) {
+          return parsed.href;
+        }
+      } catch {
+        return "#";
+      }
+      return "#";
+    }
+
+    function parseInline(rawText) {
+      let text = escapeHtml(rawText);
+      const codeTokens = [];
+
+      text = text.replace(/`([^`]+)`/g, (_, code) => {
+        const token = `__CODE_TOKEN_${codeTokens.length}__`;
+        codeTokens.push(`<code>${code}</code>`);
+        return token;
+      });
+
+      text = text.replace(/\[([\s\S]+?)\]\(((?:https?:\/\/|mailto:)[^)]+)\)/g, (_, label, url) => {
+        const safeHref = sanitizeUrl(url.replace(/&amp;/g, "&"));
+        const normalizedLabel = label.replace(/\s*\n\s*/g, " ").trim();
+        return `<a href="${escapeHtml(safeHref)}" target="_blank" rel="noopener noreferrer">${normalizedLabel}</a>`;
+      });
+
+      // Keep emphasis parsing conservative to avoid corrupting technical strings.
+      text = text.replace(/\*\*([^*\n][^*]*?)\*\*/g, "<strong>$1</strong>");
+      text = text.replace(/\*([^*\n][^*]*?)\*/g, "<em>$1</em>");
+
+      text = text.replace(/__CODE_TOKEN_(\d+)__/g, (_, index) => codeTokens[Number(index)] || "");
+
+      return text;
+    }
+
+    function isUnorderedListLine(line) {
+      return /^\s*[-*]\s+/.test(line);
+    }
+
+    function isOrderedListLine(line) {
+      return /^\s*\d+\.\s+/.test(line);
+    }
+
+    function renderMarkdown(markdown) {
+      const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+      const htmlParts = [];
+      let i = 0;
+
+      while (i < lines.length) {
+        const line = lines[i];
+
+        if (!line.trim()) {
+          i += 1;
+          continue;
+        }
+
+        if (/^```/.test(line.trim())) {
+          const language = line.trim().slice(3).trim();
+          i += 1;
+          const buffer = [];
+
+          while (i < lines.length && !/^```/.test(lines[i].trim())) {
+            buffer.push(lines[i]);
+            i += 1;
+          }
+
+          if (i < lines.length) i += 1;
+          const code = escapeHtml(buffer.join("\n"));
+          const langClass = language ? ` class="language-${escapeHtml(language)}"` : "";
+          htmlParts.push(`<pre><code${langClass}>${code}</code></pre>`);
+          continue;
+        }
+
+        const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
+        if (headingMatch) {
+          const level = headingMatch[1].length;
+          const content = parseInline(headingMatch[2].trim());
+          htmlParts.push(`<h${level}>${content}</h${level}>`);
+          i += 1;
+          continue;
+        }
+
+        if (isUnorderedListLine(line)) {
+          const items = [];
+          while (i < lines.length && isUnorderedListLine(lines[i])) {
+            const itemText = lines[i].replace(/^\s*[-*]\s+/, "").trim();
+            items.push(`<li>${parseInline(itemText)}</li>`);
+            i += 1;
+          }
+          htmlParts.push(`<ul>${items.join("")}</ul>`);
+          continue;
+        }
+
+        if (isOrderedListLine(line)) {
+          const items = [];
+          while (i < lines.length && isOrderedListLine(lines[i])) {
+            const itemText = lines[i].replace(/^\s*\d+\.\s+/, "").trim();
+            items.push(`<li>${parseInline(itemText)}</li>`);
+            i += 1;
+          }
+          htmlParts.push(`<ol>${items.join("")}</ol>`);
+          continue;
+        }
+
+        const paragraph = [];
+        while (
+          i < lines.length &&
+          lines[i].trim() &&
+          !/^```/.test(lines[i].trim()) &&
+          !lines[i].match(/^(#{1,6})\s+(.+)$/) &&
+          !isUnorderedListLine(lines[i]) &&
+          !isOrderedListLine(lines[i])
+        ) {
+          paragraph.push(lines[i].trim());
+          i += 1;
+        }
+
+        const paragraphText = parseInline(paragraph.join("\n")).replace(/\n/g, "<br>");
+        htmlParts.push(`<p>${paragraphText}</p>`);
+      }
+
+      return htmlParts.join("\n");
+    }
+
+    function wait(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function decodeEntities(text) {
+      const parser = document.createElement("textarea");
+      parser.innerHTML = text;
+      return parser.value;
+    }
+
+    async function typewriterHtml(element, html, delayMs) {
+      const template = document.createElement("template");
+      template.innerHTML = html;
+      element.innerHTML = "";
+
+      for (const child of Array.from(template.content.childNodes)) {
+        await appendNodeProgressive(child, element, delayMs);
+      }
+
+      element.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    async function appendNodeProgressive(sourceNode, targetParent, delayMs) {
+      if (sourceNode.nodeType === Node.TEXT_NODE) {
+        const decoded = decodeEntities(sourceNode.textContent || "");
+        if (!decoded) return;
+        const textNode = document.createTextNode("");
+        targetParent.appendChild(textNode);
+
+        for (const char of decoded) {
+          textNode.textContent += char;
+          if (delayMs > 0) {
+            await wait(delayMs);
+          }
+        }
+        return;
+      }
+
+      if (sourceNode.nodeType !== Node.ELEMENT_NODE) return;
+
+      const sourceEl = sourceNode;
+      const targetEl = sourceEl.cloneNode(false);
+      targetParent.appendChild(targetEl);
+
+      for (const child of Array.from(sourceEl.childNodes)) {
+        await appendNodeProgressive(child, targetEl, delayMs);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -174,6 +174,7 @@
     .message.assistant p { margin: 0.5em 0; }
     .message.assistant ul,
     .message.assistant ol { margin: 0.45em 0 0.6em 1.25em; }
+    .message.assistant li:empty { display: none; }
     .message.assistant a { color: var(--primary); }
     .message.assistant code {
       font-family: "IBM Plex Mono", "SFMono-Regular", ui-monospace, monospace;
@@ -567,6 +568,7 @@
       state.lastQuestion = question;
       state.sessionId = generateSessionId();
       state.hasActiveQuestion = true;
+      dom.messageInput.value = "";
 
       hidePlaceholder();
       appendUserMessage(question);
@@ -1029,16 +1031,15 @@
         return token;
       });
 
-      text = text.replace(/\[([\s\S]+?)\]\(([^)\s]+)\)/g, (_, label, url) => {
+      text = text.replace(/\[([\s\S]+?)\]\(((?:https?:\/\/|mailto:)[^)]+)\)/g, (_, label, url) => {
         const safeHref = sanitizeUrl(url.replace(/&amp;/g, "&"));
         const normalizedLabel = label.replace(/\s*\n\s*/g, " ").trim();
         return `<a href="${escapeHtml(safeHref)}" target="_blank" rel="noopener noreferrer">${normalizedLabel}</a>`;
       });
 
-      text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-      text = text.replace(/__([^_]+)__/g, "<strong>$1</strong>");
-      text = text.replace(/\*([^*]+)\*/g, "<em>$1</em>");
-      text = text.replace(/_([^_]+)_/g, "<em>$1</em>");
+      // Keep emphasis parsing conservative to avoid corrupting technical strings.
+      text = text.replace(/\*\*([^*\n][^*]*?)\*\*/g, "<strong>$1</strong>");
+      text = text.replace(/\*([^*\n][^*]*?)\*/g, "<em>$1</em>");
 
       text = text.replace(/__CODE_TOKEN_(\d+)__/g, (_, index) => codeTokens[Number(index)] || "");
 
@@ -1134,10 +1135,6 @@
       return htmlParts.join("\n");
     }
 
-    function splitHtmlTokens(html) {
-      return html.match(/<[^>]+>|[^<]+/g) || [];
-    }
-
     function wait(ms) {
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
@@ -1149,26 +1146,42 @@
     }
 
     async function typewriterHtml(element, html, delayMs) {
+      const template = document.createElement("template");
+      template.innerHTML = html;
       element.innerHTML = "";
-      const tokens = splitHtmlTokens(html);
 
-      for (const token of tokens) {
-        if (token.startsWith("<") && token.endsWith(">")) {
-          element.insertAdjacentHTML("beforeend", token);
-          continue;
-        }
-
-        const decodedToken = decodeEntities(token);
-        const textNode = document.createTextNode("");
-        element.appendChild(textNode);
-
-        for (const char of decodedToken) {
-          textNode.textContent += char;
-          await wait(delayMs);
-        }
+      for (const child of Array.from(template.content.childNodes)) {
+        await appendNodeProgressive(child, element, delayMs);
       }
 
       element.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    async function appendNodeProgressive(sourceNode, targetParent, delayMs) {
+      if (sourceNode.nodeType === Node.TEXT_NODE) {
+        const decoded = decodeEntities(sourceNode.textContent || "");
+        if (!decoded) return;
+        const textNode = document.createTextNode("");
+        targetParent.appendChild(textNode);
+
+        for (const char of decoded) {
+          textNode.textContent += char;
+          if (delayMs > 0) {
+            await wait(delayMs);
+          }
+        }
+        return;
+      }
+
+      if (sourceNode.nodeType !== Node.ELEMENT_NODE) return;
+
+      const sourceEl = sourceNode;
+      const targetEl = sourceEl.cloneNode(false);
+      targetParent.appendChild(targetEl);
+
+      for (const child of Array.from(sourceEl.childNodes)) {
+        await appendNodeProgressive(child, targetEl, delayMs);
+      }
     }
   </script>
 </body>
