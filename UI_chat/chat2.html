@@ -119,6 +119,12 @@
       align-items: start;
     }
 
+    .chat-column {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
     .links-panel {
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
@@ -315,18 +321,23 @@
 
     .composer {
       display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: end;
+      grid-template-columns: minmax(0, 1fr) 120px;
+      gap: 8px;
+      align-items: stretch;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: #ffffff;
+      box-shadow: var(--shadow);
+      padding: 8px;
     }
 
     .composer textarea {
       resize: vertical;
       min-height: 76px;
       max-height: 220px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 12px;
       font: inherit;
       color: var(--text);
       background: #ffffff;
@@ -335,7 +346,6 @@
 
     .composer textarea:focus {
       outline: none;
-      border-color: #9fc1ef;
       box-shadow: 0 0 0 4px rgba(0, 91, 187, 0.12);
     }
 
@@ -553,33 +563,33 @@
               <p id="linksEmpty" class="links-empty">Les liens trouvés dans la réponse apparaîtront ici.</p>
               <ul id="linksList" class="links-list"></ul>
             </aside>
+            <div class="chat-column">
+              <section id="chatZone" class="chat-zone" aria-live="polite">
+                <p id="placeholder" class="placeholder">
+                  Posez une question sur MaPrimeRenov', MaPrimeAdapt' ou les aides ANAH.
+                  Le chatbot retourne une réponse unique avec ses sources.
+                </p>
 
-            <section id="chatZone" class="chat-zone" aria-live="polite">
-              <p id="placeholder" class="placeholder">
-                Posez une question sur MaPrimeRenov', MaPrimeAdapt' ou les aides ANAH.
-                Le chatbot retourne une réponse unique avec ses sources.
-              </p>
-
-              <section id="processing" class="processing" aria-live="polite">
-                <div class="processing-head">
-                  <span class="snake" aria-hidden="true"></span>
-                  <span>Traitement en cours</span>
-                  <span id="processingStepCurrent" class="processing-step-current"></span>
-                </div>
+                <section id="processing" class="processing" aria-live="polite">
+                  <div class="processing-head">
+                    <span class="snake" aria-hidden="true"></span>
+                    <span>Traitement en cours</span>
+                    <span id="processingStepCurrent" class="processing-step-current"></span>
+                  </div>
+                </section>
               </section>
-            </section>
+            <form id="chatForm" class="composer">
+              <label for="messageInput" class="sr-only" style="position:absolute;left:-9999px;">Question</label>
+              <textarea id="messageInput" placeholder="Ex: Mon client est copropriétaire, quelle aide MaPrimeRenov' est mobilisable ?" required></textarea>
+              <button id="sendBtn" class="btn btn-primary" type="submit">Envoyer</button>
+            </form>
+
+            <div class="secondary-actions">
+              <button id="retryBtn" class="btn btn-secondary" type="button">Relancer</button>
+              <button id="resetBtn" class="btn btn-secondary" type="button">Nouvelle question</button>
+            </div>
+            </div>
           </section>
-
-          <form id="chatForm" class="composer">
-            <label for="messageInput" class="sr-only" style="position:absolute;left:-9999px;">Question</label>
-            <textarea id="messageInput" placeholder="Ex: Mon client est copropriétaire, quelle aide MaPrimeRenov' est mobilisable ?" required></textarea>
-            <button id="sendBtn" class="btn btn-primary" type="submit">Envoyer</button>
-          </form>
-
-          <div class="secondary-actions">
-            <button id="retryBtn" class="btn btn-secondary" type="button">Relancer</button>
-            <button id="resetBtn" class="btn btn-secondary" type="button">Nouvelle question</button>
-          </div>
         </div>
       </section>
 
