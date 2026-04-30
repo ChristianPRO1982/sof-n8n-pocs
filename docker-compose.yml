@@ -1,6 +1,6 @@
 services:
   n8n:
-    image: n8nio/n8n:2.9.3
+    image: n8nio/n8n:2.18.5
     container_name: n8n
     environment:
       - GENERIC_TIMEZONE=Europe/Paris
@@ -14,14 +14,15 @@ services:
       - N8N_SECURE_COOKIE=false
 
       # ✅ Public URL (important for Forms / Chat / Webhooks)
-      - N8N_HOST=<PUBLIC_HOST>
+      - N8N_HOST=15.236.66.128
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
       - N8N_PATH=/n8n/
+      - N8N_PROXY_HOPS=1
 
       # ✅ Force external URLs generation
-      - WEBHOOK_URL=http://<PUBLIC_HOST>/n8n/
-      - N8N_EDITOR_BASE_URL=http://<PUBLIC_HOST>/n8n/
+      - WEBHOOK_URL=http://15.236.66.128/n8n/
+      - N8N_EDITOR_BASE_URL=http://15.236.66.128/n8n/
 
       # Allow AI / community nodes
       - N8N_ENABLE_COMMUNITY_NODES=true
