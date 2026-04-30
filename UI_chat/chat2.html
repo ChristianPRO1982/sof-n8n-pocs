@@ -611,6 +611,7 @@
     const DEFAULT_TYPEWRITER_DELAY_MS = 4;
     const GENERIC_ERROR_MESSAGE = "Une erreur est survenue. Veuillez réessayer.";
     const NEAR_BOTTOM_THRESHOLD_PX = 80;
+    const WAITING_PREFIX_REGEX = /^\s*\[WAITING\]\s*/i;
 
     const state = {
       config: null,
@@ -623,7 +624,6 @@
       typewriterDelayMs: DEFAULT_TYPEWRITER_DELAY_MS,
       autoScrollEnabled: true,
       lastScrollY: 0,
-      processingTimerId: null,
       processingStepIndex: -1
     };
 
@@ -939,13 +939,11 @@
       dom.chatZone.appendChild(dom.processing);
       dom.processing.classList.add("visible");
       clearProcessingStep();
-      startProcessingTicker();
       maybeAutoScroll({ smooth: true });
       updateScrollDownButton();
     }
 
     function hideProcessing() {
-      stopProcessingTicker();
       dom.processing.classList.remove("visible");
       clearProcessingStep();
       updateScrollDownButton();
@@ -962,35 +960,17 @@
       dom.processingStepCurrent.textContent = label;
     }
 
-    function getProcessingStepLabels() {
-      return [
-        "Compréhension de la question",
-        "Recherche dans la documentation",
-        "Rédaction de la réponse"
-      ];
+    function extractWaitingText(text) {
+      if (typeof text !== "string") return null;
+      if (!WAITING_PREFIX_REGEX.test(text)) return null;
+      const raw = text.replace(WAITING_PREFIX_REGEX, "").trim();
+      if (!raw) return null;
+      const unwrapped = raw.replace(/^\*+|\*+$/g, "").trim();
+      return unwrapped || null;
     }
 
-    function showNextProcessingStep() {
-      const labels = getProcessingStepLabels();
-      if (!labels.length) return;
-      if (state.processingStepIndex >= labels.length - 1) {
-        stopProcessingTicker();
-        return;
-      }
-      state.processingStepIndex += 1;
-      setProcessingStepText(labels[state.processingStepIndex]);
-    }
-
-    function startProcessingTicker() {
-      stopProcessingTicker();
-      showNextProcessingStep();
-      state.processingTimerId = window.setInterval(showNextProcessingStep, 1300);
-    }
-
-    function stopProcessingTicker() {
-      if (state.processingTimerId === null) return;
-      window.clearInterval(state.processingTimerId);
-      state.processingTimerId = null;
+    function isWaitingText(text) {
+      return extractWaitingText(text) !== null;
     }
 
     function setStatus(message, isError = false) {
@@ -1088,29 +1068,11 @@
       dom.debugOutput.textContent += text;
     }
 
-    function normalizeProgressText(text) {
-      return text
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-    }
-
     function updateProcessingFromStreamText(text) {
-      const normalized = normalizeProgressText(text);
-      if (normalized.includes("comprehension de la question")) {
-        state.processingStepIndex = 0;
-        setProcessingStepText("Compréhension de la question");
-        return;
-      }
-      if (normalized.includes("recherche dans la documentation")) {
-        state.processingStepIndex = 1;
-        setProcessingStepText("Recherche dans la documentation");
-        return;
-      }
-      if (normalized.includes("redaction de la reponse")) {
-        state.processingStepIndex = 2;
-        setProcessingStepText("Rédaction de la réponse");
-      }
+      const waitingText = extractWaitingText(text);
+      if (!waitingText) return;
+      if (dom.processingStepCurrent && dom.processingStepCurrent.textContent === waitingText) return;
+      setProcessingStepText(waitingText);
     }
 
     function parseStreamEventLine(line) {
@@ -1140,8 +1102,10 @@
 
         const streamText = parseStreamEventLine(line);
         if (!streamText) continue;
-        streamItems.push(streamText);
         updateProcessingFromStreamText(streamText);
+        if (!isWaitingText(streamText)) {
+          streamItems.push(streamText);
+        }
       }
 
       return pending;
@@ -1181,8 +1145,10 @@
       if (finalLine) {
         const streamText = parseStreamEventLine(finalLine);
         if (streamText) {
-          streamItems.push(streamText);
           updateProcessingFromStreamText(streamText);
+          if (!isWaitingText(streamText)) {
+            streamItems.push(streamText);
+          }
         }
       }
 

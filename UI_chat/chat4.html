@@ -616,6 +616,11 @@
     const DEFAULT_TYPEWRITER_DELAY_MS = 4;
     const GENERIC_ERROR_MESSAGE = "Une erreur est survenue. Veuillez réessayer.";
     const NEAR_BOTTOM_THRESHOLD_PX = 80;
+    const PROCESSING_STEP_MAP = [
+      { key: "message1", label: "Compréhension de la question" },
+      { key: "message2", label: "Recherche dans la documentation" },
+      { key: "message3", label: "Rédaction de la réponse" }
+    ];
 
     const state = {
       config: null,
@@ -629,7 +634,8 @@
       autoScrollEnabled: true,
       lastScrollY: 0,
       processingTimerId: null,
-      processingStepIndex: -1
+      processingStepIndex: -1,
+      lastStreamProcessingIndex: -1
     };
 
     const dom = {
@@ -958,6 +964,7 @@
 
     function clearProcessingStep() {
       state.processingStepIndex = -1;
+      state.lastStreamProcessingIndex = -1;
       if (!dom.processingStepCurrent) return;
       dom.processingStepCurrent.textContent = "";
     }
@@ -968,11 +975,7 @@
     }
 
     function getProcessingStepLabels() {
-      return [
-        "Compréhension de la question",
-        "Recherche dans la documentation",
-        "Rédaction de la réponse"
-      ];
+      return PROCESSING_STEP_MAP.map((step) => step.label);
     }
 
     function showNextProcessingStep() {
@@ -989,7 +992,8 @@
     function startProcessingTicker() {
       stopProcessingTicker();
       showNextProcessingStep();
-      state.processingTimerId = window.setInterval(showNextProcessingStep, 1300);
+      // Keep step 1 as visual fallback. Progress to next steps must come from n8n stream signals.
+      state.processingTimerId = null;
     }
 
     function stopProcessingTicker() {
@@ -1096,26 +1100,32 @@
     function normalizeProgressText(text) {
       return text
         .toLowerCase()
+        .replace(/\[waiting\]/g, " ")
+        .replace(/\*/g, " ")
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
     }
 
+    function mapIncomingProcessingStep(text) {
+      const normalized = normalizeProgressText(normalizeIncomingText(text)).trim();
+      for (let i = 0; i < PROCESSING_STEP_MAP.length; i += 1) {
+        if (normalized.includes(PROCESSING_STEP_MAP[i].key)) {
+          return { index: i, label: PROCESSING_STEP_MAP[i].label };
+        }
+      }
+      return null;
+    }
+
     function updateProcessingFromStreamText(text) {
-      const normalized = normalizeProgressText(text);
-      if (normalized.includes("comprehension de la question")) {
-        state.processingStepIndex = 0;
-        setProcessingStepText("Compréhension de la question");
-        return;
-      }
-      if (normalized.includes("recherche dans la documentation")) {
-        state.processingStepIndex = 1;
-        setProcessingStepText("Recherche dans la documentation");
-        return;
-      }
-      if (normalized.includes("redaction de la reponse")) {
-        state.processingStepIndex = 2;
-        setProcessingStepText("Rédaction de la réponse");
-      }
+      const mapped = mapIncomingProcessingStep(text);
+      if (!mapped) return;
+      // Track duplicates based on stream progression only (not on timer fallback progression).
+      if (mapped.index <= state.lastStreamProcessingIndex) return;
+      state.lastStreamProcessingIndex = mapped.index;
+      state.processingStepIndex = mapped.index;
+      // Stream events are the source of truth when present.
+      stopProcessingTicker();
+      setProcessingStepText(mapped.label);
     }
 
     function parseStreamEventLine(line) {
@@ -1125,11 +1135,12 @@
       }
 
       const contentObj = safeJsonParse(eventObj.content);
-      if (!contentObj || typeof contentObj.text !== "string") {
-        return null;
+      if (contentObj && typeof contentObj.text === "string") {
+        return normalizeIncomingText(contentObj.text);
       }
 
-      return normalizeIncomingText(contentObj.text);
+      // Some n8n stream items are plain text tokens, not JSON objects.
+      return normalizeIncomingText(eventObj.content);
     }
 
     function consumeStreamBuffer(buffer, streamItems) {
