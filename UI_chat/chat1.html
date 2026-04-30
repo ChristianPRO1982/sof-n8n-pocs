@@ -220,6 +220,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     .snake {
@@ -231,35 +232,10 @@
       animation: spin 850ms linear infinite;
     }
 
-    .steps {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      display: grid;
-      gap: 6px;
-    }
-
-    .step {
-      border: 1px solid transparent;
-      border-radius: 8px;
-      padding: 8px 10px;
-      color: var(--muted);
-      background: #ffffffa6;
-      transition: all 220ms ease;
-    }
-
-    .step.active {
-      border-color: #b2cdf4;
-      color: #0a315f;
-      background: #ffffff;
-      transform: translateX(4px);
-      box-shadow: 0 7px 18px rgba(11, 72, 141, 0.09);
-    }
-
-    .step.done {
-      border-color: #c8dbf6;
+    .processing-step-current {
+      font-weight: 500;
       color: #2b4f7a;
-      background: #f9fcff;
+      min-height: 1.2em;
     }
 
     .composer {
@@ -457,12 +433,8 @@
             <div class="processing-head">
               <span class="snake" aria-hidden="true"></span>
               <span>Traitement en cours</span>
+              <span id="processingStepCurrent" class="processing-step-current"></span>
             </div>
-            <ol id="processingSteps" class="steps">
-              <li class="step">Compréhension de la question</li>
-              <li class="step">Recherche dans la documentation</li>
-              <li class="step">Rédaction de la réponse</li>
-            </ol>
           </section>
 
           <form id="chatForm" class="composer">
@@ -501,7 +473,8 @@
       inFlight: false,
       lastQuestion: "",
       hasActiveQuestion: false,
-      processingIndex: -1,
+      processingTimerId: null,
+      processingStepIndex: -1,
       debugMode: false,
       animationEnabled: true,
       typewriterDelayMs: DEFAULT_TYPEWRITER_DELAY_MS
@@ -514,7 +487,7 @@
       chatZone: document.getElementById("chatZone"),
       placeholder: document.getElementById("placeholder"),
       processing: document.getElementById("processing"),
-      processingSteps: Array.from(document.querySelectorAll("#processingSteps .step")),
+      processingStepCurrent: document.getElementById("processingStepCurrent"),
       status: document.getElementById("status"),
       retryBtn: document.getElementById("retryBtn"),
       resetBtn: document.getElementById("resetBtn"),
@@ -637,7 +610,7 @@
     }
 
     function resetUi() {
-      resetProcessingSteps();
+      clearProcessingStep();
       state.sessionId = null;
       state.lastQuestion = "";
       state.hasActiveQuestion = false;
@@ -690,32 +663,57 @@
 
     function showProcessing() {
       dom.processing.classList.add("visible");
-      resetProcessingSteps();
+      clearProcessingStep();
+      startProcessingTicker();
       dom.processing.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
     function hideProcessing() {
+      stopProcessingTicker();
       dom.processing.classList.remove("visible");
-      resetProcessingSteps();
+      clearProcessingStep();
     }
 
-    function resetProcessingSteps() {
-      state.processingIndex = -1;
-      dom.processingSteps.forEach((step) => {
-        step.classList.remove("active");
-        step.classList.remove("done");
-      });
+    function clearProcessingStep() {
+      state.processingStepIndex = -1;
+      if (!dom.processingStepCurrent) return;
+      dom.processingStepCurrent.textContent = "";
     }
 
-    function setProcessingStep(index) {
-      if (index < 0 || index > dom.processingSteps.length - 1) return;
-      if (index <= state.processingIndex) return;
-      state.processingIndex = index;
+    function setProcessingStepText(label) {
+      if (!dom.processingStepCurrent) return;
+      dom.processingStepCurrent.textContent = label;
+    }
 
-      dom.processingSteps.forEach((step, stepIndex) => {
-        step.classList.toggle("active", stepIndex === index);
-        step.classList.toggle("done", stepIndex < index);
-      });
+    function getProcessingStepLabels() {
+      return [
+        "Compréhension de la question",
+        "Recherche dans la documentation",
+        "Rédaction de la réponse"
+      ];
+    }
+
+    function showNextProcessingStep() {
+      const labels = getProcessingStepLabels();
+      if (!labels.length) return;
+      if (state.processingStepIndex >= labels.length - 1) {
+        stopProcessingTicker();
+        return;
+      }
+      state.processingStepIndex += 1;
+      setProcessingStepText(labels[state.processingStepIndex]);
+    }
+
+    function startProcessingTicker() {
+      stopProcessingTicker();
+      showNextProcessingStep();
+      state.processingTimerId = window.setInterval(showNextProcessingStep, 1300);
+    }
+
+    function stopProcessingTicker() {
+      if (state.processingTimerId === null) return;
+      window.clearInterval(state.processingTimerId);
+      state.processingTimerId = null;
     }
 
     function setStatus(message, isError = false) {
@@ -823,15 +821,18 @@
     function updateProcessingFromStreamText(text) {
       const normalized = normalizeProgressText(text);
       if (normalized.includes("comprehension de la question")) {
-        setProcessingStep(0);
+        state.processingStepIndex = 0;
+        setProcessingStepText("Compréhension de la question");
         return;
       }
       if (normalized.includes("recherche dans la documentation")) {
-        setProcessingStep(1);
+        state.processingStepIndex = 1;
+        setProcessingStepText("Recherche dans la documentation");
         return;
       }
       if (normalized.includes("redaction de la reponse")) {
-        setProcessingStep(2);
+        state.processingStepIndex = 2;
+        setProcessingStepText("Rédaction de la réponse");
       }
     }
 
