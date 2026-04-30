@@ -560,7 +560,8 @@
     <div id="layout" class="layout">
       <section class="panel">
         <header class="header">
-          <img src="./logo-sofinco.png" alt="Sofinco" class="logo" />
+          <img src="https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png"
+          alt="Sofinco" class="logo" />
           <div>
             <h1>Assistant MaPrimeRenov'</h1>
             <p>Démonstrateur interne pour les conseillers clientèle.</p>
@@ -668,6 +669,7 @@
 
     async function init() {
       state.config = await loadConfig("./config.ini");
+      state.config.WEBHOOK_URL = normalizeWebhookUrl(state.config.WEBHOOK_URL);
       if (!isValidWebhookUrl(state.config.WEBHOOK_URL)) {
         throw new Error("Invalid WEBHOOK_URL");
       }
@@ -1262,6 +1264,19 @@
         return parsed.protocol === "http:" || parsed.protocol === "https:";
       } catch {
         return false;
+      }
+    }
+
+    function normalizeWebhookUrl(url) {
+      if (!url) return url;
+      try {
+        const parsed = new URL(url, window.location.href);
+        if (!/^\/n8n(\/|$)/.test(parsed.pathname)) {
+          parsed.pathname = `/n8n${parsed.pathname.startsWith("/") ? "" : "/"}${parsed.pathname}`;
+        }
+        return parsed.toString();
+      } catch {
+        return url;
       }
     }
 
