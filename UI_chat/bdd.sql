@@ -1,15 +1,37 @@
-CREATE TABLE renov_liens (
+CREATE TABLE renov_lien (
     id SERIAL PRIMARY KEY,
-    thematique VARCHAR(255),
-    sousthematique VARCHAR(255),
     lien VARCHAR(500) UNIQUE,
-    categorie VARCHAR(255),
     note INT CHECK (note BETWEEN 0 AND 100),
     date_maj DATE,
     smart_scraping BOOLEAN DEFAULT FALSE,
+    updated_at TIMESTAMPTZ,
     scraped_at TIMESTAMPTZ
 );
 
--- Index unique sur thematique + sousthematique
-CREATE UNIQUE INDEX idx_renov_liens_thematique_sousthematique
-ON renov_liens (thematique, sousthematique);
+CREATE TABLE renov_thematique (
+    id SERIAL PRIMARY KEY,
+    libelle VARCHAR(100) UNIQUE
+);
+
+CREATE TABLE renov_sousthematique (
+    id SERIAL PRIMARY KEY,
+    st_id INT NOT NULL REFERENCES renov_thematique(id) ON DELETE CASCADE,
+    libelle VARCHAR(100) UNIQUE
+);
+
+CREATE TABLE renov_categorie (
+    id SERIAL PRIMARY KEY,
+    libelle VARCHAR(100) UNIQUE
+);
+
+CREATE TABLE renov_lien_sousthematique (
+    lien_id INT NOT NULL REFERENCES renov_lien(id) ON DELETE CASCADE,
+    sousthematique_id INT NOT NULL REFERENCES renov_sousthematique(id) ON DELETE CASCADE,
+    PRIMARY KEY (lien_id, sousthematique_id)
+);
+
+CREATE TABLE renov_lien_categorie (
+    lien_id INT NOT NULL REFERENCES renov_lien(id) ON DELETE CASCADE,
+    categorie_id INT NOT NULL REFERENCES renov_categorie(id) ON DELETE CASCADE,
+    PRIMARY KEY (lien_id, categorie_id)
+);
