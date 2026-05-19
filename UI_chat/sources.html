@@ -1,0 +1,1001 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestion des sources renov_liens - Sofinco</title>
+  <style>
+    :root {
+      --bg-1: #f6f9ff;
+      --bg-2: #ecf2ff;
+      --panel: #ffffff;
+      --panel-soft: #f8fbff;
+      --border: #d5e2f5;
+      --text: #0d223d;
+      --muted: #4f6585;
+      --primary: #005bbb;
+      --primary-dark: #004996;
+      --primary-soft: #dbeaff;
+      --accent: #ff7a00;
+      --danger: #b42318;
+      --success: #047857;
+      --warning: #9a6700;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --shadow: 0 18px 40px rgba(8, 44, 92, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(0, 91, 187, 0.11) 0%, transparent 30%),
+        radial-gradient(circle at 85% 16%, rgba(255, 122, 0, 0.08) 0%, transparent 30%),
+        linear-gradient(145deg, var(--bg-1), var(--bg-2));
+      min-height: 100vh;
+      padding: 28px 16px 40px;
+    }
+
+    .app { max-width: 1600px; margin: 0 auto; display: grid; gap: 16px; }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+    .layout.debug-active { grid-template-columns: minmax(0, 1fr) minmax(320px, 380px); }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 20px 24px 14px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .logo { width: 170px; height: auto; object-fit: contain; flex-shrink: 0; display: block; }
+    .header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 0.01em; }
+    .header p { margin: 4px 0 0; color: var(--muted); font-size: 0.95rem; line-height: 1.4; }
+
+    .main { padding: 18px 20px 20px; display: grid; gap: 12px; }
+
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+    .status { min-height: 24px; font-size: 0.93rem; color: var(--muted); padding: 0 4px; }
+    .status.success { color: var(--success); font-weight: 600; }
+    .status.error { color: var(--danger); font-weight: 600; }
+
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 9px 12px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: transform 120ms ease, box-shadow 160ms ease, opacity 160ms ease;
+      cursor: pointer;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: linear-gradient(180deg, #0b66cf 0%, var(--primary) 100%);
+      color: #fff;
+      box-shadow: 0 8px 16px rgba(0, 91, 187, 0.22);
+    }
+
+    .btn-danger {
+      background: #ffe9e8;
+      color: #8f1f16;
+      border: 1px solid #f7c7c4;
+    }
+
+    .btn-ghost {
+      background: #eef3fb;
+      color: #5f6f85;
+      border: 1px solid #d7e2f1;
+    }
+
+    .table-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+      overflow: auto;
+    }
+
+    table { width: 100%; border-collapse: collapse; min-width: 1500px; font-size: 0.9rem; }
+
+    thead th {
+      text-align: left;
+      padding: 11px 10px;
+      background: #eef5ff;
+      color: #153a6a;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e5eefc;
+      vertical-align: top;
+      color: #17375f;
+      line-height: 1.42;
+    }
+
+    tbody tr:nth-child(even) { background: #fbfdff; }
+    tbody tr:hover { background: #f2f7ff; }
+    tbody tr.row-dirty { outline: 2px solid #f6bf5d; outline-offset: -2px; }
+    tbody tr.row-error { outline: 2px solid #ef9a9a; outline-offset: -2px; }
+
+    .cell-input,
+    .cell-select {
+      width: 100%;
+      border: 1px solid #cbdcf4;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font: inherit;
+      color: #17375f;
+      background: #fff;
+    }
+
+    .cell-input:focus,
+    .cell-select:focus {
+      outline: none;
+      border-color: #9fc1ef;
+      box-shadow: 0 0 0 3px rgba(0, 91, 187, 0.12);
+    }
+
+    .cell-id {
+      font-weight: 700;
+      color: #0b2d56;
+      white-space: nowrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid #c5d9f7;
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: #edf4ff;
+      color: #184173;
+      font-size: 0.76rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pill.pending { border-color: #f6d38f; background: #fff6e5; color: #7f5000; }
+    .pill.sending { border-color: #bad3f7; background: #edf4ff; color: #0f3f7a; }
+    .pill.error { border-color: #f3b4b0; background: #ffe9e8; color: #8f1f16; }
+    .pill.clean { border-color: #bde6cd; background: #effdf5; color: #0d5a3e; }
+
+    .empty { padding: 26px 16px; text-align: center; color: var(--muted); }
+
+    .debug-panel {
+      display: none;
+      background: #0d1f38;
+      border: 1px solid #223e63;
+      border-radius: var(--radius-lg);
+      color: #dcecff;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      min-height: 520px;
+    }
+
+    .debug-panel.visible { display: grid; grid-template-rows: auto 1fr; }
+
+    .debug-head {
+      padding: 12px 14px;
+      border-bottom: 1px solid #274976;
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: 0.01em;
+      color: #e7f2ff;
+      background: #102846;
+    }
+
+    .debug-body {
+      margin: 0;
+      padding: 12px 14px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: "IBM Plex Mono", "SFMono-Regular", ui-monospace, monospace;
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .floating-dirty {
+      position: fixed;
+      top: 10px;
+      right: 12px;
+      z-index: 30;
+      display: none;
+      border: 1px solid #f0c67a;
+      border-radius: 10px;
+      background: #fff8eb;
+      color: #7f5000;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 8px 10px;
+      box-shadow: 0 10px 28px rgba(96, 71, 10, 0.18);
+    }
+
+    .floating-dirty.visible { display: block; }
+
+    @media (max-width: 720px) {
+      body { padding: 12px 10px 20px; }
+      .header { padding: 16px 14px 12px; }
+      .main { padding: 14px; }
+      .floating-dirty { right: 8px; top: 8px; }
+    }
+
+    @media (max-width: 1100px) {
+      .layout.debug-active { grid-template-columns: minmax(0, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div id="floatingDirty" class="floating-dirty" aria-live="polite">Modifications non enregistrées</div>
+
+  <main class="app">
+    <div id="layout" class="layout">
+      <section class="panel">
+        <header class="header">
+          <a href="./index.html" aria-label="Retour à la page d'accueil">
+            <img src="https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png" alt="Logo MaPrimeRenov" class="logo" />
+          </a>
+          <div>
+            <h1>Table `renov_liens` - Edition CUD</h1>
+            <p>Chaque ligne peut être modifiée/supprimée avec synchronisation webhook asynchrone.</p>
+          </div>
+        </header>
+
+        <div class="main">
+          <div class="toolbar">
+            <div id="status" class="status" role="status" aria-live="polite">Chargement des données...</div>
+            <button id="newRowBtn" class="btn btn-primary" type="button">Nouvelle ligne</button>
+          </div>
+
+          <div class="table-wrap" aria-label="Conteneur table renov_liens">
+            <table aria-label="Table renov_liens">
+              <thead>
+                <tr>
+                  <th>Action</th>
+                  <th>id</th>
+                  <th>thematique</th>
+                  <th>sousthematique</th>
+                  <th>lien</th>
+                  <th>categorie</th>
+                  <th>note</th>
+                  <th>date_maj</th>
+                  <th>smart_scraping</th>
+                  <th>scraped_at</th>
+                  <th>Etat</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="table-body">
+                <tr><td class="empty" colspan="12">Chargement en cours...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <aside id="debugPanel" class="debug-panel" aria-live="polite">
+        <div class="debug-head">Mode debug sources CUD</div>
+        <pre id="debugOutput" class="debug-body">En attente d'initialisation...</pre>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const FALLBACK_ENDPOINTS = {
+      C: "http://15.236.66.128/n8n/webhook-test/d6c84709-eb6f-4b6a-a3fc-4afe8345815e",
+      R: "http://15.236.66.128/n8n/webhook-test/067485e2-0438-4ff8-bd43-c3b31835a0d9",
+      U: "http://15.236.66.128/n8n/webhook-test/8d598b6a-9384-4d75-b299-0af11bd852c8",
+      D: "http://15.236.66.128/n8n/webhook-test/9b0a4b1f-f1be-46c4-af5e-97148320cc19"
+    };
+
+    const EDITABLE_FIELDS = ["thematique", "sousthematique", "lien", "categorie", "note", "date_maj", "smart_scraping", "scraped_at"];
+    const MIN_DISPATCH_MS = 500;
+    const RETRY_MAX = 2;
+
+    const state = {
+      config: null,
+      debugMode: false,
+      endpoints: { ...FALLBACK_ENDPOINTS },
+      rows: [],
+      metaByKey: new Map(),
+      queueByKey: new Map(),
+      queueOrder: [],
+      inFlight: false,
+      lastDispatchAt: 0,
+      workerTimer: null,
+      sequence: 0,
+      activeRowFocus: null,
+      blockedNavigation: false
+    };
+
+    const dom = {
+      status: document.getElementById("status"),
+      tableBody: document.getElementById("table-body"),
+      layout: document.getElementById("layout"),
+      debugPanel: document.getElementById("debugPanel"),
+      debugOutput: document.getElementById("debugOutput"),
+      newRowBtn: document.getElementById("newRowBtn"),
+      floatingDirty: document.getElementById("floatingDirty")
+    };
+
+    init().catch((error) => {
+      setStatus("Configuration invalide. Vérifiez UI_chat/config.ini.", true);
+      setTableMessage("Impossible d'initialiser la page.");
+      debugWrite(`INIT ERROR\n${String(error)}`);
+    });
+
+    async function init() {
+      state.config = await loadConfig("./config.ini");
+      state.debugMode = isTruthy(state.config.DEBUG_MODE);
+      state.endpoints = {
+        C: state.config.SOURCES_WEBHOOK_C || FALLBACK_ENDPOINTS.C,
+        R: state.config.SOURCES_WEBHOOK_R || FALLBACK_ENDPOINTS.R,
+        U: state.config.SOURCES_WEBHOOK_U || FALLBACK_ENDPOINTS.U,
+        D: state.config.SOURCES_WEBHOOK_D || FALLBACK_ENDPOINTS.D
+      };
+
+      setDebugModeUi(state.debugMode);
+      debugWrite([
+        "Initialisation sources CUD",
+        `DEBUG_MODE=${String(state.config.DEBUG_MODE || "")}`,
+        `R=${state.endpoints.R}`,
+        `C=${state.endpoints.C}`,
+        `U=${state.endpoints.U}`,
+        `D=${state.endpoints.D}`,
+        ""
+      ].join("\n"));
+
+      dom.newRowBtn.addEventListener("click", onCreateRow);
+      dom.tableBody.addEventListener("input", onTableInput);
+      dom.tableBody.addEventListener("focusin", onTableFocusIn);
+      dom.tableBody.addEventListener("focusout", onTableFocusOut);
+      dom.tableBody.addEventListener("click", onTableClick);
+      window.addEventListener("beforeunload", onBeforeUnload);
+
+      await loadRows();
+      startQueueWorker();
+      refreshDirtyUi();
+    }
+
+    async function loadConfig(path) {
+      const response = await fetch(path, { cache: "no-store" });
+      if (!response.ok) throw new Error("CONFIG_NOT_FOUND");
+      return parseIni(await response.text());
+    }
+
+    function parseIni(content) {
+      const config = {};
+      const lines = content.split(/\r?\n/);
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith("#") || line.startsWith(";")) continue;
+        const separatorIndex = line.indexOf("=");
+        if (separatorIndex < 1) continue;
+        const key = line.slice(0, separatorIndex).trim();
+        const value = line.slice(separatorIndex + 1).trim();
+        if (key) config[key] = value;
+      }
+      return config;
+    }
+
+    function isTruthy(value) {
+      if (typeof value !== "string") return false;
+      return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+    }
+
+    function setDebugModeUi(enabled) {
+      dom.debugPanel.classList.toggle("visible", enabled);
+      dom.layout.classList.toggle("debug-active", enabled);
+    }
+
+    function debugWrite(text) {
+      if (!state.debugMode) return;
+      dom.debugOutput.textContent = text;
+    }
+
+    function debugAppend(text) {
+      if (!state.debugMode) return;
+      dom.debugOutput.textContent += text;
+    }
+
+    function setStatus(message, isError = false, isSuccess = false) {
+      dom.status.textContent = message;
+      dom.status.className = isError ? "status error" : isSuccess ? "status success" : "status";
+    }
+
+    function setTableMessage(message) {
+      dom.tableBody.innerHTML = `<tr><td class="empty" colspan="12">${escapeHtml(message)}</td></tr>`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function rowKeyFromData(row) {
+      if (row.id === null || row.id === undefined || row.id === "") {
+        state.sequence += 1;
+        return `tmp:${Date.now()}:${state.sequence}`;
+      }
+      return `id:${row.id}`;
+    }
+
+    function normalizeRow(raw, key, isNew = false) {
+      return {
+        rowKey: key,
+        id: raw.id ?? null,
+        thematique: raw.thematique ?? "",
+        sousthematique: raw.sousthematique ?? "",
+        lien: raw.lien ?? "",
+        categorie: raw.categorie ?? "",
+        note: raw.note ?? "",
+        date_maj: raw.date_maj ?? "",
+        smart_scraping: typeof raw.smart_scraping === "boolean" ? raw.smart_scraping : null,
+        scraped_at: raw.scraped_at ?? "",
+        __isNew: isNew
+      };
+    }
+
+    async function loadRows() {
+      setStatus("Chargement des données...");
+      try {
+        const response = await fetch(state.endpoints.R, { method: "GET", headers: { "Accept": "application/json" } });
+        debugAppend(`LOAD R HTTP ${response.status} ${response.statusText}\n`);
+        if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
+        const payload = await response.json();
+        debugAppend(`LOAD PAYLOAD\n${JSON.stringify(payload, null, 2)}\n\n`);
+        if (!Array.isArray(payload)) throw new Error("Le payload webhook R n'est pas un tableau JSON");
+
+        state.rows = payload.map((raw) => {
+          const key = rowKeyFromData(raw);
+          const row = normalizeRow(raw, key, false);
+          state.metaByKey.set(key, {
+            original: snapshotRow(row),
+            dirty: false,
+            isNew: false,
+            isSending: false,
+            hasError: false,
+            errorMessage: ""
+          });
+          return row;
+        });
+
+        renderTable();
+        setStatus(`${state.rows.length} ligne(s) chargée(s).`, false, true);
+      } catch (error) {
+        setTableMessage(`Impossible de charger les données: ${error.message}`);
+        setStatus(`Erreur de chargement: ${error.message}`, true);
+        debugAppend(`ERROR LOAD\n${String(error)}\n\n`);
+      }
+    }
+
+    function snapshotRow(row) {
+      return {
+        id: row.id,
+        thematique: row.thematique,
+        sousthematique: row.sousthematique,
+        lien: row.lien,
+        categorie: row.categorie,
+        note: row.note,
+        date_maj: row.date_maj,
+        smart_scraping: row.smart_scraping,
+        scraped_at: row.scraped_at
+      };
+    }
+
+    function renderTable() {
+      if (!state.rows.length) {
+        setTableMessage("Aucune donnée.");
+        return;
+      }
+
+      const html = state.rows.map((row) => renderRowHtml(row)).join("");
+      dom.tableBody.innerHTML = html;
+      refreshDirtyUi();
+    }
+
+    function renderRowHtml(row) {
+      const meta = state.metaByKey.get(row.rowKey);
+      const queueEntry = state.queueByKey.get(row.rowKey);
+      const isDirty = Boolean(meta && meta.dirty);
+      const isSending = Boolean(meta && meta.isSending);
+      const hasError = Boolean(meta && meta.hasError);
+      const modDisabled = isDirty ? "" : "disabled";
+      const rowClass = [isDirty ? "row-dirty" : "", hasError ? "row-error" : ""].filter(Boolean).join(" ");
+
+      return `
+        <tr data-row-key="${escapeHtml(row.rowKey)}" class="${rowClass}">
+          <td><button class="btn btn-ghost js-modify" type="button" ${modDisabled}>MODIFIER</button></td>
+          <td><span class="cell-id">${escapeHtml(row.id ?? "(nouveau)")}</span></td>
+          <td>${renderTextInput("thematique", row.thematique)}</td>
+          <td>${renderTextInput("sousthematique", row.sousthematique)}</td>
+          <td>${renderTextInput("lien", row.lien)}</td>
+          <td>${renderTextInput("categorie", row.categorie)}</td>
+          <td>${renderTextInput("note", row.note)}</td>
+          <td>${renderTextInput("date_maj", row.date_maj)}</td>
+          <td>${renderBooleanSelect("smart_scraping", row.smart_scraping)}</td>
+          <td>${renderTextInput("scraped_at", row.scraped_at)}</td>
+          <td class="js-row-state">${renderStatePill(meta, queueEntry, isSending)}</td>
+          <td><button class="btn btn-danger js-delete" type="button">SUPPRIMER</button></td>
+        </tr>
+      `;
+    }
+
+    function renderTextInput(field, value) {
+      return `<input class="cell-input" data-field="${field}" value="${escapeHtml(value)}" />`;
+    }
+
+    function renderBooleanSelect(field, value) {
+      const selectedNull = value === null ? "selected" : "";
+      const selectedTrue = value === true ? "selected" : "";
+      const selectedFalse = value === false ? "selected" : "";
+      return `
+        <select class="cell-select" data-field="${field}">
+          <option value="" ${selectedNull}>null</option>
+          <option value="true" ${selectedTrue}>true</option>
+          <option value="false" ${selectedFalse}>false</option>
+        </select>
+      `;
+    }
+
+    function renderStatePill(meta, queueEntry, isSending) {
+      if (meta && meta.hasError) {
+        return `<span class="pill error" title="${escapeHtml(meta.errorMessage || "Erreur")}">erreur</span>`;
+      }
+      if (isSending) {
+        return '<span class="pill sending">envoi...</span>';
+      }
+      if (queueEntry) {
+        return `<span class="pill pending">en attente ${escapeHtml(queueEntry.type)}</span>`;
+      }
+      if (meta && meta.dirty) {
+        return '<span class="pill pending">modifié</span>';
+      }
+      return '<span class="pill clean">ok</span>';
+    }
+
+    function onCreateRow() {
+      const key = rowKeyFromData({ id: null });
+      const row = normalizeRow({}, key, true);
+      state.rows.unshift(row);
+      state.metaByKey.set(key, {
+        original: snapshotRow(row),
+        dirty: false,
+        isNew: true,
+        isSending: false,
+        hasError: false,
+        errorMessage: ""
+      });
+      renderTable();
+      setStatus("Nouvelle ligne ajoutée. Renseignez les champs puis quittez la ligne.");
+      debugAppend(`CREATE UI row=${key}\n`);
+    }
+
+    function onTableInput(event) {
+      const target = event.target;
+      if (!target || !target.matches("[data-field]")) return;
+      const rowEl = target.closest("tr[data-row-key]");
+      if (!rowEl) return;
+
+      const rowKey = rowEl.dataset.rowKey;
+      const row = findRow(rowKey);
+      if (!row) return;
+
+      const field = target.dataset.field;
+      row[field] = parseFieldValue(field, target.value);
+      updateRowDirtyState(rowKey);
+      refreshRowUi(rowEl, rowKey);
+      refreshDirtyUi();
+    }
+
+    function parseFieldValue(field, value) {
+      if (field === "smart_scraping") {
+        if (value === "true") return true;
+        if (value === "false") return false;
+        return null;
+      }
+      if (field === "note") {
+        return value.trim() === "" ? "" : value;
+      }
+      return value;
+    }
+
+    function onTableFocusIn(event) {
+      const rowEl = event.target.closest("tr[data-row-key]");
+      if (!rowEl) return;
+      state.activeRowFocus = rowEl.dataset.rowKey;
+    }
+
+    function onTableFocusOut(event) {
+      const rowEl = event.target.closest("tr[data-row-key]");
+      if (!rowEl) return;
+
+      window.setTimeout(() => {
+        const active = document.activeElement;
+        if (active && rowEl.contains(active)) return;
+        const rowKey = rowEl.dataset.rowKey;
+        const meta = state.metaByKey.get(rowKey);
+        if (!meta || !meta.dirty) return;
+
+        const row = findRow(rowKey);
+        if (!row) return;
+
+        const actionType = meta.isNew ? "C" : "U";
+        enqueueCrud(rowKey, actionType, buildPayload(actionType, row));
+        debugAppend(`BLUR enqueue ${actionType} row=${rowKey}\n`);
+      }, 0);
+    }
+
+    function onTableClick(event) {
+      const button = event.target.closest("button");
+      if (!button) return;
+      const rowEl = button.closest("tr[data-row-key]");
+      if (!rowEl) return;
+      const rowKey = rowEl.dataset.rowKey;
+
+      if (button.classList.contains("js-modify")) {
+        onClickModify(rowKey);
+        return;
+      }
+
+      if (button.classList.contains("js-delete")) {
+        onClickDelete(rowKey);
+      }
+    }
+
+    function onClickModify(rowKey) {
+      const meta = state.metaByKey.get(rowKey);
+      const row = findRow(rowKey);
+      if (!meta || !row || !meta.dirty) return;
+
+      const actionType = meta.isNew ? "C" : "U";
+      enqueueCrud(rowKey, actionType, buildPayload(actionType, row), true);
+      debugAppend(`CLICK MODIFIER enqueue-priority ${actionType} row=${rowKey}\n`);
+      setStatus("Modification mise en file d'envoi.");
+    }
+
+    function onClickDelete(rowKey) {
+      const row = findRow(rowKey);
+      const meta = state.metaByKey.get(rowKey);
+      if (!row || !meta) return;
+
+      if (!window.confirm("Confirmer la suppression de cette ligne ?")) {
+        return;
+      }
+
+      if (meta.isNew && !row.id) {
+        removeRowLocal(rowKey);
+        debugAppend(`DELETE local-only row=${rowKey}\n`);
+        return;
+      }
+
+      enqueueCrud(rowKey, "D", buildPayload("D", row), true);
+      debugAppend(`CLICK SUPPRIMER enqueue D row=${rowKey}\n`);
+      setStatus("Suppression mise en file d'envoi.");
+    }
+
+    function findRow(rowKey) {
+      return state.rows.find((row) => row.rowKey === rowKey) || null;
+    }
+
+    function updateRowDirtyState(rowKey) {
+      const row = findRow(rowKey);
+      const meta = state.metaByKey.get(rowKey);
+      if (!row || !meta) return;
+
+      const current = snapshotRow(row);
+      const original = meta.original;
+      meta.dirty = !areRowsEqual(current, original);
+      if (meta.dirty) {
+        meta.hasError = false;
+        meta.errorMessage = "";
+      }
+    }
+
+    function areRowsEqual(a, b) {
+      return a.id === b.id
+        && a.thematique === b.thematique
+        && a.sousthematique === b.sousthematique
+        && a.lien === b.lien
+        && a.categorie === b.categorie
+        && String(a.note) === String(b.note)
+        && a.date_maj === b.date_maj
+        && a.smart_scraping === b.smart_scraping
+        && a.scraped_at === b.scraped_at;
+    }
+
+    function buildPayload(type, row) {
+      if (type === "D") {
+        return { id: row.id };
+      }
+
+      const payload = snapshotRow(row);
+      if (type === "C" && (payload.id === null || payload.id === "")) {
+        delete payload.id;
+      }
+      return payload;
+    }
+
+    function enqueueCrud(rowKey, type, payload, priority = false) {
+      const meta = state.metaByKey.get(rowKey);
+      if (!meta) return;
+
+      const existing = state.queueByKey.get(rowKey);
+
+      if (existing && existing.type === "C" && type === "D" && meta.isNew) {
+        // create followed by delete before dispatch: cancel both
+        state.queueByKey.delete(rowKey);
+        state.queueOrder = state.queueOrder.filter((key) => key !== rowKey);
+        removeRowLocal(rowKey);
+        debugAppend(`QUEUE cancel C+D row=${rowKey}\n`);
+        return;
+      }
+
+      if (type === "D") {
+        state.queueByKey.set(rowKey, { type, payload, retry: 0 });
+      } else if (existing && existing.type === "D") {
+        // keep delete as dominant action
+      } else {
+        state.queueByKey.set(rowKey, { type, payload, retry: existing ? existing.retry : 0 });
+      }
+
+      if (!state.queueOrder.includes(rowKey)) {
+        if (priority) {
+          state.queueOrder.unshift(rowKey);
+        } else {
+          state.queueOrder.push(rowKey);
+        }
+      } else if (priority) {
+        state.queueOrder = [rowKey, ...state.queueOrder.filter((key) => key !== rowKey)];
+      }
+
+      refreshRow(rowKey);
+      refreshDirtyUi();
+      debugAppend(`QUEUE ${type} row=${rowKey} size=${state.queueOrder.length}\n`);
+    }
+
+    function startQueueWorker() {
+      if (state.workerTimer) return;
+      state.workerTimer = window.setInterval(tickQueueWorker, 100);
+    }
+
+    async function tickQueueWorker() {
+      if (state.inFlight) return;
+      if (!state.queueOrder.length) return;
+      const now = Date.now();
+      if ((now - state.lastDispatchAt) < MIN_DISPATCH_MS) return;
+
+      const rowKey = state.queueOrder[0];
+      const entry = state.queueByKey.get(rowKey);
+      if (!entry) {
+        state.queueOrder.shift();
+        return;
+      }
+
+      const meta = state.metaByKey.get(rowKey);
+      if (!meta) {
+        state.queueByKey.delete(rowKey);
+        state.queueOrder.shift();
+        return;
+      }
+
+      state.inFlight = true;
+      state.lastDispatchAt = now;
+      meta.isSending = true;
+      meta.hasError = false;
+      meta.errorMessage = "";
+      refreshRow(rowKey);
+      refreshDirtyUi();
+
+      const endpoint = state.endpoints[entry.type];
+      debugAppend(`SEND ${entry.type} row=${rowKey}\n${JSON.stringify(entry.payload, null, 2)}\n`);
+
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/plain, */*"
+          },
+          body: JSON.stringify(entry.payload)
+        });
+
+        const text = await response.text();
+        debugAppend(`RESP ${entry.type} ${response.status} ${response.statusText}\n${text}\n\n`);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status} ${response.statusText}`);
+        }
+
+        onCrudSuccess(rowKey, entry, text);
+        setStatus(`Action ${entry.type} envoyée avec succès.`, false, true);
+      } catch (error) {
+        onCrudFailure(rowKey, entry, error);
+      } finally {
+        meta.isSending = false;
+        state.inFlight = false;
+        refreshRow(rowKey);
+        refreshDirtyUi();
+      }
+    }
+
+    function onCrudSuccess(rowKey, entry, responseText) {
+      const meta = state.metaByKey.get(rowKey);
+      const row = findRow(rowKey);
+      if (!meta) return;
+
+      state.queueByKey.delete(rowKey);
+      state.queueOrder = state.queueOrder.filter((key) => key !== rowKey);
+
+      if (entry.type === "D") {
+        removeRowLocal(rowKey);
+        return;
+      }
+
+      if (entry.type === "C" && row) {
+        const parsed = safeJsonParse(responseText);
+        if (parsed && typeof parsed === "object" && parsed.id !== undefined && parsed.id !== null && parsed.id !== "") {
+          row.id = parsed.id;
+          if (row.rowKey.startsWith("tmp:")) {
+            const newKey = `id:${row.id}`;
+            renameRowKey(row.rowKey, newKey);
+            rowKey = newKey;
+          }
+        }
+        meta.isNew = false;
+      }
+
+      if (row) {
+        meta.original = snapshotRow(row);
+        meta.dirty = false;
+      }
+
+      meta.hasError = false;
+      meta.errorMessage = "";
+      refreshRow(rowKey);
+    }
+
+    function onCrudFailure(rowKey, entry, error) {
+      const meta = state.metaByKey.get(rowKey);
+      if (!meta) return;
+
+      entry.retry += 1;
+      if (entry.retry > RETRY_MAX) {
+        state.queueByKey.delete(rowKey);
+        state.queueOrder = state.queueOrder.filter((key) => key !== rowKey);
+        meta.hasError = true;
+        meta.errorMessage = String(error.message || error);
+        setStatus(`Echec ${entry.type}: ${error.message || error}`, true);
+        debugAppend(`FAIL FINAL ${entry.type} row=${rowKey} ${String(error)}\n`);
+      } else {
+        state.queueByKey.set(rowKey, entry);
+        setStatus(`Retry ${entry.type} (${entry.retry}/${RETRY_MAX})...`, false);
+        debugAppend(`RETRY ${entry.type} row=${rowKey} #${entry.retry} ${String(error)}\n`);
+      }
+    }
+
+    function renameRowKey(oldKey, newKey) {
+      if (oldKey === newKey) return;
+
+      const row = findRow(oldKey);
+      if (!row) return;
+      row.rowKey = newKey;
+
+      const meta = state.metaByKey.get(oldKey);
+      if (meta) {
+        state.metaByKey.set(newKey, meta);
+        state.metaByKey.delete(oldKey);
+      }
+
+      const queue = state.queueByKey.get(oldKey);
+      if (queue) {
+        state.queueByKey.set(newKey, queue);
+        state.queueByKey.delete(oldKey);
+      }
+
+      state.queueOrder = state.queueOrder.map((key) => (key === oldKey ? newKey : key));
+    }
+
+    function removeRowLocal(rowKey) {
+      state.rows = state.rows.filter((row) => row.rowKey !== rowKey);
+      state.metaByKey.delete(rowKey);
+      state.queueByKey.delete(rowKey);
+      state.queueOrder = state.queueOrder.filter((key) => key !== rowKey);
+      renderTable();
+      refreshDirtyUi();
+    }
+
+    function refreshRow(rowKey) {
+      const row = findRow(rowKey);
+      if (!row) {
+        renderTable();
+        return;
+      }
+
+      const rowEl = dom.tableBody.querySelector(`tr[data-row-key="${cssEscape(rowKey)}"]`);
+      if (!rowEl) {
+        renderTable();
+        return;
+      }
+
+      rowEl.outerHTML = renderRowHtml(row);
+    }
+
+    function refreshRowUi(rowEl, rowKey) {
+      const meta = state.metaByKey.get(rowKey);
+      const queueEntry = state.queueByKey.get(rowKey);
+      if (!meta) return;
+
+      rowEl.classList.toggle("row-dirty", Boolean(meta.dirty));
+      rowEl.classList.toggle("row-error", Boolean(meta.hasError));
+
+      const modifyBtn = rowEl.querySelector(".js-modify");
+      if (modifyBtn) {
+        modifyBtn.disabled = !meta.dirty;
+      }
+
+      const stateCell = rowEl.querySelector(".js-row-state");
+      if (stateCell) {
+        stateCell.innerHTML = renderStatePill(meta, queueEntry, Boolean(meta.isSending));
+      }
+    }
+
+    function cssEscape(value) {
+      if (window.CSS && typeof window.CSS.escape === "function") {
+        return window.CSS.escape(value);
+      }
+      return value.replace(/(["\\])/g, "\\$1");
+    }
+
+    function refreshDirtyUi() {
+      const dirtyCount = Array.from(state.metaByKey.values()).filter((meta) => meta.dirty).length;
+      const queueCount = state.queueOrder.length;
+      const sendingCount = Array.from(state.metaByKey.values()).filter((meta) => meta.isSending).length;
+      const hasPendingWork = dirtyCount > 0 || queueCount > 0 || sendingCount > 0;
+
+      dom.floatingDirty.classList.toggle("visible", hasPendingWork);
+      if (hasPendingWork) {
+        dom.floatingDirty.textContent = `Modifs: ${dirtyCount} | Queue: ${queueCount} | Envoi: ${sendingCount}`;
+      }
+      state.blockedNavigation = hasPendingWork;
+    }
+
+    function onBeforeUnload(event) {
+      if (!state.blockedNavigation) return;
+      event.preventDefault();
+      event.returnValue = "";
+    }
+
+    function safeJsonParse(text) {
+      try { return JSON.parse(text); } catch { return null; }
+    }
+  </script>
+</body>
+</html>
