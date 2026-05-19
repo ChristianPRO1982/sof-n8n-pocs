@@ -619,7 +619,10 @@
     const PROCESSING_STEP_MAP = [
       { key: "message1", label: "Compréhension de la question" },
       { key: "message2", label: "Recherche dans la documentation" },
-      { key: "message3", label: "Rédaction de la réponse" }
+      { key: "message3", label: "Rédaction de la réponse" },
+      { key: "comprehension de la question", label: "Compréhension de la question" },
+      { key: "recherche dans la documentation", label: "Recherche dans la documentation" },
+      { key: "redaction de la reponse", label: "Rédaction de la réponse" }
     ];
 
     const state = {
@@ -1110,7 +1113,10 @@
       const normalized = normalizeProgressText(normalizeIncomingText(text)).trim();
       for (let i = 0; i < PROCESSING_STEP_MAP.length; i += 1) {
         if (normalized.includes(PROCESSING_STEP_MAP[i].key)) {
-          return { index: i, label: PROCESSING_STEP_MAP[i].label };
+          const label = PROCESSING_STEP_MAP[i].label;
+          const index = getProcessingStepLabels().indexOf(label);
+          if (index === -1) return null;
+          return { index, label };
         }
       }
       return null;
@@ -1128,19 +1134,32 @@
       setProcessingStepText(mapped.label);
     }
 
+    function updateProcessingFromMetadata(nodeName) {
+      if (typeof nodeName !== "string" || !nodeName.trim()) return;
+      updateProcessingFromStreamText(nodeName);
+    }
+
     function parseStreamEventLine(line) {
       const eventObj = safeJsonParse(line);
-      if (!eventObj || eventObj.type !== "item" || typeof eventObj.content !== "string") {
-        return null;
+      if (!eventObj || typeof eventObj !== "object") {
+        return { text: null, event: null };
+      }
+
+      if (eventObj.metadata && typeof eventObj.metadata.nodeName === "string") {
+        updateProcessingFromMetadata(eventObj.metadata.nodeName);
+      }
+
+      if (eventObj.type !== "item" || typeof eventObj.content !== "string") {
+        return { text: null, event: eventObj };
       }
 
       const contentObj = safeJsonParse(eventObj.content);
       if (contentObj && typeof contentObj.text === "string") {
-        return normalizeIncomingText(contentObj.text);
+        return { text: normalizeIncomingText(contentObj.text), event: eventObj };
       }
 
       // Some n8n stream items are plain text tokens, not JSON objects.
-      return normalizeIncomingText(eventObj.content);
+      return { text: normalizeIncomingText(eventObj.content), event: eventObj };
     }
 
     function consumeStreamBuffer(buffer, streamItems) {
@@ -1154,7 +1173,8 @@
         pending = pending.slice(newlineIndex + 1);
         if (!line) continue;
 
-        const streamText = parseStreamEventLine(line);
+        const parsed = parseStreamEventLine(line);
+        const streamText = parsed.text;
         if (!streamText) continue;
         streamItems.push(streamText);
         updateProcessingFromStreamText(streamText);
@@ -1195,7 +1215,8 @@
 
       const finalLine = lineBuffer.trim();
       if (finalLine) {
-        const streamText = parseStreamEventLine(finalLine);
+        const parsed = parseStreamEventLine(finalLine);
+        const streamText = parsed.text;
         if (streamText) {
           streamItems.push(streamText);
           updateProcessingFromStreamText(streamText);

@@ -469,7 +469,14 @@
   <script>
     const DEFAULT_TYPEWRITER_DELAY_MS = 4;
     const GENERIC_ERROR_MESSAGE = "Une erreur est survenue. Veuillez réessayer.";
-    const WAITING_PREFIX_REGEX = /^\s*\[WAITING\]\s*/i;
+    const PROCESSING_STEP_MAP = [
+      { key: "message1", label: "Compréhension de la question" },
+      { key: "message2", label: "Recherche dans la documentation" },
+      { key: "message3", label: "Rédaction de la réponse" },
+      { key: "comprehension de la question", label: "Compréhension de la question" },
+      { key: "recherche dans la documentation", label: "Recherche dans la documentation" },
+      { key: "redaction de la reponse", label: "Rédaction de la réponse" }
+    ];
 
     const state = {
       config: null,
@@ -478,6 +485,8 @@
       lastQuestion: "",
       hasActiveQuestion: false,
       processingStepIndex: -1,
+      lastStreamProcessingIndex: -1,
+      processingTimerId: null,
       debugMode: false,
       animationEnabled: true,
       typewriterDelayMs: DEFAULT_TYPEWRITER_DELAY_MS
@@ -667,16 +676,19 @@
     function showProcessing() {
       dom.processing.classList.add("visible");
       clearProcessingStep();
+      startProcessingTicker();
       dom.processing.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
     function hideProcessing() {
+      stopProcessingTicker();
       dom.processing.classList.remove("visible");
       clearProcessingStep();
     }
 
     function clearProcessingStep() {
       state.processingStepIndex = -1;
+      state.lastStreamProcessingIndex = -1;
       if (!dom.processingStepCurrent) return;
       dom.processingStepCurrent.textContent = "";
     }
@@ -686,17 +698,28 @@
       dom.processingStepCurrent.textContent = label;
     }
 
-    function extractWaitingText(text) {
-      if (typeof text !== "string") return null;
-      if (!WAITING_PREFIX_REGEX.test(text)) return null;
-      const raw = text.replace(WAITING_PREFIX_REGEX, "").trim();
-      if (!raw) return null;
-      const unwrapped = raw.replace(/^\*+|\*+$/g, "").trim();
-      return unwrapped || null;
+    function getProcessingStepLabels() {
+      return PROCESSING_STEP_MAP.slice(0, 3).map((step) => step.label);
     }
 
-    function isWaitingText(text) {
-      return extractWaitingText(text) !== null;
+    function showNextProcessingStep() {
+      const labels = getProcessingStepLabels();
+      if (!labels.length) return;
+      if (state.processingStepIndex >= labels.length - 1) return;
+      state.processingStepIndex += 1;
+      setProcessingStepText(labels[state.processingStepIndex]);
+    }
+
+    function startProcessingTicker() {
+      stopProcessingTicker();
+      showNextProcessingStep();
+      state.processingTimerId = null;
+    }
+
+    function stopProcessingTicker() {
+      if (state.processingTimerId === null) return;
+      window.clearInterval(state.processingTimerId);
+      state.processingTimerId = null;
     }
 
     function setStatus(message, isError = false) {
@@ -794,25 +817,63 @@
       dom.debugOutput.textContent += text;
     }
 
+    function normalizeProgressText(text) {
+      return text
+        .toLowerCase()
+        .replace(/\[waiting\]/g, " ")
+        .replace(/\*/g, " ")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function mapIncomingProcessingStep(text) {
+      const normalized = normalizeProgressText(normalizeIncomingText(text)).trim();
+      for (let i = 0; i < PROCESSING_STEP_MAP.length; i += 1) {
+        if (normalized.includes(PROCESSING_STEP_MAP[i].key)) {
+          const label = PROCESSING_STEP_MAP[i].label;
+          const index = getProcessingStepLabels().indexOf(label);
+          if (index === -1) return null;
+          return { index, label };
+        }
+      }
+      return null;
+    }
+
     function updateProcessingFromStreamText(text) {
-      const waitingText = extractWaitingText(text);
-      if (!waitingText) return;
-      if (dom.processingStepCurrent && dom.processingStepCurrent.textContent === waitingText) return;
-      setProcessingStepText(waitingText);
+      const mapped = mapIncomingProcessingStep(text);
+      if (!mapped) return;
+      if (mapped.index <= state.lastStreamProcessingIndex) return;
+      state.lastStreamProcessingIndex = mapped.index;
+      state.processingStepIndex = mapped.index;
+      stopProcessingTicker();
+      setProcessingStepText(mapped.label);
+    }
+
+    function updateProcessingFromMetadata(nodeName) {
+      if (typeof nodeName !== "string" || !nodeName.trim()) return;
+      updateProcessingFromStreamText(nodeName);
     }
 
     function parseStreamEventLine(line) {
       const eventObj = safeJsonParse(line);
-      if (!eventObj || eventObj.type !== "item" || typeof eventObj.content !== "string") {
-        return null;
+      if (!eventObj || typeof eventObj !== "object") {
+        return { text: null, event: null };
+      }
+
+      if (eventObj.metadata && typeof eventObj.metadata.nodeName === "string") {
+        updateProcessingFromMetadata(eventObj.metadata.nodeName);
+      }
+
+      if (eventObj.type !== "item" || typeof eventObj.content !== "string") {
+        return { text: null, event: eventObj };
       }
 
       const contentObj = safeJsonParse(eventObj.content);
-      if (!contentObj || typeof contentObj.text !== "string") {
-        return null;
+      if (contentObj && typeof contentObj.text === "string") {
+        return { text: normalizeIncomingText(contentObj.text), event: eventObj };
       }
 
-      return normalizeIncomingText(contentObj.text);
+      return { text: normalizeIncomingText(eventObj.content), event: eventObj };
     }
 
     function consumeStreamBuffer(buffer, streamItems) {
@@ -826,12 +887,11 @@
         pending = pending.slice(newlineIndex + 1);
         if (!line) continue;
 
-        const streamText = parseStreamEventLine(line);
+        const parsed = parseStreamEventLine(line);
+        const streamText = parsed.text;
         if (!streamText) continue;
+        streamItems.push(streamText);
         updateProcessingFromStreamText(streamText);
-        if (!isWaitingText(streamText)) {
-          streamItems.push(streamText);
-        }
       }
 
       return pending;
@@ -869,12 +929,11 @@
 
       const finalLine = lineBuffer.trim();
       if (finalLine) {
-        const streamText = parseStreamEventLine(finalLine);
+        const parsed = parseStreamEventLine(finalLine);
+        const streamText = parsed.text;
         if (streamText) {
+          streamItems.push(streamText);
           updateProcessingFromStreamText(streamText);
-          if (!isWaitingText(streamText)) {
-            streamItems.push(streamText);
-          }
         }
       }
 
