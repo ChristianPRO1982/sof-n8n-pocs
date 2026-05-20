@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CRUD Sous-thématiques - Sofinco</title>
+  <title>CRUD Thématiques - Sofinco</title>
   <style>
     :root {
       --bg-1: #f6f9ff;
@@ -35,7 +35,7 @@
     }
 
     .app {
-      max-width: 1300px;
+      max-width: 1200px;
       margin: 0 auto;
       display: grid;
       gap: 16px;
@@ -112,7 +112,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 760px;
+      min-width: 540px;
     }
 
     th, td {
@@ -134,8 +134,7 @@
       white-space: nowrap;
     }
 
-    .cell-input,
-    .cell-select {
+    .cell-input {
       width: 100%;
       border: 1px solid #cbdcf4;
       border-radius: 8px;
@@ -180,7 +179,7 @@
   <main class="app">
     <section class="panel">
       <header class="header">
-        <a href="./index.html" aria-label="Retour à la page d'accueil">
+        <a href="../index.html" aria-label="Retour à la page d'accueil">
           <img
             src="https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png"
             alt="Logo MaPrimeRenov"
@@ -188,8 +187,8 @@
           />
         </a>
         <div>
-          <h1>Gestion des sous-thématiques</h1>
-          <p>CRUD simple sur la table <code>renov_sousthematique</code>.</p>
+          <h1>Gestion des thématiques</h1>
+          <p>CRUD simple sur la table <code>renov_thematique</code>.</p>
         </div>
       </header>
 
@@ -201,17 +200,16 @@
           </div>
 
           <div class="table-wrap">
-            <table aria-label="Table des sous-thématiques">
+            <table aria-label="Table des thématiques">
               <thead>
                 <tr>
                   <th>id</th>
-                  <th>Thématique parent</th>
-                  <th>Libellé sous-thématique</th>
+                  <th>Libellé</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody id="tableBody">
-                <tr><td colspan="4">Chargement...</td></tr>
+                <tr><td colspan="3">Chargement...</td></tr>
               </tbody>
             </table>
           </div>
@@ -225,8 +223,7 @@
   </main>
 
   <script>
-    const TABLE_NAME = "renov_sousthematique";
-    const PARENT_TABLE = "renov_thematique";
+    const TABLE_NAME = "renov_thematique";
     const FALLBACK_ENDPOINTS = {
       C: "http://15.236.66.128/n8n/webhook-test/51b0418f-a18b-419d-814d-b0d6a6d8ba8d",
       R: "http://15.236.66.128/n8n/webhook-test/e99e3774-1dfb-49a6-aeb8-348046a412a2",
@@ -237,8 +234,7 @@
     const state = {
       config: null,
       endpoints: { ...FALLBACK_ENDPOINTS },
-      rows: [],
-      thematiques: []
+      rows: []
     };
 
     const dom = {
@@ -252,7 +248,7 @@
     });
 
     async function init() {
-      state.config = await loadConfig("./config.ini");
+      state.config = await loadConfig("../config.ini");
       state.endpoints = {
         C: state.config.TAGS_WEBHOOK_C || FALLBACK_ENDPOINTS.C,
         R: state.config.TAGS_WEBHOOK_R || FALLBACK_ENDPOINTS.R,
@@ -263,7 +259,6 @@
       dom.form.addEventListener("submit", onSubmitSave);
       dom.tableBody.addEventListener("click", onTableClick);
 
-      await loadThematiques();
       await loadRows();
     }
 
@@ -290,9 +285,9 @@
       dom.status.className = isError ? "status error" : isSuccess ? "status success" : "status";
     }
 
-    async function apiCall(action, table, data) {
+    async function apiCall(action, data) {
       const endpoint = state.endpoints[action];
-      const payload = { action, table, data };
+      const payload = { action, table: TABLE_NAME, data };
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -317,6 +312,15 @@
       return parsed;
     }
 
+    async function loadRows() {
+      setStatus("Chargement des thématiques...");
+      const payload = await apiCall("R", {});
+      const rows = normalizeReadPayload(payload);
+      state.rows = rows.map((row) => ({ id: row.id, libelle: row.libelle || "" }));
+      renderTable();
+      setStatus(`${state.rows.length} thématique(s) chargée(s).`, false, true);
+    }
+
     function normalizeReadPayload(payload) {
       if (Array.isArray(payload)) return payload;
       if (payload && Array.isArray(payload.data)) return payload.data;
@@ -324,46 +328,11 @@
       return [];
     }
 
-    async function loadThematiques() {
-      const payload = await apiCall("R", PARENT_TABLE, {});
-      const rows = normalizeReadPayload(payload);
-      state.thematiques = rows
-        .map((row) => ({ id: Number(row.id), libelle: String(row.libelle || "") }))
-        .filter((row) => Number.isFinite(row.id));
-    }
-
-    async function loadRows() {
-      setStatus("Chargement des sous-thématiques...");
-      const payload = await apiCall("R", TABLE_NAME, {});
-      const rows = normalizeReadPayload(payload);
-      state.rows = rows.map((row) => ({
-        id: Number(row.id),
-        st_id: row.st_id === null || row.st_id === undefined || row.st_id === "" ? null : Number(row.st_id),
-        libelle: row.libelle || ""
-      }));
-      renderTable();
-      setStatus(`${state.rows.length} sous-thématique(s) chargée(s).`, false, true);
-    }
-
-    function renderThematiqueOptions(selectedId) {
-      const opts = ['<option value="">Choisir...</option>'];
-      for (const row of state.thematiques) {
-        const selected = Number(selectedId) === Number(row.id) ? "selected" : "";
-        opts.push(`<option value="${escapeHtml(row.id)}" ${selected}>${escapeHtml(row.libelle)}</option>`);
-      }
-      return opts.join("");
-    }
-
     function renderTable() {
       const lines = state.rows.map((row) => {
         return `
           <tr data-kind="existing" data-id="${escapeHtml(row.id)}">
             <td><span class="cell-id">${escapeHtml(row.id)}</span></td>
-            <td>
-              <select class="cell-select" name="st_id">
-                ${renderThematiqueOptions(row.st_id)}
-              </select>
-            </td>
             <td><input class="cell-input" name="libelle" value="${escapeHtml(row.libelle)}" /></td>
             <td><button type="button" class="btn btn-danger js-delete">Supprimer</button></td>
           </tr>
@@ -373,11 +342,6 @@
       lines.push(`
         <tr data-kind="create">
           <td><span class="cell-id">(nouveau)</span></td>
-          <td>
-            <select class="cell-select" name="st_id">
-              ${renderThematiqueOptions(null)}
-            </select>
-          </td>
           <td><input class="cell-input" name="libelle" value="" placeholder="Nouveau libellé" /></td>
           <td></td>
         </tr>
@@ -399,18 +363,15 @@
       const rows = [];
       dom.tableBody.querySelectorAll("tr[data-kind]").forEach((tr) => {
         const kind = tr.dataset.kind;
-        const libelleInput = tr.querySelector('input[name="libelle"]');
-        const stSelect = tr.querySelector('select[name="st_id"]');
-
-        const libelle = libelleInput ? libelleInput.value.trim() : "";
-        const st_id = stSelect && stSelect.value !== "" ? Number(stSelect.value) : null;
+        const input = tr.querySelector('input[name="libelle"]');
+        const libelle = input ? input.value.trim() : "";
 
         if (kind === "existing") {
-          rows.push({ kind, id: Number(tr.dataset.id), st_id, libelle });
+          rows.push({ kind, id: Number(tr.dataset.id), libelle });
           return;
         }
 
-        rows.push({ kind, st_id, libelle });
+        rows.push({ kind, libelle });
       });
       return rows;
     }
@@ -422,17 +383,16 @@
 
       formRows.forEach((row) => {
         if (row.kind === "create") {
-          if (row.libelle && Number.isFinite(row.st_id)) {
-            creates.push({ st_id: row.st_id, libelle: row.libelle });
+          if (row.libelle) {
+            creates.push({ libelle: row.libelle });
           }
           return;
         }
 
         const original = originalMap.get(Number(row.id));
         if (!original) return;
-
-        if (original.libelle !== row.libelle || Number(original.st_id) !== Number(row.st_id)) {
-          updates.push({ id: row.id, st_id: row.st_id, libelle: row.libelle });
+        if (original.libelle !== row.libelle) {
+          updates.push({ id: row.id, libelle: row.libelle });
         }
       });
 
@@ -448,11 +408,11 @@
       }
 
       for (const payload of creates) {
-        await apiCall("C", TABLE_NAME, payload);
+        await apiCall("C", payload);
       }
 
       for (const payload of updates) {
-        await apiCall("U", TABLE_NAME, payload);
+        await apiCall("U", payload);
       }
 
       return {
@@ -471,7 +431,6 @@
           setStatus("Aucune modification à enregistrer.");
           return;
         }
-        await loadThematiques();
         await loadRows();
         setStatus(`Enregistré: ${result.createCount} création(s), ${result.updateCount} mise(s) à jour.`, false, true);
       } catch (error) {
@@ -497,9 +456,8 @@
         await persistAllChanges();
 
         setStatus("Suppression en cours...");
-        await apiCall("D", TABLE_NAME, { id: rowId });
+        await apiCall("D", { id: rowId });
 
-        await loadThematiques();
         await loadRows();
         setStatus("Suppression effectuée.", false, true);
       } catch (error) {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CRUD Thématiques - Sofinco</title>
+  <title>CRUD Catégories - Sofinco</title>
   <style>
     :root {
       --bg-1: #f6f9ff;
@@ -179,7 +179,7 @@
   <main class="app">
     <section class="panel">
       <header class="header">
-        <a href="./index.html" aria-label="Retour à la page d'accueil">
+        <a href="../index.html" aria-label="Retour à la page d'accueil">
           <img
             src="https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png"
             alt="Logo MaPrimeRenov"
@@ -187,8 +187,8 @@
           />
         </a>
         <div>
-          <h1>Gestion des thématiques</h1>
-          <p>CRUD simple sur la table <code>renov_thematique</code>.</p>
+          <h1>Gestion des catégories</h1>
+          <p>CRUD simple sur la table <code>renov_categorie</code>.</p>
         </div>
       </header>
 
@@ -200,7 +200,7 @@
           </div>
 
           <div class="table-wrap">
-            <table aria-label="Table des thématiques">
+            <table aria-label="Table des catégories">
               <thead>
                 <tr>
                   <th>id</th>
@@ -223,7 +223,7 @@
   </main>
 
   <script>
-    const TABLE_NAME = "renov_thematique";
+    const TABLE_NAME = "renov_categorie";
     const FALLBACK_ENDPOINTS = {
       C: "http://15.236.66.128/n8n/webhook-test/51b0418f-a18b-419d-814d-b0d6a6d8ba8d",
       R: "http://15.236.66.128/n8n/webhook-test/e99e3774-1dfb-49a6-aeb8-348046a412a2",
@@ -248,7 +248,7 @@
     });
 
     async function init() {
-      state.config = await loadConfig("./config.ini");
+      state.config = await loadConfig("../config.ini");
       state.endpoints = {
         C: state.config.TAGS_WEBHOOK_C || FALLBACK_ENDPOINTS.C,
         R: state.config.TAGS_WEBHOOK_R || FALLBACK_ENDPOINTS.R,
@@ -313,12 +313,12 @@
     }
 
     async function loadRows() {
-      setStatus("Chargement des thématiques...");
+      setStatus("Chargement des catégories...");
       const payload = await apiCall("R", {});
       const rows = normalizeReadPayload(payload);
       state.rows = rows.map((row) => ({ id: row.id, libelle: row.libelle || "" }));
       renderTable();
-      setStatus(`${state.rows.length} thématique(s) chargée(s).`, false, true);
+      setStatus(`${state.rows.length} catégorie(s) chargée(s).`, false, true);
     }
 
     function normalizeReadPayload(payload) {

@@ -255,7 +255,7 @@
     <div id="layout" class="layout">
       <section class="panel">
         <header class="header">
-          <a href="./index.html" aria-label="Retour à la page d'accueil">
+          <a href="../index.html" aria-label="Retour à la page d'accueil">
             <img src="https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png" alt="Logo MaPrimeRenov" class="logo" />
           </a>
           <div>
@@ -348,7 +348,7 @@
     });
 
     async function init() {
-      state.config = await loadConfig("./config.ini");
+      state.config = await loadConfig("../config.ini");
       state.debugMode = isTruthy(state.config.DEBUG_MODE);
       state.endpoints = {
         C: state.config.SOURCES_WEBHOOK_C || FALLBACK_ENDPOINTS.C,
