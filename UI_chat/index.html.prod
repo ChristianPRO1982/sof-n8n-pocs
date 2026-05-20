@@ -236,7 +236,7 @@
           <a class="btn btn-primary" href="sources/thematiques.html">THÉMATIQUES</a>
           <a class="btn btn-primary" href="sources/sousthematiques.html">SOUS-THÉMATIQUES</a>
           <a class="btn btn-primary" href="sources/categories.html">CATÉGORIES</a>
-          <br>
+          <hr>
           <a class="btn btn-primary" href="chats/chat3.html">Ouvrir Chat 3</a>
         </div>
       </article>
@@ -244,7 +244,7 @@
       <article class="card">
         <span class="badge">Moteur RAG N8N Vx</span>
         <h2>🚧 En construction 🚧</h2>
-        <p>Futur développement.<br>🛠️ 👷 🔨 ⚙️ 🏗️ 🚀</p>
+        <p>Futur développement.<br>🛠️👷 🔨 ⚙️ 🏗️ 🚀</p>
         <div class="actions">
           <span class="btn btn-secondary">⏳ Comming soon...</span>
         </div>

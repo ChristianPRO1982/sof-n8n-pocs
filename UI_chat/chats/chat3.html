@@ -513,7 +513,7 @@
     });
 
     async function init() {
-      state.config = await loadConfig("../config.ini");
+      state.config = await loadConfigFromKnownPaths();
       if (!isValidWebhookUrl(state.config.WEBHOOK_URL)) {
         throw new Error("Invalid WEBHOOK_URL");
       }
@@ -612,7 +612,11 @@
         }
       } catch (error) {
         hideProcessing();
-        setStatus(GENERIC_ERROR_MESSAGE, true);
+        if (error instanceof TypeError) {
+          setStatus("Erreur reseau vers n8n. Verifiez WEBHOOK_URL, CORS et protocole HTTP/HTTPS.", true);
+        } else {
+          setStatus(GENERIC_ERROR_MESSAGE, true);
+        }
         debugWrite(`ERROR\n${String(error)}`);
         showButton(dom.retryBtn);
         showButton(dom.resetBtn);
@@ -747,6 +751,21 @@
         return window.crypto.randomUUID();
       }
       return `session-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+    }
+
+    async function loadConfigFromKnownPaths() {
+      const candidates = ["../config.ini", "./config.ini", "config.ini", "/UI_chat/config.ini"];
+      let lastError = null;
+
+      for (const path of candidates) {
+        try {
+          return await loadConfig(path);
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError || new Error("CONFIG_NOT_FOUND");
     }
 
     async function loadConfig(path) {
