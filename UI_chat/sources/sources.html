@@ -192,8 +192,9 @@
 
     .action-stack {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       gap: 6px;
+      align-items: center;
     }
 
     .empty { padding: 26px 16px; text-align: center; color: var(--muted); }
@@ -471,7 +472,7 @@
         lien: raw.lien ?? "",
         note: raw.note ?? "",
         date_maj: normalizeDateOnly(raw.date_maj),
-        smart_scraping: typeof raw.smart_scraping === "boolean" ? raw.smart_scraping : null,
+        smart_scraping: typeof raw.smart_scraping === "boolean" ? raw.smart_scraping : false,
         updated_at: formatTimestampToMinute(raw.updated_at),
         scraped_at: formatTimestampToMinute(raw.scraped_at),
         __isNew: isNew
@@ -593,12 +594,10 @@
     }
 
     function renderBooleanSelect(field, value) {
-      const selectedNull = value === null ? "selected" : "";
       const selectedTrue = value === true ? "selected" : "";
       const selectedFalse = value === false ? "selected" : "";
       return `
         <select class="cell-select" data-field="${field}">
-          <option value="" ${selectedNull}>null</option>
           <option value="true" ${selectedTrue}>true</option>
           <option value="false" ${selectedFalse}>false</option>
         </select>
@@ -642,8 +641,7 @@
     function parseFieldValue(field, value) {
       if (field === "smart_scraping") {
         if (value === "true") return true;
-        if (value === "false") return false;
-        return null;
+        return false;
       }
       if (field === "note") {
         return value.trim() === "" ? "" : value.trim();
@@ -809,6 +807,13 @@
       return null;
     }
 
+    function validateRowIdentityForAction(actionType, row) {
+      if ((actionType === "U" || actionType === "D") && (row.id === null || row.id === undefined || row.id === "")) {
+        return `${actionType} impossible: id manquant sur la ligne.`;
+      }
+      return null;
+    }
+
     function markRowValidationError(rowKey, message, rowEl = null) {
       const meta = state.metaByKey.get(rowKey);
       if (!meta) return;
@@ -822,7 +827,15 @@
 
     function enqueueCrud(rowKey, type, payload, priority = false) {
       const meta = state.metaByKey.get(rowKey);
+      const row = findRow(rowKey);
       if (!meta) return;
+      if (!row) return;
+
+      const identityError = validateRowIdentityForAction(type, row);
+      if (identityError) {
+        markRowValidationError(rowKey, identityError);
+        return;
+      }
 
       const existing = state.queueByKey.get(rowKey);
 
@@ -939,15 +952,23 @@
       if (entry.type === "C" && row) {
         const parsed = safeJsonParse(responseText);
         const created = Array.isArray(parsed) ? parsed[0] : parsed;
+        let hasCreatedId = false;
         if (created && typeof created === "object" && created.id !== undefined && created.id !== null && created.id !== "") {
           row.id = created.id;
+          hasCreatedId = true;
           if (row.rowKey.startsWith("tmp:")) {
             const newKey = `id:${row.id}`;
             renameRowKey(row.rowKey, newKey);
             rowKey = newKey;
           }
         }
-        meta.isNew = false;
+        if (hasCreatedId) {
+          meta.isNew = false;
+        } else {
+          meta.hasError = true;
+          meta.errorMessage = "CREATE OK mais aucun id retourné par le webhook.";
+          setStatus("CREATE réussi mais id manquant dans la réponse webhook.", true);
+        }
       }
 
       if (row) {
