@@ -106,6 +106,18 @@
       border: 1px solid #d7e2f1;
     }
 
+    .btn-modify {
+      background: linear-gradient(180deg, #0b66cf 0%, var(--primary) 100%);
+      color: #fff;
+      box-shadow: 0 8px 16px rgba(0, 91, 187, 0.22);
+    }
+
+    .btn-add {
+      background: linear-gradient(180deg, #10a36e 0%, #047857 100%);
+      color: #fff;
+      box-shadow: 0 8px 16px rgba(4, 120, 87, 0.24);
+    }
+
     .table-wrap {
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
@@ -113,7 +125,7 @@
       overflow: auto;
     }
 
-    table { width: 100%; border-collapse: collapse; min-width: 1500px; font-size: 0.9rem; }
+    table { width: 100%; border-collapse: collapse; min-width: 1300px; font-size: 0.9rem; }
 
     thead th {
       text-align: left;
@@ -164,23 +176,25 @@
       white-space: nowrap;
     }
 
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      border: 1px solid #c5d9f7;
-      border-radius: 999px;
-      padding: 2px 8px;
-      background: #edf4ff;
-      color: #184173;
-      font-size: 0.76rem;
-      font-weight: 700;
-      white-space: nowrap;
+    .cell-readonly {
+      display: inline-block;
+      width: 100%;
+      border: 1px solid #d8e4f5;
+      border-radius: 8px;
+      padding: 6px 8px;
+      background: #f4f8ff;
+      color: #4f6585;
+      min-height: 34px;
     }
 
-    .pill.pending { border-color: #f6d38f; background: #fff6e5; color: #7f5000; }
-    .pill.sending { border-color: #bad3f7; background: #edf4ff; color: #0f3f7a; }
-    .pill.error { border-color: #f3b4b0; background: #ffe9e8; color: #8f1f16; }
-    .pill.clean { border-color: #bde6cd; background: #effdf5; color: #0d5a3e; }
+    .col-action { width: 140px; }
+    .col-note { width: 80px; }
+
+    .action-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
 
     .empty { padding: 26px 16px; text-align: center; color: var(--muted); }
 
@@ -192,7 +206,7 @@
       color: #dcecff;
       box-shadow: var(--shadow);
       overflow: hidden;
-      min-height: 520px;
+      height: 90vh;
     }
 
     .debug-panel.visible { display: grid; grid-template-rows: auto 1fr; }
@@ -274,20 +288,18 @@
             <table aria-label="Table renov_lien">
               <thead>
                 <tr>
-                  <th>Action</th>
+                  <th class="col-action">Action</th>
                   <th>id</th>
                   <th>lien</th>
-                  <th>note</th>
+                  <th class="col-note">note</th>
                   <th>date_maj</th>
                   <th>smart_scraping</th>
                   <th>updated_at</th>
                   <th>scraped_at</th>
-                  <th>Etat</th>
-                  <th>Action</th>
                 </tr>
               </thead>
               <tbody id="table-body">
-                <tr><td class="empty" colspan="10">Chargement en cours...</td></tr>
+                <tr><td class="empty" colspan="8">Chargement en cours...</td></tr>
               </tbody>
             </table>
           </div>
@@ -309,7 +321,6 @@
       D: "http://15.236.66.128/n8n/webhook-test/9b0a4b1f-f1be-46c4-af5e-97148320cc19"
     };
 
-    const EDITABLE_FIELDS = ["lien", "note", "date_maj", "smart_scraping", "updated_at", "scraped_at"];
     const MIN_DISPATCH_MS = 500;
     const RETRY_MAX = 2;
 
@@ -412,11 +423,19 @@
     function debugWrite(text) {
       if (!state.debugMode) return;
       dom.debugOutput.textContent = text;
+      forceDebugScrollToEnd();
     }
 
     function debugAppend(text) {
       if (!state.debugMode) return;
       dom.debugOutput.textContent += text;
+      forceDebugScrollToEnd();
+    }
+
+    function forceDebugScrollToEnd() {
+      window.requestAnimationFrame(() => {
+        dom.debugOutput.scrollTop = dom.debugOutput.scrollHeight;
+      });
     }
 
     function setStatus(message, isError = false, isSuccess = false) {
@@ -425,7 +444,7 @@
     }
 
     function setTableMessage(message) {
-      dom.tableBody.innerHTML = `<tr><td class="empty" colspan="10">${escapeHtml(message)}</td></tr>`;
+      dom.tableBody.innerHTML = `<tr><td class="empty" colspan="8">${escapeHtml(message)}</td></tr>`;
     }
 
     function escapeHtml(value) {
@@ -453,8 +472,8 @@
         note: raw.note ?? "",
         date_maj: normalizeDateOnly(raw.date_maj),
         smart_scraping: typeof raw.smart_scraping === "boolean" ? raw.smart_scraping : null,
-        updated_at: normalizeTimestamp(raw.updated_at),
-        scraped_at: raw.scraped_at ?? "",
+        updated_at: formatTimestampToMinute(raw.updated_at),
+        scraped_at: formatTimestampToMinute(raw.scraped_at),
         __isNew: isNew
       };
     }
@@ -467,9 +486,13 @@
       return match ? match[1] : trimmed;
     }
 
-    function normalizeTimestamp(value) {
+    function formatTimestampToMinute(value) {
       if (value === null || value === undefined) return "";
-      return String(value);
+      const text = String(value).trim();
+      if (!text) return "";
+      const match = /^(\d{4}-\d{2}-\d{2})[T\s](\d{2}:\d{2})/.exec(text);
+      if (match) return `${match[1]} ${match[2]}`;
+      return text;
     }
 
     async function loadRows() {
@@ -530,31 +553,43 @@
 
     function renderRowHtml(row) {
       const meta = state.metaByKey.get(row.rowKey);
-      const queueEntry = state.queueByKey.get(row.rowKey);
       const isDirty = Boolean(meta && meta.dirty);
-      const isSending = Boolean(meta && meta.isSending);
       const hasError = Boolean(meta && meta.hasError);
+      const isCreateRow = Boolean(meta && meta.isNew);
       const modDisabled = isDirty ? "" : "disabled";
       const rowClass = [isDirty ? "row-dirty" : "", hasError ? "row-error" : ""].filter(Boolean).join(" ");
+      const actionLabel = isCreateRow ? "AJOUTER" : "MODIFIER";
+      const actionClass = isCreateRow ? "btn-add" : "btn-modify";
 
       return `
         <tr data-row-key="${escapeHtml(row.rowKey)}" class="${rowClass}">
-          <td><button class="btn btn-ghost js-modify" type="button" ${modDisabled}>MODIFIER</button></td>
+          <td class="col-action">
+            <div class="action-stack">
+              <button class="btn ${actionClass} js-modify" type="button" ${modDisabled}>${actionLabel}</button>
+              <button class="btn btn-danger js-delete" type="button">SUPPRIMER</button>
+            </div>
+          </td>
           <td><span class="cell-id">${escapeHtml(row.id ?? "(nouveau)")}</span></td>
           <td>${renderTextInput("lien", row.lien)}</td>
-          <td>${renderTextInput("note", row.note)}</td>
-          <td>${renderTextInput("date_maj", row.date_maj)}</td>
+          <td class="col-note">${renderNoteInput(row.note)}</td>
+          <td>${renderDateInput("date_maj", row.date_maj)}</td>
           <td>${renderBooleanSelect("smart_scraping", row.smart_scraping)}</td>
-          <td>${renderTextInput("updated_at", row.updated_at)}</td>
-          <td>${renderTextInput("scraped_at", row.scraped_at)}</td>
-          <td class="js-row-state">${renderStatePill(meta, queueEntry, isSending)}</td>
-          <td><button class="btn btn-danger js-delete" type="button">SUPPRIMER</button></td>
+          <td><span class="cell-readonly">${escapeHtml(row.updated_at || "")}</span></td>
+          <td><span class="cell-readonly">${escapeHtml(row.scraped_at || "")}</span></td>
         </tr>
       `;
     }
 
     function renderTextInput(field, value) {
       return `<input class="cell-input" data-field="${field}" value="${escapeHtml(value)}" />`;
+    }
+
+    function renderNoteInput(value) {
+      return `<input class="cell-input" data-field="note" type="number" min="0" max="10" step="1" inputmode="numeric" value="${escapeHtml(value)}" />`;
+    }
+
+    function renderDateInput(field, value) {
+      return `<input class="cell-input" data-field="${field}" type="date" value="${escapeHtml(value)}" />`;
     }
 
     function renderBooleanSelect(field, value) {
@@ -568,22 +603,6 @@
           <option value="false" ${selectedFalse}>false</option>
         </select>
       `;
-    }
-
-    function renderStatePill(meta, queueEntry, isSending) {
-      if (meta && meta.hasError) {
-        return `<span class="pill error" title="${escapeHtml(meta.errorMessage || "Erreur")}">erreur</span>`;
-      }
-      if (isSending) {
-        return '<span class="pill sending">envoi...</span>';
-      }
-      if (queueEntry) {
-        return `<span class="pill pending">en attente ${escapeHtml(queueEntry.type)}</span>`;
-      }
-      if (meta && meta.dirty) {
-        return '<span class="pill pending">modifié</span>';
-      }
-      return '<span class="pill clean">ok</span>';
     }
 
     function onCreateRow() {
@@ -627,7 +646,10 @@
         return null;
       }
       if (field === "note") {
-        return value.trim() === "" ? "" : value;
+        return value.trim() === "" ? "" : value.trim();
+      }
+      if (field === "date_maj") {
+        return normalizeDateOnly(value);
       }
       return value;
     }
@@ -651,6 +673,12 @@
 
         const row = findRow(rowKey);
         if (!row) return;
+
+        const validationError = validateRowForCrud(row);
+        if (validationError) {
+          markRowValidationError(rowKey, validationError, rowEl);
+          return;
+        }
 
         const actionType = meta.isNew ? "C" : "U";
         enqueueCrud(rowKey, actionType, buildPayload(actionType, row));
@@ -679,6 +707,13 @@
       const meta = state.metaByKey.get(rowKey);
       const row = findRow(rowKey);
       if (!meta || !row || !meta.dirty) return;
+
+      const rowEl = dom.tableBody.querySelector(`tr[data-row-key="${cssEscape(rowKey)}"]`);
+      const validationError = validateRowForCrud(row);
+      if (validationError) {
+        markRowValidationError(rowKey, validationError, rowEl);
+        return;
+      }
 
       const actionType = meta.isNew ? "C" : "U";
       enqueueCrud(rowKey, actionType, buildPayload(actionType, row), true);
@@ -739,11 +774,50 @@
         return { id: row.id };
       }
 
-      const payload = snapshotRow(row);
+      const payload = {
+        id: row.id,
+        lien: String(row.lien ?? ""),
+        note: row.note === "" ? null : Number(row.note),
+        date_maj: row.date_maj === "" ? null : row.date_maj,
+        smart_scraping: row.smart_scraping
+      };
       if (type === "C" && (payload.id === null || payload.id === "")) {
         delete payload.id;
       }
       return payload;
+    }
+
+    function validateRowForCrud(row) {
+      const noteText = String(row.note ?? "").trim();
+      if (noteText !== "") {
+        if (!/^-?\d+$/.test(noteText)) {
+          return "Note invalide: entier requis entre 0 et 10.";
+        }
+        const noteValue = Number(noteText);
+        if (!Number.isInteger(noteValue) || noteValue < 0 || noteValue > 10) {
+          return "Note invalide: entier requis entre 0 et 10.";
+        }
+      }
+
+      const dateText = String(row.date_maj ?? "").trim();
+      if (dateText !== "") {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
+          return "date_maj invalide: format attendu YYYY-MM-DD.";
+        }
+      }
+
+      return null;
+    }
+
+    function markRowValidationError(rowKey, message, rowEl = null) {
+      const meta = state.metaByKey.get(rowKey);
+      if (!meta) return;
+      meta.hasError = true;
+      meta.errorMessage = message;
+      setStatus(message, true);
+      const targetRowEl = rowEl || dom.tableBody.querySelector(`tr[data-row-key="${cssEscape(rowKey)}"]`);
+      if (targetRowEl) refreshRowUi(targetRowEl, rowKey);
+      refreshDirtyUi();
     }
 
     function enqueueCrud(rowKey, type, payload, priority = false) {
@@ -954,7 +1028,6 @@
 
     function refreshRowUi(rowEl, rowKey) {
       const meta = state.metaByKey.get(rowKey);
-      const queueEntry = state.queueByKey.get(rowKey);
       if (!meta) return;
 
       rowEl.classList.toggle("row-dirty", Boolean(meta.dirty));
@@ -963,11 +1036,6 @@
       const modifyBtn = rowEl.querySelector(".js-modify");
       if (modifyBtn) {
         modifyBtn.disabled = !meta.dirty;
-      }
-
-      const stateCell = rowEl.querySelector(".js-row-state");
-      if (stateCell) {
-        stateCell.innerHTML = renderStatePill(meta, queueEntry, Boolean(meta.isSending));
       }
     }
 
