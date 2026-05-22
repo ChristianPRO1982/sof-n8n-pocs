@@ -82,15 +82,6 @@
     .status { min-height: 24px; font-size: 0.93rem; color: var(--muted); padding: 0 4px; }
     .status.success { color: var(--success); font-weight: 600; }
     .status.error { color: var(--danger); font-weight: 600; }
-
-    .line-count {
-      min-height: 20px;
-      font-size: 0.9rem;
-      color: #2f4f76;
-      padding: 0 4px;
-      font-weight: 600;
-    }
-
     .btn {
       border: 0;
       border-radius: 10px;
@@ -312,8 +303,6 @@
               <button id="newRowBtn" class="btn btn-primary" type="button">Nouvelle ligne</button>
             </div>
           </div>
-
-          <div id="lineCount" class="line-count" aria-live="polite">Chargement...</div>
           <div id="status" class="status" role="status" aria-live="polite">Chargement des données...</div>
 
           <div class="table-wrap" aria-label="Conteneur table thématiques">
@@ -369,7 +358,6 @@
 
     const dom = {
       status: document.getElementById("status"),
-      lineCount: document.getElementById("lineCount"),
       tableBody: document.getElementById("tableBody"),
       layout: document.getElementById("layout"),
       debugPanel: document.getElementById("debugPanel"),
@@ -468,11 +456,6 @@
       dom.status.textContent = message;
       dom.status.className = isError ? "status error" : isSuccess ? "status success" : "status";
     }
-
-    function setLineCount(message) {
-      dom.lineCount.textContent = message;
-    }
-
     function setTableMessage(message) {
       dom.tableBody.innerHTML = `<tr><td class="empty" colspan="3">${escapeHtml(message)}</td></tr>`;
     }
@@ -567,11 +550,9 @@
         });
 
         renderTable();
-        setLineCount(`${state.rows.length} ligne(s) chargée(s).`);
         setStatus(`${state.rows.length} ligne(s) chargée(s).`, false, true);
       } catch (error) {
         setTableMessage(`Impossible de charger les données: ${error.message}`);
-        setLineCount("0 ligne chargée.");
         setStatus(`Erreur de chargement: ${error.message}`, true);
         debugAppend(`ERROR LOAD\n${String(error)}\n\n`);
       }
@@ -629,7 +610,6 @@
         errorMessage: ""
       });
       renderTable();
-      setLineCount(`${state.rows.length} ligne(s) chargée(s).`);
       setStatus("Nouvelle ligne ajoutée. Renseignez les champs puis quittez la ligne.");
       debugAppend(`CREATE UI row=${key}\n`);
     }
@@ -945,9 +925,7 @@
 
       meta.hasError = false;
       meta.errorMessage = "";
-      refreshRow(rowKey);
-      setLineCount(`${state.rows.length} ligne(s) chargée(s).`);
-    }
+      refreshRow(rowKey);    }
 
     function onCrudFailure(rowKey, entry, error) {
       const meta = state.metaByKey.get(rowKey);
@@ -995,9 +973,7 @@
       state.metaByKey.delete(rowKey);
       state.queueByKey.delete(rowKey);
       state.queueOrder = state.queueOrder.filter((key) => key !== rowKey);
-      renderTable();
-      setLineCount(`${state.rows.length} ligne(s) chargée(s).`);
-      refreshDirtyUi();
+      renderTable();      refreshDirtyUi();
     }
 
     function refreshRow(rowKey) {
