@@ -34,12 +34,10 @@
       padding: 28px 16px 40px;
     }
 
-    .app {
-      max-width: 1300px;
-      margin: 0 auto;
-      display: grid;
-      gap: 16px;
-    }
+    .app { max-width: 1600px; margin: 0 auto; display: grid; gap: 16px; }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+    .layout.debug-active { grid-template-columns: minmax(0, 1fr) minmax(320px, 380px); }
 
     .panel {
       background: var(--panel);
@@ -59,32 +57,13 @@
       flex-wrap: wrap;
     }
 
-    .logo {
-      width: 170px;
-      height: auto;
-      object-fit: contain;
-      display: block;
-    }
+    .logo { width: 170px; height: auto; object-fit: contain; flex-shrink: 0; display: block; }
+    .header h1 { margin: 0; font-size: 1.2rem; letter-spacing: 0.01em; }
+    .header p { margin: 4px 0 0; color: var(--muted); font-size: 0.95rem; line-height: 1.4; }
 
-    .header h1 {
-      margin: 0;
-      font-size: 1.2rem;
-      letter-spacing: 0.01em;
-    }
+    .main { padding: 18px 20px 20px; display: grid; gap: 12px; }
 
-    .header p {
-      margin: 4px 0 0;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .main {
-      padding: 16px 18px 20px;
-      display: grid;
-      gap: 12px;
-    }
-
-    .toolbar {
+    .nav-toolbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -92,71 +71,39 @@
       flex-wrap: wrap;
     }
 
-    .status {
-      min-height: 24px;
-      font-size: 0.93rem;
-      color: var(--muted);
-      padding: 0 4px;
+    .nav-links,
+    .action-stack {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
+    .status { min-height: 24px; font-size: 0.93rem; color: var(--muted); padding: 0 4px; }
     .status.success { color: var(--success); font-weight: 600; }
     .status.error { color: var(--danger); font-weight: 600; }
 
-    .table-wrap {
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      overflow: auto;
-      background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 760px;
-    }
-
-    th, td {
-      border-bottom: 1px solid #e5eefc;
-      padding: 10px;
-      text-align: left;
-      vertical-align: top;
-    }
-
-    th {
-      background: #eef5ff;
-      color: #153a6a;
-      white-space: nowrap;
-    }
-
-    .cell-id {
-      font-weight: 700;
-      color: #0b2d56;
-      white-space: nowrap;
-    }
-
-    .cell-input,
-    .cell-select {
-      width: 100%;
-      border: 1px solid #cbdcf4;
-      border-radius: 8px;
-      padding: 7px 8px;
-      font: inherit;
-      color: #17375f;
-      background: #fff;
+    .line-count {
+      min-height: 20px;
+      font-size: 0.9rem;
+      color: #2f4f76;
+      padding: 0 4px;
+      font-weight: 600;
     }
 
     .btn {
       border: 0;
       border-radius: 10px;
       padding: 9px 12px;
-      font-weight: 600;
-      font-size: 0.87rem;
-      cursor: pointer;
       text-decoration: none;
-      transition: transform 120ms ease;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: transform 120ms ease, box-shadow 160ms ease, opacity 160ms ease;
+      cursor: pointer;
     }
 
     .btn:hover { transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
     .btn-primary {
       background: linear-gradient(180deg, #0b66cf 0%, var(--primary) 100%);
@@ -170,58 +117,229 @@
       border: 1px solid #f7c7c4;
     }
 
-    .footer-actions {
+    .btn-ghost {
+      background: #eef3fb;
+      color: #5f6f85;
+      border: 1px solid #d7e2f1;
+    }
+
+    .btn-modify {
+      background: linear-gradient(180deg, #0b66cf 0%, var(--primary) 100%);
+      color: #fff;
+      box-shadow: 0 8px 16px rgba(0, 91, 187, 0.22);
+    }
+
+    .btn-add {
+      background: linear-gradient(180deg, #10a36e 0%, #047857 100%);
+      color: #fff;
+      box-shadow: 0 8px 16px rgba(4, 120, 87, 0.24);
+    }
+
+    .btn-nav {
+      background: #eef3fb;
+      color: #3e5d86;
+      border: 1px solid #d5e2f5;
+      font-size: 0.82rem;
+      padding: 8px 10px;
+    }
+
+    .btn-nav.active {
+      background: linear-gradient(180deg, #0b66cf 0%, var(--primary) 100%);
+      color: #fff;
+      border-color: #0054ad;
+      box-shadow: 0 8px 16px rgba(0, 91, 187, 0.22);
+      pointer-events: none;
+    }
+
+    .table-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+      overflow: auto;
+    }
+
+    table { width: 100%; border-collapse: collapse; min-width: 1300px; font-size: 0.9rem; }
+
+    thead th {
+      text-align: left;
+      padding: 11px 10px;
+      background: #eef5ff;
+      color: #153a6a;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e5eefc;
+      vertical-align: top;
+      color: #17375f;
+      line-height: 1.42;
+    }
+
+    tbody tr:nth-child(even) { background: #fbfdff; }
+    tbody tr:hover { background: #f2f7ff; }
+    tbody tr.row-dirty { outline: 2px solid #f6bf5d; outline-offset: -2px; }
+    tbody tr.row-error { outline: 2px solid #ef9a9a; outline-offset: -2px; }
+
+    .cell-input,
+    .cell-select {
+      width: 100%;
+      border: 1px solid #cbdcf4;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font: inherit;
+      color: #17375f;
+      background: #fff;
+    }
+
+    .cell-input:focus,
+    .cell-select:focus {
+      outline: none;
+      border-color: #9fc1ef;
+      box-shadow: 0 0 0 3px rgba(0, 91, 187, 0.12);
+    }
+
+    .cell-id {
+      font-weight: 700;
+      color: #0b2d56;
+      white-space: nowrap;
+    }
+
+    .col-action { width: 140px; }
+
+    .action-stack {
       display: flex;
-      justify-content: flex-end;
+      flex-direction: row;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .empty { padding: 26px 16px; text-align: center; color: var(--muted); }
+
+    .debug-panel {
+      display: none;
+      background: #0d1f38;
+      border: 1px solid #223e63;
+      border-radius: var(--radius-lg);
+      color: #dcecff;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      height: 90vh;
+    }
+
+    .debug-panel.visible { display: grid; grid-template-rows: auto 1fr; }
+
+    .debug-head {
+      padding: 12px 14px;
+      border-bottom: 1px solid #274976;
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: 0.01em;
+      color: #e7f2ff;
+      background: #102846;
+    }
+
+    .debug-body {
+      margin: 0;
+      padding: 12px 14px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: "IBM Plex Mono", "SFMono-Regular", ui-monospace, monospace;
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .floating-dirty {
+      position: fixed;
+      top: 10px;
+      right: 12px;
+      z-index: 30;
+      display: none;
+      border: 1px solid #f0c67a;
+      border-radius: 10px;
+      background: #fff8eb;
+      color: #7f5000;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 8px 10px;
+      box-shadow: 0 10px 28px rgba(96, 71, 10, 0.18);
+    }
+
+    .floating-dirty.visible { display: block; }
+
+    @media (max-width: 720px) {
+      body { padding: 12px 10px 20px; }
+      .header { padding: 16px 14px 12px; }
+      .main { padding: 14px; }
+      .floating-dirty { right: 8px; top: 8px; }
+    }
+
+    @media (max-width: 1100px) {
+      .layout.debug-active { grid-template-columns: minmax(0, 1fr); }
     }
   </style>
 </head>
 <body>
-  <main class="app">
-    <section class="panel">
-      <header class="header">
-        <a href="../index.html" aria-label="Retour à la page d'accueil">
-          <img
-            src="https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png"
-            alt="Logo MaPrimeRenov"
-            class="logo"
-          />
-        </a>
-        <div>
-          <h1>Gestion des sous-thématiques</h1>
-          <p>CRUD simple sur la table <code>renov_sousthematique</code>.</p>
-        </div>
-      </header>
+  <div id="floatingDirty" class="floating-dirty" aria-live="polite">Modifications non enregistrées</div>
 
-      <div class="main">
-        <form id="crudForm" method="post">
-          <div class="toolbar">
-            <div id="status" class="status" role="status" aria-live="polite">Chargement...</div>
-            <button class="btn btn-primary" type="submit">Enregistrer</button>
+  <main class="app">
+    <div id="layout" class="layout">
+      <section class="panel">
+        <header class="header">
+          <a href="../index.html" aria-label="Retour à la page d'accueil">
+            <img src="https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png" alt="Logo MaPrimeRenov" class="logo" />
+          </a>
+          <div>
+            <h1>Gestion des sous-thématiques</h1>
+            <p>Table <code>renov_sousthematique</code> avec envoi asynchrone CUD.</p>
+          </div>
+        </header>
+
+        <div class="main">
+          <div class="nav-toolbar">
+            <nav class="nav-links" aria-label="Navigation tables sources">
+              <a class="btn btn-nav" href="sources.html">Sources</a>
+              <a class="btn btn-nav" href="thematiques.html">Thématiques</a>
+              <a class="btn btn-nav active" href="sousthematiques.html" aria-current="page">Sous-thématiques</a>
+              <a class="btn btn-nav" href="categories.html">Catégories</a>
+            </nav>
+            <div class="action-stack">
+              <button id="refreshBtn" class="btn btn-ghost" type="button">Rafraîchir</button>
+              <button id="newRowBtn" class="btn btn-primary" type="button">Nouvelle ligne</button>
+            </div>
           </div>
 
-          <div class="table-wrap">
+          <div id="lineCount" class="line-count" aria-live="polite">Chargement...</div>
+          <div id="status" class="status" role="status" aria-live="polite">Chargement des données...</div>
+
+          <div class="table-wrap" aria-label="Conteneur table sous-thématiques">
             <table aria-label="Table des sous-thématiques">
               <thead>
                 <tr>
+                  <th class="col-action">Action</th>
                   <th>id</th>
-                  <th>Thématique parent</th>
-                  <th>Libellé sous-thématique</th>
-                  <th>Action</th>
+                  <th>thématique parent</th>
+                  <th>libellé</th>
                 </tr>
               </thead>
               <tbody id="tableBody">
-                <tr><td colspan="4">Chargement...</td></tr>
+                <tr><td class="empty" colspan="4">Chargement en cours...</td></tr>
               </tbody>
             </table>
           </div>
+        </div>
+      </section>
 
-          <div class="footer-actions">
-            <button class="btn btn-primary" type="submit">Enregistrer</button>
-          </div>
-        </form>
-      </div>
-    </section>
+      <aside id="debugPanel" class="debug-panel" aria-live="polite">
+        <div class="debug-head">Mode debug sous-thématiques CUD</div>
+        <pre id="debugOutput" class="debug-body">En attente d'initialisation...</pre>
+      </aside>
+    </div>
   </main>
 
   <script>
@@ -234,25 +352,47 @@
       D: "http://15.236.66.128/n8n/webhook-test/476cf9cd-2cd6-4240-bf0f-0052ff5ccc24"
     };
 
+    const MIN_DISPATCH_MS = 500;
+    const RETRY_MAX = 2;
+
     const state = {
       config: null,
+      debugMode: false,
       endpoints: { ...FALLBACK_ENDPOINTS },
       rows: [],
-      thematiques: []
+      thematiques: [],
+      thematiqueIds: new Set(),
+      metaByKey: new Map(),
+      queueByKey: new Map(),
+      queueOrder: [],
+      inFlight: false,
+      lastDispatchAt: 0,
+      workerTimer: null,
+      sequence: 0,
+      blockedNavigation: false
     };
 
     const dom = {
-      form: document.getElementById("crudForm"),
       status: document.getElementById("status"),
-      tableBody: document.getElementById("tableBody")
+      lineCount: document.getElementById("lineCount"),
+      tableBody: document.getElementById("tableBody"),
+      layout: document.getElementById("layout"),
+      debugPanel: document.getElementById("debugPanel"),
+      debugOutput: document.getElementById("debugOutput"),
+      refreshBtn: document.getElementById("refreshBtn"),
+      newRowBtn: document.getElementById("newRowBtn"),
+      floatingDirty: document.getElementById("floatingDirty")
     };
 
     init().catch((error) => {
-      setStatus(`Erreur d'initialisation: ${error.message || error}`, true);
+      setStatus("Configuration invalide. Vérifiez UI_chat/config.ini.", true);
+      setTableMessage("Impossible d'initialiser la page.");
+      debugWrite(`INIT ERROR\n${String(error)}`);
     });
 
     async function init() {
       state.config = await loadConfig("../config.ini");
+      state.debugMode = isTruthy(state.config.DEBUG_MODE);
       state.endpoints = {
         C: state.config.TAGS_WEBHOOK_C || FALLBACK_ENDPOINTS.C,
         R: state.config.TAGS_WEBHOOK_R || FALLBACK_ENDPOINTS.R,
@@ -260,11 +400,28 @@
         D: state.config.TAGS_WEBHOOK_D || FALLBACK_ENDPOINTS.D
       };
 
-      dom.form.addEventListener("submit", onSubmitSave);
-      dom.tableBody.addEventListener("click", onTableClick);
+      setDebugModeUi(state.debugMode);
+      debugWrite([
+        "Initialisation sous-thématiques CUD",
+        `DEBUG_MODE=${String(state.config.DEBUG_MODE || "")}`,
+        `R=${state.endpoints.R}`,
+        `C=${state.endpoints.C}`,
+        `U=${state.endpoints.U}`,
+        `D=${state.endpoints.D}`,
+        ""
+      ].join("\n"));
 
-      await loadThematiques();
+      dom.refreshBtn.addEventListener("click", onRefreshClick);
+      dom.newRowBtn.addEventListener("click", onCreateRow);
+      dom.tableBody.addEventListener("input", onTableInput);
+      dom.tableBody.addEventListener("focusout", onTableFocusOut);
+      dom.tableBody.addEventListener("click", onTableClick);
+      window.addEventListener("beforeunload", onBeforeUnload);
+
+      await refreshThematiquesCache();
       await loadRows();
+      startQueueWorker();
+      refreshDirtyUi();
     }
 
     async function loadConfig(path) {
@@ -285,12 +442,57 @@
       return out;
     }
 
+    function isTruthy(value) {
+      if (typeof value !== "string") return false;
+      return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+    }
+
+    function setDebugModeUi(enabled) {
+      dom.debugPanel.classList.toggle("visible", enabled);
+      dom.layout.classList.toggle("debug-active", enabled);
+    }
+
+    function debugWrite(text) {
+      if (!state.debugMode) return;
+      dom.debugOutput.textContent = text;
+      forceDebugScrollToEnd();
+    }
+
+    function debugAppend(text) {
+      if (!state.debugMode) return;
+      dom.debugOutput.textContent += text;
+      forceDebugScrollToEnd();
+    }
+
+    function forceDebugScrollToEnd() {
+      window.requestAnimationFrame(() => {
+        dom.debugOutput.scrollTop = dom.debugOutput.scrollHeight;
+      });
+    }
+
     function setStatus(message, isError = false, isSuccess = false) {
       dom.status.textContent = message;
       dom.status.className = isError ? "status error" : isSuccess ? "status success" : "status";
     }
 
-    async function apiCall(action, table, data) {
+    function setLineCount(message) {
+      dom.lineCount.textContent = message;
+    }
+
+    function setTableMessage(message) {
+      dom.tableBody.innerHTML = `<tr><td class="empty" colspan="4">${escapeHtml(message)}</td></tr>`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    async function apiCall(action, data, table = TABLE_NAME) {
       const endpoint = state.endpoints[action];
       const payload = { action, table, data };
       const response = await fetch(endpoint, {
@@ -310,6 +512,8 @@
         parsed = raw;
       }
 
+      debugAppend(`API ${action} ${table} HTTP ${response.status} ${response.statusText}\n${raw}\n\n`);
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status} ${response.statusText}`);
       }
@@ -324,187 +528,609 @@
       return [];
     }
 
-    async function loadThematiques() {
-      const payload = await apiCall("R", PARENT_TABLE, {});
+    async function refreshThematiquesCache() {
+      const payload = await apiCall("R", {}, PARENT_TABLE);
       const rows = normalizeReadPayload(payload);
       state.thematiques = rows
         .map((row) => ({ id: Number(row.id), libelle: String(row.libelle || "") }))
         .filter((row) => Number.isFinite(row.id));
+      state.thematiqueIds = new Set(state.thematiques.map((row) => row.id));
+    }
+
+    function isValidThematiqueId(value) {
+      const num = Number(value);
+      if (!Number.isFinite(num)) return false;
+      return state.thematiqueIds.has(num);
+    }
+
+    function rowKeyFromData(row) {
+      if (row.id === null || row.id === undefined || row.id === "") {
+        state.sequence += 1;
+        return `tmp:${Date.now()}:${state.sequence}`;
+      }
+      return `id:${row.id}`;
+    }
+
+    function normalizeRow(raw, key, isNew = false) {
+      const stRaw = raw.st_id;
+      const stId = stRaw === null || stRaw === undefined || stRaw === "" ? null : Number(stRaw);
+      return {
+        rowKey: key,
+        id: raw.id ?? null,
+        st_id: Number.isFinite(stId) ? stId : null,
+        libelle: String(raw.libelle ?? ""),
+        __isNew: isNew
+      };
+    }
+
+    function snapshotRow(row) {
+      return {
+        id: row.id,
+        st_id: row.st_id,
+        libelle: row.libelle
+      };
     }
 
     async function loadRows() {
       setStatus("Chargement des sous-thématiques...");
-      const payload = await apiCall("R", TABLE_NAME, {});
-      const rows = normalizeReadPayload(payload);
-      state.rows = rows.map((row) => ({
-        id: Number(row.id),
-        st_id: row.st_id === null || row.st_id === undefined || row.st_id === "" ? null : Number(row.st_id),
-        libelle: row.libelle || ""
-      }));
-      renderTable();
-      setStatus(`${state.rows.length} sous-thématique(s) chargée(s).`, false, true);
+      try {
+        const payload = await apiCall("R", {});
+        const rows = normalizeReadPayload(payload);
+
+        state.rows = rows.map((raw) => {
+          const key = rowKeyFromData(raw);
+          const row = normalizeRow(raw, key, false);
+          const hasInvalidParent = row.st_id !== null && !isValidThematiqueId(row.st_id);
+          if (hasInvalidParent) row.st_id = null;
+          state.metaByKey.set(key, {
+            original: snapshotRow(row),
+            dirty: false,
+            isNew: false,
+            isSending: false,
+            hasError: hasInvalidParent,
+            errorMessage: hasInvalidParent ? "Thématique parent supprimée ou invalide. Re-sélection requise." : ""
+          });
+          return row;
+        });
+
+        renderTable();
+        setLineCount(`${state.rows.length} ligne(s) chargée(s).`);
+        setStatus(`${state.rows.length} ligne(s) chargée(s).`, false, true);
+      } catch (error) {
+        setTableMessage(`Impossible de charger les données: ${error.message}`);
+        setLineCount("0 ligne chargée.");
+        setStatus(`Erreur de chargement: ${error.message}`, true);
+        debugAppend(`ERROR LOAD\n${String(error)}\n\n`);
+      }
     }
 
     function renderThematiqueOptions(selectedId) {
-      const opts = ['<option value="">Choisir...</option>'];
-      for (const row of state.thematiques) {
-        const selected = Number(selectedId) === Number(row.id) ? "selected" : "";
-        opts.push(`<option value="${escapeHtml(row.id)}" ${selected}>${escapeHtml(row.libelle)}</option>`);
+      const selected = Number(selectedId);
+      const options = ['<option value="">Choisir...</option>'];
+      for (const item of state.thematiques) {
+        const isSelected = Number(item.id) === selected ? "selected" : "";
+        options.push(`<option value="${escapeHtml(item.id)}" ${isSelected}>${escapeHtml(item.libelle)}</option>`);
       }
-      return opts.join("");
+      return options.join("");
     }
 
     function renderTable() {
-      const lines = state.rows.map((row) => {
-        return `
-          <tr data-kind="existing" data-id="${escapeHtml(row.id)}">
-            <td><span class="cell-id">${escapeHtml(row.id)}</span></td>
-            <td>
-              <select class="cell-select" name="st_id">
-                ${renderThematiqueOptions(row.st_id)}
-              </select>
-            </td>
-            <td><input class="cell-input" name="libelle" value="${escapeHtml(row.libelle)}" /></td>
-            <td><button type="button" class="btn btn-danger js-delete">Supprimer</button></td>
-          </tr>
-        `;
-      });
+      if (!state.rows.length) {
+        setTableMessage("Aucune donnée.");
+        return;
+      }
 
-      lines.push(`
-        <tr data-kind="create">
-          <td><span class="cell-id">(nouveau)</span></td>
+      const html = state.rows.map((row) => renderRowHtml(row)).join("");
+      dom.tableBody.innerHTML = html;
+      refreshDirtyUi();
+    }
+
+    function renderRowHtml(row) {
+      const meta = state.metaByKey.get(row.rowKey);
+      const isDirty = Boolean(meta && meta.dirty);
+      const hasError = Boolean(meta && meta.hasError);
+      const isCreateRow = Boolean(meta && meta.isNew);
+      const modDisabled = isDirty ? "" : "disabled";
+      const rowClass = [isDirty ? "row-dirty" : "", hasError ? "row-error" : ""].filter(Boolean).join(" ");
+      const actionLabel = isCreateRow ? "AJOUTER" : "MODIFIER";
+      const actionClass = isCreateRow ? "btn-add" : "btn-modify";
+
+      return `
+        <tr data-row-key="${escapeHtml(row.rowKey)}" class="${rowClass}">
+          <td class="col-action">
+            <div class="action-stack">
+              <button class="btn ${actionClass} js-modify" type="button" ${modDisabled}>${actionLabel}</button>
+              <button class="btn btn-danger js-delete" type="button">SUPPRIMER</button>
+            </div>
+          </td>
+          <td><span class="cell-id">${escapeHtml(row.id ?? "(nouveau)")}</span></td>
           <td>
-            <select class="cell-select" name="st_id">
-              ${renderThematiqueOptions(null)}
+            <select class="cell-select" data-field="st_id">
+              ${renderThematiqueOptions(row.st_id)}
             </select>
           </td>
-          <td><input class="cell-input" name="libelle" value="" placeholder="Nouveau libellé" /></td>
-          <td></td>
+          <td><input class="cell-input" data-field="libelle" value="${escapeHtml(row.libelle)}" /></td>
         </tr>
-      `);
-
-      dom.tableBody.innerHTML = lines.join("");
+      `;
     }
 
-    function escapeHtml(value) {
-      return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\"/g, "&quot;")
-        .replace(/'/g, "&#39;");
+    function onRefreshClick() {
+      window.location.reload();
     }
 
-    function collectFormRows() {
-      const rows = [];
-      dom.tableBody.querySelectorAll("tr[data-kind]").forEach((tr) => {
-        const kind = tr.dataset.kind;
-        const libelleInput = tr.querySelector('input[name="libelle"]');
-        const stSelect = tr.querySelector('select[name="st_id"]');
-
-        const libelle = libelleInput ? libelleInput.value.trim() : "";
-        const st_id = stSelect && stSelect.value !== "" ? Number(stSelect.value) : null;
-
-        if (kind === "existing") {
-          rows.push({ kind, id: Number(tr.dataset.id), st_id, libelle });
-          return;
-        }
-
-        rows.push({ kind, st_id, libelle });
+    function onCreateRow() {
+      const key = rowKeyFromData({ id: null });
+      const row = normalizeRow({}, key, true);
+      state.rows.unshift(row);
+      state.metaByKey.set(key, {
+        original: snapshotRow(row),
+        dirty: false,
+        isNew: true,
+        isSending: false,
+        hasError: false,
+        errorMessage: ""
       });
-      return rows;
+      renderTable();
+      setLineCount(`${state.rows.length} ligne(s) chargée(s).`);
+      setStatus("Nouvelle ligne ajoutée. Renseignez les champs puis quittez la ligne.");
+      debugAppend(`CREATE UI row=${key}\n`);
     }
 
-    function diffRows(formRows) {
-      const creates = [];
-      const updates = [];
-      const originalMap = new Map(state.rows.map((row) => [Number(row.id), row]));
-
-      formRows.forEach((row) => {
-        if (row.kind === "create") {
-          if (row.libelle && Number.isFinite(row.st_id)) {
-            creates.push({ st_id: row.st_id, libelle: row.libelle });
-          }
-          return;
-        }
-
-        const original = originalMap.get(Number(row.id));
-        if (!original) return;
-
-        if (original.libelle !== row.libelle || Number(original.st_id) !== Number(row.st_id)) {
-          updates.push({ id: row.id, st_id: row.st_id, libelle: row.libelle });
-        }
-      });
-
-      return { creates, updates };
+    function parseFieldValue(field, value) {
+      if (field === "st_id") {
+        if (value === "") return null;
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+      }
+      return value;
     }
 
-    async function persistAllChanges() {
-      const formRows = collectFormRows();
-      const { creates, updates } = diffRows(formRows);
-
-      if (!creates.length && !updates.length) {
-        return { changed: false, createCount: 0, updateCount: 0 };
-      }
-
-      for (const payload of creates) {
-        await apiCall("C", TABLE_NAME, payload);
-      }
-
-      for (const payload of updates) {
-        await apiCall("U", TABLE_NAME, payload);
-      }
-
-      return {
-        changed: true,
-        createCount: creates.length,
-        updateCount: updates.length
-      };
-    }
-
-    async function onSubmitSave(event) {
-      event.preventDefault();
-      try {
-        setStatus("Enregistrement en cours...");
-        const result = await persistAllChanges();
-        if (!result.changed) {
-          setStatus("Aucune modification à enregistrer.");
-          return;
-        }
-        await loadThematiques();
-        await loadRows();
-        setStatus(`Enregistré: ${result.createCount} création(s), ${result.updateCount} mise(s) à jour.`, false, true);
-      } catch (error) {
-        setStatus(`Erreur enregistrement: ${error.message || error}`, true);
-      }
-    }
-
-    async function onTableClick(event) {
-      const button = event.target.closest(".js-delete");
-      if (!button) return;
-      const rowEl = button.closest('tr[data-kind="existing"]');
+    function onTableInput(event) {
+      const target = event.target;
+      if (!target || !target.matches("[data-field]")) return;
+      const rowEl = target.closest("tr[data-row-key]");
       if (!rowEl) return;
 
-      const rowId = Number(rowEl.dataset.id);
-      if (!Number.isFinite(rowId)) return;
+      const rowKey = rowEl.dataset.rowKey;
+      const row = findRow(rowKey);
+      if (!row) return;
+
+      row[target.dataset.field] = parseFieldValue(target.dataset.field, target.value);
+      updateRowDirtyState(rowKey);
+      refreshRowUi(rowEl, rowKey);
+      refreshDirtyUi();
+    }
+
+    function onTableFocusOut(event) {
+      const rowEl = event.target.closest("tr[data-row-key]");
+      if (!rowEl) return;
+
+      window.setTimeout(() => {
+        const active = document.activeElement;
+        if (active && rowEl.contains(active)) return;
+        const rowKey = rowEl.dataset.rowKey;
+        const meta = state.metaByKey.get(rowKey);
+        if (!meta || !meta.dirty) return;
+
+        const row = findRow(rowKey);
+        if (!row) return;
+
+        const validationError = validateRowForCrud(row);
+        if (validationError) {
+          markRowValidationError(rowKey, validationError, rowEl);
+          return;
+        }
+
+        const actionType = meta.isNew ? "C" : "U";
+        enqueueCrud(rowKey, actionType, buildPayload(actionType, row));
+        debugAppend(`BLUR enqueue ${actionType} row=${rowKey}\n`);
+      }, 0);
+    }
+
+    function onTableClick(event) {
+      const button = event.target.closest("button");
+      if (!button) return;
+      const rowEl = button.closest("tr[data-row-key]");
+      if (!rowEl) return;
+      const rowKey = rowEl.dataset.rowKey;
+
+      if (button.classList.contains("js-modify")) {
+        onClickModify(rowKey);
+        return;
+      }
+
+      if (button.classList.contains("js-delete")) {
+        onClickDelete(rowKey);
+      }
+    }
+
+    function onClickModify(rowKey) {
+      const meta = state.metaByKey.get(rowKey);
+      const row = findRow(rowKey);
+      if (!meta || !row || !meta.dirty) return;
+
+      const rowEl = dom.tableBody.querySelector(`tr[data-row-key="${cssEscape(rowKey)}"]`);
+      const validationError = validateRowForCrud(row);
+      if (validationError) {
+        markRowValidationError(rowKey, validationError, rowEl);
+        return;
+      }
+
+      const actionType = meta.isNew ? "C" : "U";
+      enqueueCrud(rowKey, actionType, buildPayload(actionType, row), true);
+      debugAppend(`CLICK MODIFIER enqueue-priority ${actionType} row=${rowKey}\n`);
+      setStatus("Modification mise en file d'envoi.");
+    }
+
+    function onClickDelete(rowKey) {
+      const row = findRow(rowKey);
+      const meta = state.metaByKey.get(rowKey);
+      if (!row || !meta) return;
 
       if (!window.confirm("Confirmer la suppression de cette ligne ?")) {
         return;
       }
 
-      try {
-        setStatus("Sauvegarde préalable avant suppression...");
-        await persistAllChanges();
-
-        setStatus("Suppression en cours...");
-        await apiCall("D", TABLE_NAME, { id: rowId });
-
-        await loadThematiques();
-        await loadRows();
-        setStatus("Suppression effectuée.", false, true);
-      } catch (error) {
-        setStatus(`Erreur suppression: ${error.message || error}`, true);
+      if (meta.isNew && !row.id) {
+        removeRowLocal(rowKey);
+        debugAppend(`DELETE local-only row=${rowKey}\n`);
+        return;
       }
+
+      enqueueCrud(rowKey, "D", buildPayload("D", row), true);
+      debugAppend(`CLICK SUPPRIMER enqueue D row=${rowKey}\n`);
+      setStatus("Suppression mise en file d'envoi.");
+    }
+
+    function findRow(rowKey) {
+      return state.rows.find((row) => row.rowKey === rowKey) || null;
+    }
+
+    function updateRowDirtyState(rowKey) {
+      const row = findRow(rowKey);
+      const meta = state.metaByKey.get(rowKey);
+      if (!row || !meta) return;
+
+      const current = snapshotRow(row);
+      const original = meta.original;
+      meta.dirty = !areRowsEqual(current, original);
+      if (meta.dirty) {
+        meta.hasError = false;
+        meta.errorMessage = "";
+      }
+    }
+
+    function areRowsEqual(a, b) {
+      return a.id === b.id
+        && String(a.libelle) === String(b.libelle)
+        && Number(a.st_id) === Number(b.st_id);
+    }
+
+    function buildPayload(type, row) {
+      if (type === "D") {
+        return { id: row.id };
+      }
+
+      const payload = {
+        id: row.id,
+        st_id: row.st_id,
+        libelle: String(row.libelle ?? "").trim()
+      };
+
+      if (type === "C" && (payload.id === null || payload.id === "")) {
+        delete payload.id;
+      }
+
+      return payload;
+    }
+
+    function validateRowForCrud(row) {
+      const libelle = String(row.libelle ?? "").trim();
+      if (!libelle) {
+        return "Libellé obligatoire.";
+      }
+
+      if (!Number.isFinite(Number(row.st_id))) {
+        row.st_id = null;
+        return "Thématique parent obligatoire.";
+      }
+
+      if (!isValidThematiqueId(row.st_id)) {
+        row.st_id = null;
+        return "Thématique parent invalide ou supprimée. Re-sélection requise.";
+      }
+
+      return null;
+    }
+
+    function validateRowIdentityForAction(actionType, row) {
+      if ((actionType === "U" || actionType === "D") && (row.id === null || row.id === undefined || row.id === "")) {
+        return `${actionType} impossible: id manquant sur la ligne.`;
+      }
+      return null;
+    }
+
+    function markRowValidationError(rowKey, message, rowEl = null) {
+      const meta = state.metaByKey.get(rowKey);
+      if (!meta) return;
+      meta.hasError = true;
+      meta.errorMessage = message;
+      setStatus(message, true);
+      const targetRowEl = rowEl || dom.tableBody.querySelector(`tr[data-row-key="${cssEscape(rowKey)}"]`);
+      if (targetRowEl) {
+        if (!findRow(rowKey)) return;
+        targetRowEl.outerHTML = renderRowHtml(findRow(rowKey));
+      }
+      refreshDirtyUi();
+    }
+
+    function enqueueCrud(rowKey, type, payload, priority = false) {
+      const meta = state.metaByKey.get(rowKey);
+      const row = findRow(rowKey);
+      if (!meta || !row) return;
+
+      const identityError = validateRowIdentityForAction(type, row);
+      if (identityError) {
+        markRowValidationError(rowKey, identityError);
+        return;
+      }
+
+      const existing = state.queueByKey.get(rowKey);
+
+      if (existing && existing.type === "C" && type === "D" && meta.isNew) {
+        state.queueByKey.delete(rowKey);
+        state.queueOrder = state.queueOrder.filter((key) => key !== rowKey);
+        removeRowLocal(rowKey);
+        debugAppend(`QUEUE cancel C+D row=${rowKey}\n`);
+        return;
+      }
+
+      if (type === "D") {
+        state.queueByKey.set(rowKey, { type, payload, retry: 0 });
+      } else if (existing && existing.type === "D") {
+        // Delete reste prioritaire.
+      } else {
+        state.queueByKey.set(rowKey, { type, payload, retry: existing ? existing.retry : 0 });
+      }
+
+      if (!state.queueOrder.includes(rowKey)) {
+        if (priority) state.queueOrder.unshift(rowKey);
+        else state.queueOrder.push(rowKey);
+      } else if (priority) {
+        state.queueOrder = [rowKey, ...state.queueOrder.filter((key) => key !== rowKey)];
+      }
+
+      refreshRow(rowKey);
+      refreshDirtyUi();
+      debugAppend(`QUEUE ${type} row=${rowKey} size=${state.queueOrder.length}\n`);
+    }
+
+    function startQueueWorker() {
+      if (state.workerTimer) return;
+      state.workerTimer = window.setInterval(tickQueueWorker, 100);
+    }
+
+    async function tickQueueWorker() {
+      if (state.inFlight) return;
+      if (!state.queueOrder.length) return;
+      const now = Date.now();
+      if ((now - state.lastDispatchAt) < MIN_DISPATCH_MS) return;
+
+      const rowKey = state.queueOrder[0];
+      const entry = state.queueByKey.get(rowKey);
+      if (!entry) {
+        state.queueOrder.shift();
+        return;
+      }
+
+      const meta = state.metaByKey.get(rowKey);
+      if (!meta) {
+        state.queueByKey.delete(rowKey);
+        state.queueOrder.shift();
+        return;
+      }
+
+      state.inFlight = true;
+      state.lastDispatchAt = now;
+      meta.isSending = true;
+      meta.hasError = false;
+      meta.errorMessage = "";
+      refreshRow(rowKey);
+      refreshDirtyUi();
+
+      debugAppend(`SEND ${entry.type} row=${rowKey}\n${JSON.stringify(entry.payload, null, 2)}\n`);
+
+      try {
+        const responsePayload = await apiCall(entry.type, entry.payload);
+        await onCrudSuccess(rowKey, entry, responsePayload);
+        setStatus(`Action ${entry.type} envoyée avec succès.`, false, true);
+      } catch (error) {
+        await onCrudFailure(rowKey, entry, error);
+      } finally {
+        const freshMeta = state.metaByKey.get(rowKey);
+        if (freshMeta) freshMeta.isSending = false;
+        state.inFlight = false;
+        refreshRow(rowKey);
+        refreshDirtyUi();
+      }
+    }
+
+    async function onCrudSuccess(rowKey, entry, responsePayload) {
+      const meta = state.metaByKey.get(rowKey);
+      const row = findRow(rowKey);
+      if (!meta) return;
+
+      state.queueByKey.delete(rowKey);
+      state.queueOrder = state.queueOrder.filter((key) => key !== rowKey);
+
+      if (entry.type === "D") {
+        removeRowLocal(rowKey);
+        await refreshThematiquesCache();
+        renderTable();
+        return;
+      }
+
+      if (entry.type === "C" && row) {
+        const created = Array.isArray(responsePayload) ? responsePayload[0] : responsePayload;
+        let hasCreatedId = false;
+        if (created && typeof created === "object" && created.id !== undefined && created.id !== null && created.id !== "") {
+          row.id = created.id;
+          hasCreatedId = true;
+          if (row.rowKey.startsWith("tmp:")) {
+            const newKey = `id:${row.id}`;
+            renameRowKey(row.rowKey, newKey);
+            rowKey = newKey;
+          }
+        }
+        if (hasCreatedId) {
+          meta.isNew = false;
+        } else {
+          meta.hasError = true;
+          meta.errorMessage = "CREATE OK mais aucun id retourné par le webhook.";
+          setStatus("CREATE réussi mais id manquant dans la réponse webhook.", true);
+        }
+      }
+
+      await refreshThematiquesCache();
+
+      if (row) {
+        row.libelle = String(row.libelle ?? "").trim();
+        if (!isValidThematiqueId(row.st_id)) {
+          row.st_id = null;
+          meta.hasError = true;
+          meta.errorMessage = "Thématique parent supprimée ou invalide. Re-sélection requise.";
+        }
+        meta.original = snapshotRow(row);
+        meta.dirty = false;
+      }
+
+      if (!meta.errorMessage) {
+        meta.hasError = false;
+      }
+
+      refreshRow(rowKey);
+      setLineCount(`${state.rows.length} ligne(s) chargée(s).`);
+    }
+
+    async function onCrudFailure(rowKey, entry, error) {
+      const meta = state.metaByKey.get(rowKey);
+      const row = findRow(rowKey);
+      if (!meta) return;
+
+      entry.retry += 1;
+      if (entry.retry > RETRY_MAX) {
+        state.queueByKey.delete(rowKey);
+        state.queueOrder = state.queueOrder.filter((key) => key !== rowKey);
+        meta.hasError = true;
+        meta.errorMessage = String(error.message || error);
+
+        if ((entry.type === "C" || entry.type === "U") && row) {
+          try {
+            await refreshThematiquesCache();
+            if (!isValidThematiqueId(row.st_id)) {
+              row.st_id = null;
+              meta.errorMessage = "Thématique parent invalide après mise à jour concurrente. Re-sélection requise.";
+              refreshRow(rowKey);
+            }
+          } catch {
+            // Ignore refresh errors, keep initial failure message.
+          }
+        }
+
+        setStatus(`Echec ${entry.type}: ${meta.errorMessage}`, true);
+        debugAppend(`FAIL FINAL ${entry.type} row=${rowKey} ${String(error)}\n`);
+      } else {
+        state.queueByKey.set(rowKey, entry);
+        setStatus(`Retry ${entry.type} (${entry.retry}/${RETRY_MAX})...`);
+        debugAppend(`RETRY ${entry.type} row=${rowKey} #${entry.retry} ${String(error)}\n`);
+      }
+    }
+
+    function renameRowKey(oldKey, newKey) {
+      if (oldKey === newKey) return;
+
+      const row = findRow(oldKey);
+      if (!row) return;
+      row.rowKey = newKey;
+
+      const meta = state.metaByKey.get(oldKey);
+      if (meta) {
+        state.metaByKey.set(newKey, meta);
+        state.metaByKey.delete(oldKey);
+      }
+
+      const queue = state.queueByKey.get(oldKey);
+      if (queue) {
+        state.queueByKey.set(newKey, queue);
+        state.queueByKey.delete(oldKey);
+      }
+
+      state.queueOrder = state.queueOrder.map((key) => (key === oldKey ? newKey : key));
+    }
+
+    function removeRowLocal(rowKey) {
+      state.rows = state.rows.filter((row) => row.rowKey !== rowKey);
+      state.metaByKey.delete(rowKey);
+      state.queueByKey.delete(rowKey);
+      state.queueOrder = state.queueOrder.filter((key) => key !== rowKey);
+      renderTable();
+      setLineCount(`${state.rows.length} ligne(s) chargée(s).`);
+      refreshDirtyUi();
+    }
+
+    function refreshRow(rowKey) {
+      const row = findRow(rowKey);
+      if (!row) {
+        renderTable();
+        return;
+      }
+
+      const rowEl = dom.tableBody.querySelector(`tr[data-row-key="${cssEscape(rowKey)}"]`);
+      if (!rowEl) {
+        renderTable();
+        return;
+      }
+
+      rowEl.outerHTML = renderRowHtml(row);
+    }
+
+    function refreshRowUi(rowEl, rowKey) {
+      const meta = state.metaByKey.get(rowKey);
+      if (!meta) return;
+
+      rowEl.classList.toggle("row-dirty", Boolean(meta.dirty));
+      rowEl.classList.toggle("row-error", Boolean(meta.hasError));
+
+      const modifyBtn = rowEl.querySelector(".js-modify");
+      if (modifyBtn) {
+        modifyBtn.disabled = !meta.dirty;
+      }
+    }
+
+    function cssEscape(value) {
+      if (window.CSS && typeof window.CSS.escape === "function") {
+        return window.CSS.escape(value);
+      }
+      return value.replace(/(["\\])/g, "\\$1");
+    }
+
+    function refreshDirtyUi() {
+      const dirtyCount = Array.from(state.metaByKey.values()).filter((meta) => meta.dirty).length;
+      const queueCount = state.queueOrder.length;
+      const sendingCount = Array.from(state.metaByKey.values()).filter((meta) => meta.isSending).length;
+      const hasPendingWork = dirtyCount > 0 || queueCount > 0 || sendingCount > 0;
+
+      dom.floatingDirty.classList.toggle("visible", hasPendingWork);
+      if (hasPendingWork) {
+        dom.floatingDirty.textContent = `Modifs: ${dirtyCount} | Queue: ${queueCount} | Envoi: ${sendingCount}`;
+      }
+      state.blockedNavigation = hasPendingWork;
+    }
+
+    function onBeforeUnload(event) {
+      if (!state.blockedNavigation) return;
+      event.preventDefault();
+      event.returnValue = "";
     }
   </script>
 </body>
