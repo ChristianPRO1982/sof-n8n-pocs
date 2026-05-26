@@ -26,12 +26,12 @@ CREATE TABLE renov_categorie (
 
 CREATE TABLE renov_lien_sousthematique (
     lien_id INT NOT NULL REFERENCES renov_lien(id) ON DELETE CASCADE,
-    sousthematique_id INT NOT NULL REFERENCES renov_sousthematique(id) ON DELETE CASCADE,
-    PRIMARY KEY (lien_id, sousthematique_id)
+    target_id INT NOT NULL REFERENCES renov_sousthematique(id) ON DELETE CASCADE,
+    PRIMARY KEY (lien_id, target_id)
 );
 
 CREATE TABLE renov_lien_categorie (
     lien_id INT NOT NULL REFERENCES renov_lien(id) ON DELETE CASCADE,
-    categorie_id INT NOT NULL REFERENCES renov_categorie(id) ON DELETE CASCADE,
-    PRIMARY KEY (lien_id, categorie_id)
+    target_id INT NOT NULL REFERENCES renov_categorie(id) ON DELETE CASCADE,
+    PRIMARY KEY (lien_id, target_id)
 );
