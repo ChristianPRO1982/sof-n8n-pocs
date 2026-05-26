@@ -85,6 +85,29 @@
       flex-wrap: wrap;
     }
 
+    .nav-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .nav-group-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .nav-divider {
+      width: 1px;
+      height: 22px;
+      background: #c7d8f1;
+      border-radius: 999px;
+    }
+
     .status { min-height: 24px; font-size: 0.93rem; color: var(--muted); padding: 0 4px; }
     .status.success { color: var(--success); font-weight: 600; }
     .status.error { color: var(--danger); font-weight: 600; }
@@ -288,6 +311,8 @@
       .header { padding: 16px 14px 12px; }
       .main { padding: 14px; }
       .floating-dirty { right: 8px; top: 8px; }
+      .nav-group { width: 100%; }
+      .nav-divider { display: none; }
     }
 
     @media (max-width: 1100px) {
@@ -313,11 +338,15 @@
 
         <div class="main">
           <div class="nav-toolbar">
-            <nav class="nav-links" aria-label="Navigation tables sources">
-              <a class="btn btn-nav active" href="sources.html" aria-current="page">Sources</a>
-              <a class="btn btn-nav" href="thematiques.html">Thématiques</a>
-              <a class="btn btn-nav" href="sousthematiques.html">Sous-thématiques</a>
-              <a class="btn btn-nav" href="categories.html">Catégories</a>
+            <nav class="nav-links" aria-label="Navigation tables et paramétrage">
+              <a class="btn btn-nav active" href="sources.html" aria-current="page">Sources URLs</a>
+              <div class="nav-group">
+                <span class="nav-divider" aria-hidden="true"></span>
+                <span class="nav-group-label">Paramétrage</span>
+                <a class="btn btn-nav" href="thematiques.html">Thématiques</a>
+                <a class="btn btn-nav" href="sousthematiques.html">Sous-thématiques</a>
+                <a class="btn btn-nav" href="categories.html">Catégories</a>
+              </div>
             </nav>
             <div class="action-stack">
               <button id="refreshBtn" class="btn btn-ghost" type="button">Rafraîchir</button>
