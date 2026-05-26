@@ -720,7 +720,7 @@
       setStatus("Modification mise en file d'envoi.");
     }
 
-    async function onClickDelete(rowKey) {
+    function onClickDelete(rowKey) {
       const row = findRow(rowKey);
       const meta = state.metaByKey.get(rowKey);
       if (!row || !meta) return;
@@ -732,20 +732,9 @@
         return;
       }
 
-      let cascadeCount = 0;
-      try {
-        const payload = await apiCall("R", {}, "renov_sousthematique");
-        const subRows = normalizeReadPayload(payload);
-        cascadeCount = subRows.filter((item) => Number(item.st_id) === Number(row.id)).length;
-      } catch (error) {
-        setStatus(`Impossible d'évaluer la cascade: ${error.message || error}`, true);
-      }
-
       const label = String(row.libelle || "").trim();
       const targetText = label ? `"${label}"` : `id ${row.id}`;
-      const confirmMessage = cascadeCount > 0
-        ? `Confirmer la suppression de la thématique ${targetText} ?\nCette suppression supprimera aussi ${cascadeCount} sous-thématique(s) liée(s).`
-        : `Confirmer la suppression de la thématique ${targetText} ?`;
+      const confirmMessage = `Confirmer la suppression de la thématique ${targetText} ?\nSi des sous-thématiques sont présentes, elles seront supprimées.`;
 
       if (!window.confirm(confirmMessage)) {
         return;
