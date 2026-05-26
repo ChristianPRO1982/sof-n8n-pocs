@@ -334,6 +334,7 @@
 
   <script>
     const TABLE_NAME = "renov_sousthematique";
+    const PARENT_TABLE = "renov_thematique";
     const FALLBACK_ENDPOINTS = {
       C: "http://15.236.66.128/n8n/webhook-test/51b0418f-a18b-419d-814d-b0d6a6d8ba8d",
       R: "http://15.236.66.128/n8n/webhook-test/e99e3774-1dfb-49a6-aeb8-348046a412a2",
@@ -406,6 +407,7 @@
       dom.tableBody.addEventListener("click", onTableClick);
       window.addEventListener("beforeunload", onBeforeUnload);
 
+      await refreshThematiquesCache();
       await loadRows();
       startQueueWorker();
       refreshDirtyUi();
@@ -474,9 +476,9 @@
         .replace(/'/g, "&#39;");
     }
 
-    async function apiCall(action, data) {
+    async function apiCall(action, data, table = TABLE_NAME) {
       const endpoint = state.endpoints[action];
-      const payload = { action, table: TABLE_NAME, data };
+      const payload = { action, table, data };
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -494,7 +496,7 @@
         parsed = raw;
       }
 
-      debugAppend(`API ${action} ${TABLE_NAME} HTTP ${response.status} ${response.statusText}\n${raw}\n\n`);
+      debugAppend(`API ${action} ${table} HTTP ${response.status} ${response.statusText}\n${raw}\n\n`);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status} ${response.statusText}`);
@@ -510,14 +512,12 @@
       return [];
     }
 
-    function refreshThematiquesCacheFromReadRows(readRows) {
-      const byId = new Map();
-      for (const row of readRows) {
-        const id = Number(row.t_id);
-        if (!Number.isFinite(id) || byId.has(id)) continue;
-        byId.set(id, String(row.t_lib || ""));
-      }
-      state.thematiques = Array.from(byId.entries()).map(([id, libelle]) => ({ id, libelle }));
+    async function refreshThematiquesCache() {
+      const payload = await apiCall("R", {}, PARENT_TABLE);
+      const rows = normalizeReadPayload(payload);
+      state.thematiques = rows
+        .map((row) => ({ id: Number(row.id), libelle: String(row.libelle || "") }))
+        .filter((row) => Number.isFinite(row.id));
       state.thematiqueIds = new Set(state.thematiques.map((row) => row.id));
     }
 
@@ -561,7 +561,6 @@
       try {
         const payload = await apiCall("R", {});
         const rows = normalizeReadPayload(payload);
-        refreshThematiquesCacheFromReadRows(rows);
 
         state.rows = rows.map((raw) => {
           const key = rowKeyFromData(raw);
