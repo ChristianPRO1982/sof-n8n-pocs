@@ -334,7 +334,6 @@
 
   <script>
     const TABLE_NAME = "renov_sousthematique";
-    const PARENT_TABLE = "renov_thematique";
     const FALLBACK_ENDPOINTS = {
       C: "http://15.236.66.128/n8n/webhook-test/51b0418f-a18b-419d-814d-b0d6a6d8ba8d",
       R: "http://15.236.66.128/n8n/webhook-test/e99e3774-1dfb-49a6-aeb8-348046a412a2",
@@ -407,7 +406,6 @@
       dom.tableBody.addEventListener("click", onTableClick);
       window.addEventListener("beforeunload", onBeforeUnload);
 
-      await refreshThematiquesCache();
       await loadRows();
       startQueueWorker();
       refreshDirtyUi();
@@ -476,9 +474,9 @@
         .replace(/'/g, "&#39;");
     }
 
-    async function apiCall(action, data, table = TABLE_NAME) {
+    async function apiCall(action, data) {
       const endpoint = state.endpoints[action];
-      const payload = { action, table, data };
+      const payload = { action, table: TABLE_NAME, data };
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -496,7 +494,7 @@
         parsed = raw;
       }
 
-      debugAppend(`API ${action} ${table} HTTP ${response.status} ${response.statusText}\n${raw}\n\n`);
+      debugAppend(`API ${action} ${TABLE_NAME} HTTP ${response.status} ${response.statusText}\n${raw}\n\n`);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status} ${response.statusText}`);
@@ -512,12 +510,14 @@
       return [];
     }
 
-    async function refreshThematiquesCache() {
-      const payload = await apiCall("R", {}, PARENT_TABLE);
-      const rows = normalizeReadPayload(payload);
-      state.thematiques = rows
-        .map((row) => ({ id: Number(row.id), libelle: String(row.libelle || "") }))
-        .filter((row) => Number.isFinite(row.id));
+    function refreshThematiquesCacheFromReadRows(readRows) {
+      const byId = new Map();
+      for (const row of readRows) {
+        const id = Number(row.t_id);
+        if (!Number.isFinite(id) || byId.has(id)) continue;
+        byId.set(id, String(row.t_lib || ""));
+      }
+      state.thematiques = Array.from(byId.entries()).map(([id, libelle]) => ({ id, libelle }));
       state.thematiqueIds = new Set(state.thematiques.map((row) => row.id));
     }
 
@@ -528,21 +528,22 @@
     }
 
     function rowKeyFromData(row) {
-      if (row.id === null || row.id === undefined || row.id === "") {
+      const rowId = row.id ?? row.st_id;
+      if (rowId === null || rowId === undefined || rowId === "") {
         state.sequence += 1;
         return `tmp:${Date.now()}:${state.sequence}`;
       }
-      return `id:${row.id}`;
+      return `id:${rowId}`;
     }
 
     function normalizeRow(raw, key, isNew = false) {
-      const stRaw = raw.st_id;
-      const stId = stRaw === null || stRaw === undefined || stRaw === "" ? null : Number(stRaw);
+      const parentRaw = raw.t_id;
+      const parentId = parentRaw === null || parentRaw === undefined || parentRaw === "" ? null : Number(parentRaw);
       return {
         rowKey: key,
-        id: raw.id ?? null,
-        st_id: Number.isFinite(stId) ? stId : null,
-        libelle: String(raw.libelle ?? ""),
+        id: raw.st_id ?? null,
+        st_id: Number.isFinite(parentId) ? parentId : null,
+        libelle: String(raw.st_lib ?? ""),
         __isNew: isNew
       };
     }
@@ -560,6 +561,7 @@
       try {
         const payload = await apiCall("R", {});
         const rows = normalizeReadPayload(payload);
+        refreshThematiquesCacheFromReadRows(rows);
 
         state.rows = rows.map((raw) => {
           const key = rowKeyFromData(raw);
@@ -946,16 +948,15 @@
 
       if (entry.type === "D") {
         removeRowLocal(rowKey);
-        await refreshThematiquesCache();
-        renderTable();
         return;
       }
 
       if (entry.type === "C" && row) {
         const created = Array.isArray(responsePayload) ? responsePayload[0] : responsePayload;
         let hasCreatedId = false;
-        if (created && typeof created === "object" && created.id !== undefined && created.id !== null && created.id !== "") {
-          row.id = created.id;
+        const createdId = created && typeof created === "object" ? (created.id ?? created.st_id) : null;
+        if (createdId !== undefined && createdId !== null && createdId !== "") {
+          row.id = createdId;
           hasCreatedId = true;
           if (row.rowKey.startsWith("tmp:")) {
             const newKey = `id:${row.id}`;
@@ -971,8 +972,6 @@
           setStatus("CREATE réussi mais id manquant dans la réponse webhook.", true);
         }
       }
-
-      await refreshThematiquesCache();
 
       if (row) {
         row.libelle = String(row.libelle ?? "").trim();
@@ -1005,7 +1004,6 @@
 
         if ((entry.type === "C" || entry.type === "U") && row) {
           try {
-            await refreshThematiquesCache();
             if (!isValidThematiqueId(row.st_id)) {
               row.st_id = null;
               meta.errorMessage = "Thématique parent invalide après mise à jour concurrente. Re-sélection requise.";
