@@ -70,6 +70,21 @@
 
     .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 
+    .nav-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     .status { min-height: 24px; font-size: 0.93rem; color: var(--muted); padding: 0 4px; }
     .status.success { color: var(--success); font-weight: 600; }
     .status.error { color: var(--danger); font-weight: 600; }
@@ -116,6 +131,22 @@
       background: linear-gradient(180deg, #10a36e 0%, #047857 100%);
       color: #fff;
       box-shadow: 0 8px 16px rgba(4, 120, 87, 0.24);
+    }
+
+    .btn-nav {
+      background: #eef3fb;
+      color: #3e5d86;
+      border: 1px solid #d5e2f5;
+      font-size: 0.82rem;
+      padding: 8px 10px;
+    }
+
+    .btn-nav.active {
+      background: linear-gradient(180deg, #0b66cf 0%, var(--primary) 100%);
+      color: #fff;
+      border-color: #0054ad;
+      box-shadow: 0 8px 16px rgba(0, 91, 187, 0.22);
+      pointer-events: none;
     }
 
     .table-wrap {
@@ -187,7 +218,7 @@
       min-height: 34px;
     }
 
-    .col-action { width: 140px; }
+    .col-action { width: 220px; }
     .col-note { width: 80px; }
 
     .action-stack {
@@ -195,6 +226,7 @@
       flex-direction: row;
       gap: 6px;
       align-items: center;
+      flex-wrap: nowrap;
     }
 
     .empty { padding: 26px 16px; text-align: center; color: var(--muted); }
@@ -280,9 +312,20 @@
         </header>
 
         <div class="main">
+          <div class="nav-toolbar">
+            <nav class="nav-links" aria-label="Navigation tables sources">
+              <a class="btn btn-nav active" href="sources.html" aria-current="page">Sources</a>
+              <a class="btn btn-nav" href="thematiques.html">Thématiques</a>
+              <a class="btn btn-nav" href="sousthematiques.html">Sous-thématiques</a>
+              <a class="btn btn-nav" href="categories.html">Catégories</a>
+            </nav>
+            <div class="action-stack">
+              <button id="refreshBtn" class="btn btn-ghost" type="button">Rafraîchir</button>
+              <button id="newRowBtn" class="btn btn-primary" type="button">Nouvelle ligne</button>
+            </div>
+          </div>
           <div class="toolbar">
             <div id="status" class="status" role="status" aria-live="polite">Chargement des données...</div>
-            <button id="newRowBtn" class="btn btn-primary" type="button">Nouvelle ligne</button>
           </div>
 
           <div class="table-wrap" aria-label="Conteneur table renov_lien">
@@ -347,6 +390,7 @@
       layout: document.getElementById("layout"),
       debugPanel: document.getElementById("debugPanel"),
       debugOutput: document.getElementById("debugOutput"),
+      refreshBtn: document.getElementById("refreshBtn"),
       newRowBtn: document.getElementById("newRowBtn"),
       floatingDirty: document.getElementById("floatingDirty")
     };
@@ -378,6 +422,7 @@
         ""
       ].join("\n"));
 
+      dom.refreshBtn.addEventListener("click", onRefreshClick);
       dom.newRowBtn.addEventListener("click", onCreateRow);
       dom.tableBody.addEventListener("input", onTableInput);
       dom.tableBody.addEventListener("focusin", onTableFocusIn);
@@ -602,6 +647,10 @@
           <option value="false" ${selectedFalse}>false</option>
         </select>
       `;
+    }
+
+    function onRefreshClick() {
+      window.location.reload();
     }
 
     function onCreateRow() {
