@@ -70,6 +70,104 @@
 
     .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 
+    .filters-panel {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      padding: 10px 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .filters-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filters-title {
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #294a73;
+      letter-spacing: 0.01em;
+    }
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      align-items: start;
+    }
+
+    .filter-group {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .filter-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: #4f6585;
+    }
+
+    .filter-zone {
+      display: grid;
+      gap: 6px;
+      width: 100%;
+      border: 1px solid #d8e4f5;
+      border-radius: 10px;
+      background: #f7fbff;
+      padding: 6px 8px;
+      min-height: 34px;
+      cursor: pointer;
+      transition: border-color 120ms ease, box-shadow 120ms ease;
+    }
+
+    .filter-zone.is-editing {
+      border-color: #7fb0ec;
+      box-shadow: 0 0 0 3px rgba(0, 91, 187, 0.12);
+      background: #fff;
+    }
+
+    .filter-note-wrap {
+      border: 1px solid #d8e4f5;
+      border-radius: 10px;
+      background: #f7fbff;
+      padding: 8px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .filter-note-values {
+      font-size: 0.82rem;
+      color: #294a73;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .filter-note-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .filter-note-row label {
+      font-size: 0.78rem;
+      color: #4f6585;
+      display: grid;
+      gap: 4px;
+    }
+
+    .filter-note-row input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+    }
+
     .nav-toolbar {
       display: flex;
       align-items: center;
@@ -422,6 +520,8 @@
       .floating-dirty { right: 8px; top: 8px; }
       .nav-group { width: 100%; }
       .nav-divider { display: none; }
+      .filters-grid { grid-template-columns: 1fr; }
+      .filter-note-row { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 1100px) {
@@ -465,6 +565,39 @@
           <div class="toolbar">
             <div id="status" class="status" role="status" aria-live="polite">Chargement des données...</div>
           </div>
+
+          <section id="filtersPanel" class="filters-panel" aria-label="Filtres des sources">
+            <div class="filters-head">
+              <span class="filters-title">Filtres dynamiques (OR)</span>
+              <button id="resetFiltersBtn" class="btn btn-ghost" type="button">Retirer tous les filtres</button>
+            </div>
+            <div class="filters-grid">
+              <div class="filter-group">
+                <span class="filter-label">Thématiques</span>
+                <div id="filterThemeZone"></div>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Catégories</span>
+                <div id="filterCategoryZone"></div>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Note</span>
+                <div class="filter-note-wrap">
+                  <div id="filterNoteValues" class="filter-note-values">Toutes les notes (0 à 10)</div>
+                  <div class="filter-note-row">
+                    <label for="filterNoteMin">
+                      Minimum
+                      <input id="filterNoteMin" type="range" min="0" max="10" step="1" value="0" data-filter-note="min" />
+                    </label>
+                    <label for="filterNoteMax">
+                      Maximum
+                      <input id="filterNoteMax" type="range" min="0" max="10" step="1" value="10" data-filter-note="max" />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
           <div class="table-wrap" aria-label="Conteneur table renov_lien">
             <table aria-label="Table renov_lien">
@@ -530,6 +663,15 @@
         categorieById: new Map(),
         sousthematiquesByThematique: new Map()
       },
+      filters: {
+        sousthematiqueIds: [],
+        categorieIds: [],
+        noteMin: 0,
+        noteMax: 10,
+        noteActive: false
+      },
+      activeFilterZone: null,
+      filterZoneActivationGuard: null,
       activeZone: null,
       zoneActivationGuard: null,
       relationPendingKeys: new Set(),
@@ -551,7 +693,14 @@
       debugOutput: document.getElementById("debugOutput"),
       refreshBtn: document.getElementById("refreshBtn"),
       newRowBtn: document.getElementById("newRowBtn"),
-      floatingDirty: document.getElementById("floatingDirty")
+      floatingDirty: document.getElementById("floatingDirty"),
+      filtersPanel: document.getElementById("filtersPanel"),
+      resetFiltersBtn: document.getElementById("resetFiltersBtn"),
+      filterThemeZone: document.getElementById("filterThemeZone"),
+      filterCategoryZone: document.getElementById("filterCategoryZone"),
+      filterNoteValues: document.getElementById("filterNoteValues"),
+      filterNoteMin: document.getElementById("filterNoteMin"),
+      filterNoteMax: document.getElementById("filterNoteMax")
     };
 
     init().catch((error) => {
@@ -599,9 +748,14 @@
       dom.tableBody.addEventListener("input", onTableInput);
       dom.tableBody.addEventListener("focusout", onTableFocusOut);
       dom.tableBody.addEventListener("click", onTableClick);
+      dom.filtersPanel.addEventListener("click", onFiltersClick);
+      dom.filtersPanel.addEventListener("input", onFiltersInput);
+      dom.filtersPanel.addEventListener("focusout", onFiltersFocusOut);
+      dom.resetFiltersBtn.addEventListener("click", onResetFiltersClick);
       window.addEventListener("beforeunload", onBeforeUnload);
 
       await loadTagReferences();
+      renderFilters();
       await loadRows();
       startQueueWorker();
       refreshDirtyUi();
@@ -888,9 +1042,143 @@
         setTableMessage("Aucune donnée.");
         return;
       }
-      const html = state.rows.map((row) => renderRowHtml(row)).join("");
+      const filteredRows = getFilteredRows();
+      if (!filteredRows.length) {
+        setTableMessage("Aucune ligne ne correspond aux filtres.");
+        return;
+      }
+      const html = filteredRows.map((row) => renderRowHtml(row)).join("");
       dom.tableBody.innerHTML = html;
       refreshDirtyUi();
+    }
+
+    function renderFilters() {
+      dom.filterThemeZone.innerHTML = renderFilterZone("sousthematique");
+      dom.filterCategoryZone.innerHTML = renderFilterZone("categorie");
+      renderFilterNote();
+    }
+
+    function renderFilterZone(zoneType) {
+      const selectedIds = zoneType === "sousthematique" ? state.filters.sousthematiqueIds : state.filters.categorieIds;
+      const isEditing = isFilterZoneEditing(zoneType);
+      const zoneClass = ["filter-zone", isEditing ? "is-editing" : ""].filter(Boolean).join(" ");
+      const chipsHtml = renderFilterChips(selectedIds, zoneType, isEditing);
+      const selectHtml = isEditing ? renderFilterSelect(zoneType, selectedIds) : "";
+      return `
+        <div class="${zoneClass}" data-filter-zone="${zoneType}" tabindex="0">
+          <div class="relation-chip-list">${chipsHtml}</div>
+          ${selectHtml}
+        </div>
+      `;
+    }
+
+    function renderFilterChips(selectedIds, zoneType, editable) {
+      if (!selectedIds.length) {
+        return `<span class="relation-empty">Aucun filtre</span>`;
+      }
+      const chips = [];
+      for (const id of selectedIds) {
+        const label = zoneType === "sousthematique" ? getSousthematiqueDisplay(id) : getCategorieDisplay(id);
+        const remove = editable
+          ? `<button class="relation-chip-remove js-filter-remove" type="button" data-filter-zone="${zoneType}" data-target-id="${id}" aria-label="Retirer">✖</button>`
+          : "";
+        chips.push(`<span class="relation-chip">${escapeHtml(label)}${remove}</span>`);
+      }
+      return chips.join("");
+    }
+
+    function renderFilterSelect(zoneType, selectedIds) {
+      if (zoneType === "sousthematique") {
+        const selectedSet = new Set(selectedIds.map((value) => Number(value)));
+        const groups = [];
+        for (const thematique of state.catalog.thematiques) {
+          const options = (state.catalog.sousthematiquesByThematique.get(thematique.id) || [])
+            .filter((item) => !selectedSet.has(item.id))
+            .map((item) => `<option value="${item.id}">${escapeHtml(item.libelle)}</option>`)
+            .join("");
+          if (options) {
+            groups.push(`<optgroup label="${escapeHtml(thematique.libelle)}">${options}</optgroup>`);
+          }
+        }
+        const orphanOptions = state.catalog.sousthematiques
+          .filter((item) => !state.catalog.thematiqueById.has(item.thematiqueId) && !selectedSet.has(item.id))
+          .map((item) => `<option value="${item.id}">${escapeHtml(item.libelle)}</option>`)
+          .join("");
+        if (orphanOptions) {
+          groups.push(`<optgroup label="Sans thématique">${orphanOptions}</optgroup>`);
+        }
+        if (!groups.length) {
+          return `<select class="cell-select relation-select" data-filter-zone-select="${zoneType}" disabled><option>Aucune sous-thématique disponible</option></select>`;
+        }
+        return `
+          <select class="cell-select relation-select" data-filter-zone-select="${zoneType}">
+            <option value="">Ajouter un filtre thématique...</option>
+            ${groups.join("")}
+          </select>
+        `;
+      }
+
+      const selectedSet = new Set(selectedIds.map((value) => Number(value)));
+      const options = state.catalog.categories
+        .filter((item) => !selectedSet.has(item.id))
+        .map((item) => `<option value="${item.id}">${escapeHtml(item.libelle)}</option>`)
+        .join("");
+      if (!options) {
+        return `<select class="cell-select relation-select" data-filter-zone-select="${zoneType}" disabled><option>Aucune catégorie disponible</option></select>`;
+      }
+      return `
+        <select class="cell-select relation-select" data-filter-zone-select="${zoneType}">
+          <option value="">Ajouter un filtre catégorie...</option>
+          ${options}
+        </select>
+      `;
+    }
+
+    function renderFilterNote() {
+      const { noteMin, noteMax, noteActive } = state.filters;
+      dom.filterNoteMin.value = String(noteMin);
+      dom.filterNoteMax.value = String(noteMax);
+      dom.filterNoteValues.textContent = noteActive
+        ? `Note filtrée: ${noteMin} à ${noteMax}`
+        : "Toutes les notes (0 à 10)";
+    }
+
+    function getFilteredRows() {
+      if (!hasActiveFilters()) return state.rows;
+      return state.rows.filter((row) => rowMatchesFilters(row));
+    }
+
+    function hasActiveFilters() {
+      return state.filters.sousthematiqueIds.length > 0
+        || state.filters.categorieIds.length > 0
+        || state.filters.noteActive;
+    }
+
+    function rowMatchesFilters(row) {
+      const matchTheme = state.filters.sousthematiqueIds.length > 0
+        && hasIntersection(row.sousthematique_ids, state.filters.sousthematiqueIds);
+      const matchCategorie = state.filters.categorieIds.length > 0
+        && hasIntersection(row.categorie_ids, state.filters.categorieIds);
+      const matchNote = state.filters.noteActive && rowNoteMatchesFilter(row);
+      return matchTheme || matchCategorie || matchNote;
+    }
+
+    function rowNoteMatchesFilter(row) {
+      const raw = row?.note;
+      if (raw === null || raw === undefined) return false;
+      const text = String(raw).trim();
+      if (!text) return false;
+      const value = Number(text);
+      if (!Number.isFinite(value)) return false;
+      return value >= state.filters.noteMin && value <= state.filters.noteMax;
+    }
+
+    function hasIntersection(left, right) {
+      const rightSet = new Set((right || []).map((value) => Number(value)));
+      for (const value of left || []) {
+        if (rightSet.has(Number(value))) return true;
+      }
+      return false;
     }
 
     function renderRowHtml(row) {
@@ -1042,6 +1330,163 @@
       return item.libelle || `#${id}`;
     }
 
+    function onFiltersClick(event) {
+      const removeBtn = event.target.closest(".js-filter-remove");
+      if (removeBtn) {
+        event.preventDefault();
+        const zoneType = removeBtn.dataset.filterZone;
+        const targetId = Number(removeBtn.dataset.targetId);
+        removeFilterSelection(zoneType, targetId);
+        return;
+      }
+
+      const zoneEl = event.target.closest("[data-filter-zone]");
+      if (!zoneEl) return;
+      const zoneType = zoneEl.dataset.filterZone;
+      activateFilterZone(zoneType);
+    }
+
+    function onFiltersInput(event) {
+      const target = event.target;
+      if (!target) return;
+
+      if (target.matches("[data-filter-zone-select]")) {
+        const zoneType = target.dataset.filterZoneSelect;
+        const rawValue = String(target.value ?? "").trim();
+        if (!rawValue) return;
+        const targetId = Number(rawValue);
+        if (!Number.isFinite(targetId)) return;
+        addFilterSelection(zoneType, targetId);
+        return;
+      }
+
+      if (target.matches("[data-filter-note]")) {
+        updateNoteFilterRange(target.dataset.filterNote);
+      }
+    }
+
+    function onFiltersFocusOut(event) {
+      const zoneEl = event.target.closest("[data-filter-zone]");
+      if (!zoneEl) return;
+      const zoneType = zoneEl.dataset.filterZone;
+      window.setTimeout(() => {
+        if (isFilterZoneGuardActive(zoneType)) return;
+        if (isFocusInsideCurrentFilterZone(zoneType)) return;
+        closeActiveFilterZoneIfMatch(zoneType);
+      }, 0);
+    }
+
+    function onResetFiltersClick() {
+      state.filters.sousthematiqueIds = [];
+      state.filters.categorieIds = [];
+      state.filters.noteMin = 0;
+      state.filters.noteMax = 10;
+      state.filters.noteActive = false;
+      state.activeFilterZone = null;
+      state.filterZoneActivationGuard = null;
+      renderFilters();
+      renderTable();
+    }
+
+    function addFilterSelection(zoneType, targetId) {
+      const field = zoneType === "sousthematique" ? "sousthematiqueIds" : "categorieIds";
+      state.filters[field] = uniqueNumericIds([...(state.filters[field] || []), Number(targetId)]);
+      renderFilters();
+      renderTable();
+      focusFilterSelect(zoneType);
+    }
+
+    function removeFilterSelection(zoneType, targetId) {
+      const field = zoneType === "sousthematique" ? "sousthematiqueIds" : "categorieIds";
+      state.filters[field] = (state.filters[field] || []).filter((value) => Number(value) !== Number(targetId));
+      renderFilters();
+      renderTable();
+      focusFilterSelect(zoneType);
+    }
+
+    function updateNoteFilterRange(changedBound) {
+      let noteMin = clampNoteValue(dom.filterNoteMin.value);
+      let noteMax = clampNoteValue(dom.filterNoteMax.value);
+      if (changedBound === "min" && noteMin > noteMax) {
+        noteMax = noteMin;
+      }
+      if (changedBound === "max" && noteMax < noteMin) {
+        noteMin = noteMax;
+      }
+      state.filters.noteMin = noteMin;
+      state.filters.noteMax = noteMax;
+      state.filters.noteActive = !(noteMin === 0 && noteMax === 10);
+      renderFilterNote();
+      renderTable();
+    }
+
+    function clampNoteValue(value) {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) return 0;
+      return Math.min(10, Math.max(0, Math.round(numeric)));
+    }
+
+    function activateFilterZone(zoneType) {
+      if (!zoneType) return;
+      if (state.activeFilterZone === zoneType) return;
+      state.activeFilterZone = zoneType;
+      setFilterZoneActivationGuard(zoneType);
+      renderFilters();
+      focusFilterSelect(zoneType);
+    }
+
+    function focusFilterSelect(zoneType) {
+      window.setTimeout(() => {
+        const selectEl = dom.filtersPanel.querySelector(`[data-filter-zone="${zoneType}"] [data-filter-zone-select="${zoneType}"]`);
+        if (selectEl) selectEl.focus();
+        clearFilterZoneActivationGuard(zoneType);
+      }, 0);
+    }
+
+    function closeActiveFilterZoneIfMatch(zoneType) {
+      if (state.activeFilterZone !== zoneType) return;
+      state.activeFilterZone = null;
+      renderFilters();
+    }
+
+    function isFilterZoneEditing(zoneType) {
+      return state.activeFilterZone === zoneType;
+    }
+
+    function getCurrentFilterZoneElement(zoneType) {
+      return dom.filtersPanel.querySelector(`[data-filter-zone="${zoneType}"]`);
+    }
+
+    function isFocusInsideCurrentFilterZone(zoneType) {
+      const zone = getCurrentFilterZoneElement(zoneType);
+      const active = document.activeElement;
+      if (!zone || !active) return false;
+      return zone.contains(active);
+    }
+
+    function setFilterZoneActivationGuard(zoneType) {
+      state.filterZoneActivationGuard = {
+        zoneType,
+        expiresAt: Date.now() + 1000
+      };
+    }
+
+    function isFilterZoneGuardActive(zoneType) {
+      const guard = state.filterZoneActivationGuard;
+      if (!guard) return false;
+      if (Date.now() > guard.expiresAt) {
+        state.filterZoneActivationGuard = null;
+        return false;
+      }
+      return guard.zoneType === zoneType;
+    }
+
+    function clearFilterZoneActivationGuard(zoneType) {
+      if (!state.filterZoneActivationGuard) return;
+      if (state.filterZoneActivationGuard.zoneType !== zoneType) return;
+      state.filterZoneActivationGuard = null;
+    }
+
     function onRefreshClick() {
       window.location.reload();
     }
@@ -1087,6 +1532,10 @@
       const rawValue = target.type === "checkbox" ? target.checked : target.value;
       row[field] = parseFieldValue(field, rawValue);
       updateRowDirtyState(rowKey);
+      if (field === "note" && state.filters.noteActive) {
+        renderTable();
+        return;
+      }
       refreshRowUi(rowEl, rowKey);
       refreshDirtyUi();
     }
@@ -1326,7 +1775,8 @@
         : current.filter((value) => Number(value) !== targetValue);
       meta.hasError = false;
       meta.errorMessage = "";
-      refreshRow(rowKey);
+      if (hasActiveFilters()) renderTable();
+      else refreshRow(rowKey);
       refreshDirtyUi();
 
       try {
@@ -1338,7 +1788,8 @@
         meta.hasError = true;
         meta.errorMessage = String(error.message || error);
         setStatus("Impossible de mettre à jour les associations.", true);
-        refreshRow(rowKey);
+        if (hasActiveFilters()) renderTable();
+        else refreshRow(rowKey);
         refreshDirtyUi();
       } finally {
         state.relationPendingKeys.delete(pendingKey);
