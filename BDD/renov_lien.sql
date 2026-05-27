@@ -2,7 +2,7 @@ CREATE TABLE renov_lien (
     id SERIAL PRIMARY KEY,
     url VARCHAR(500) UNIQUE,
     title VARCHAR(150),
-    score INT CHECK (score BETWEEN 0 AND 100),
+    score INT CHECK (score BETWEEN 0 AND 10),
     update_date DATE,
     smart_scraping BOOLEAN DEFAULT FALSE,
     updated_at TIMESTAMPTZ,
