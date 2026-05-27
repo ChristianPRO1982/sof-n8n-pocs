@@ -39,7 +39,7 @@
       padding: 28px 16px 40px;
     }
 
-    .app { max-width: 1600px; margin: 0 auto; display: grid; gap: 16px; }
+    .app { width: 100%; max-width: none; margin: 0; display: grid; gap: 16px; }
 
     .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
     .layout.debug-active { grid-template-columns: minmax(0, 1fr) minmax(320px, 380px); }
@@ -179,7 +179,7 @@
       overflow: auto;
     }
 
-    table { width: 100%; border-collapse: collapse; min-width: 1750px; font-size: 0.9rem; }
+    table { width: 100%; border-collapse: collapse; min-width: 1200px; font-size: 0.9rem; }
 
     thead th {
       text-align: left;
@@ -224,6 +224,15 @@
       box-shadow: 0 0 0 3px rgba(0, 91, 187, 0.12);
     }
 
+    .cell-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      display: block;
+      margin: 7px auto;
+    }
+
     .cell-id {
       font-weight: 700;
       color: #0b2d56;
@@ -241,13 +250,15 @@
       min-height: 34px;
     }
 
-    .col-action { width: 220px; }
-    .col-id { width: 84px; }
-    .col-zone { width: 290px; min-width: 290px; }
-    .col-note { width: 80px; }
-    .col-date { width: 140px; }
-    .col-bool { width: 130px; }
-    .col-ts { width: 170px; }
+    .col-action { width: 8%; }
+    .col-id { width: 84px; display: none; }
+    .layout.debug-active .col-id { display: table-cell; }
+    .col-link { width: 20%; }
+    .col-zone { width: 20%; min-width: 0; }
+    .col-note { width: 5%; }
+    .col-date { width: 8%; }
+    .col-bool { width: 5%; }
+    .col-ts { width: 7%; }
 
     .relation-zone {
       display: grid;
@@ -322,6 +333,12 @@
       gap: 6px;
       align-items: center;
       flex-wrap: nowrap;
+    }
+
+    .row-actions .btn {
+      font-size: 0.72rem;
+      padding: 9px 7px;
+      letter-spacing: 0.01em;
     }
 
     .empty { padding: 26px 16px; text-align: center; color: var(--muted); }
@@ -433,16 +450,16 @@
             <table aria-label="Table renov_lien">
               <thead>
                 <tr>
-                  <th class="col-action">Action</th>
-                  <th class="col-id">id</th>
-                  <th>lien</th>
+                  <th class="col-action">Actions</th>
+                  <th class="col-id">ID</th>
+                  <th class="col-link">Lien</th>
                   <th class="col-zone">Thématiques</th>
                   <th class="col-zone">Catégories</th>
-                  <th class="col-note">note</th>
-                  <th class="col-date">date_maj</th>
-                  <th class="col-bool">smart_scraping</th>
-                  <th class="col-ts">updated_at</th>
-                  <th class="col-ts">scraped_at</th>
+                  <th class="col-note">Note</th>
+                  <th class="col-date"><span title="Date de mise à jour de la source. Elle est différente de la date MAJ qui correspond à la modification de cette ligne et de la date de scraping qui correspond à la date où le robot à récupérer le texte de la page cible.">Date ⓘ</span></th>
+                  <th class="col-bool"><span title="Scraping intelligent avec IA et profondeur de 3">scrap ⓘ</span></th>
+                  <th class="col-ts">MAJ</th>
+                  <th class="col-ts">Scraping</th>
                 </tr>
               </thead>
               <tbody id="table-body">
@@ -870,18 +887,18 @@
       return `
         <tr data-row-key="${escapeHtml(row.rowKey)}" class="${rowClass}">
           <td class="col-action">
-            <div class="action-stack">
+            <div class="action-stack row-actions">
               <button class="btn ${actionClass} js-modify" type="button" ${modDisabled}>${actionLabel}</button>
               <button class="btn btn-danger js-delete" type="button">SUPPRIMER</button>
             </div>
           </td>
           <td class="col-id"><span class="cell-id">${escapeHtml(row.id ?? "(nouveau)")}</span></td>
-          <td>${renderTextInput("lien", row.lien)}</td>
+          <td class="col-link">${renderTextInput("lien", row.lien)}</td>
           <td class="col-zone">${renderRelationZone(row, "sousthematique", canEditRelations)}</td>
           <td class="col-zone">${renderRelationZone(row, "categorie", canEditRelations)}</td>
           <td class="col-note">${renderNoteInput(row.note)}</td>
           <td class="col-date">${renderDateInput("date_maj", row.date_maj)}</td>
-          <td class="col-bool">${renderBooleanSelect("smart_scraping", row.smart_scraping)}</td>
+          <td class="col-bool">${renderBooleanCheckbox("smart_scraping", row.smart_scraping)}</td>
           <td class="col-ts"><span class="cell-readonly">${escapeHtml(row.updated_at || "")}</span></td>
           <td class="col-ts"><span class="cell-readonly">${escapeHtml(row.scraped_at || "")}</span></td>
         </tr>
@@ -900,15 +917,9 @@
       return `<input class="cell-input" data-field="${field}" type="date" value="${escapeHtml(value)}" />`;
     }
 
-    function renderBooleanSelect(field, value) {
-      const selectedTrue = value === true ? "selected" : "";
-      const selectedFalse = value === false ? "selected" : "";
-      return `
-        <select class="cell-select" data-field="${field}">
-          <option value="true" ${selectedTrue}>true</option>
-          <option value="false" ${selectedFalse}>false</option>
-        </select>
-      `;
+    function renderBooleanCheckbox(field, value) {
+      const checked = value === true ? "checked" : "";
+      return `<input class="cell-checkbox" data-field="${field}" type="checkbox" ${checked} aria-label="Activer le scraping intelligent" />`;
     }
 
     function renderRelationZone(row, zoneType, enabled) {
@@ -1045,7 +1056,8 @@
       if (!row) return;
 
       const field = target.dataset.field;
-      row[field] = parseFieldValue(field, target.value);
+      const rawValue = target.type === "checkbox" ? target.checked : target.value;
+      row[field] = parseFieldValue(field, rawValue);
       updateRowDirtyState(rowKey);
       refreshRowUi(rowEl, rowKey);
       refreshDirtyUi();
@@ -1053,6 +1065,7 @@
 
     function parseFieldValue(field, value) {
       if (field === "smart_scraping") {
+        if (typeof value === "boolean") return value;
         return value === "true";
       }
       if (field === "note") {
