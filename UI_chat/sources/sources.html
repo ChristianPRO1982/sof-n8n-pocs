@@ -583,15 +583,15 @@
               <div class="filter-group">
                 <span class="filter-label">Note</span>
                 <div class="filter-note-wrap">
-                  <div id="filterNoteValues" class="filter-note-values">Toutes les notes (0 à 10)</div>
+                  <div id="filterNoteValues" class="filter-note-values">Toutes les notes (0 à 100)</div>
                   <div class="filter-note-row">
                     <label for="filterNoteMin">
                       Minimum
-                      <input id="filterNoteMin" type="range" min="0" max="10" step="1" value="0" data-filter-note="min" />
+                      <input id="filterNoteMin" type="range" min="0" max="100" step="1" value="0" data-filter-note="min" />
                     </label>
                     <label for="filterNoteMax">
                       Maximum
-                      <input id="filterNoteMax" type="range" min="0" max="10" step="1" value="10" data-filter-note="max" />
+                      <input id="filterNoteMax" type="range" min="0" max="100" step="1" value="100" data-filter-note="max" />
                     </label>
                   </div>
                 </div>
@@ -667,7 +667,7 @@
         sousthematiqueIds: [],
         categorieIds: [],
         noteMin: 0,
-        noteMax: 10,
+        noteMax: 100,
         noteActive: false
       },
       activeFilterZone: null,
@@ -887,11 +887,11 @@
       return {
         rowKey: key,
         id: raw.id ?? null,
-        lien: raw.lien ?? "",
+        url: raw.url ?? raw.lien ?? "",
         sousthematique_ids: normalizeIdArray(raw.sousthematique_ids),
         categorie_ids: normalizeIdArray(raw.categorie_ids),
-        note: raw.note ?? "",
-        date_maj: normalizeDateOnly(raw.date_maj),
+        score: raw.score ?? raw.note ?? "",
+        update_date: normalizeDateOnly(raw.update_date ?? raw.date_maj),
         smart_scraping: typeof raw.smart_scraping === "boolean" ? raw.smart_scraping : false,
         updated_at: formatTimestampToMinute(raw.updated_at),
         scraped_at: formatTimestampToMinute(raw.scraped_at),
@@ -958,22 +958,22 @@
         state.catalog.thematiques = themesRaw
           .map((raw) => ({
             id: Number(raw.id ?? raw.t_id),
-            libelle: String(raw.libelle ?? raw.t_lib ?? "")
+            libelle: String(raw.description ?? raw.libelle ?? raw.t_lib ?? "")
           }))
           .filter((row) => Number.isFinite(row.id));
 
         state.catalog.sousthematiques = subThemesRaw
           .map((raw) => ({
-            id: Number(raw.id ?? raw.st_id ?? raw.sousthematique_id),
-            thematiqueId: Number(raw.thematique_id ?? raw.t_id ?? raw.st_parent_id),
-            libelle: String(raw.libelle ?? raw.st_lib ?? "")
+            id: Number(raw.id ?? raw.sousthematique_id ?? raw.st_id),
+            thematiqueId: Number(raw.st_id ?? raw.thematique_id ?? raw.t_id ?? raw.st_parent_id),
+            libelle: String(raw.description ?? raw.libelle ?? raw.st_lib ?? "")
           }))
           .filter((row) => Number.isFinite(row.id));
 
         state.catalog.categories = categoriesRaw
           .map((raw) => ({
             id: Number(raw.id ?? raw.c_id ?? raw.categorie_id),
-            libelle: String(raw.libelle ?? raw.c_lib ?? "")
+            libelle: String(raw.description ?? raw.libelle ?? raw.c_lib ?? "")
           }))
           .filter((row) => Number.isFinite(row.id));
 
@@ -1028,9 +1028,9 @@
     function snapshotRow(row) {
       return {
         id: row.id,
-        lien: row.lien,
-        note: row.note,
-        date_maj: row.date_maj,
+        url: row.url,
+        score: row.score,
+        update_date: row.update_date,
         smart_scraping: row.smart_scraping,
         updated_at: row.updated_at,
         scraped_at: row.scraped_at
@@ -1140,7 +1140,7 @@
       dom.filterNoteMax.value = String(noteMax);
       dom.filterNoteValues.textContent = noteActive
         ? `Note filtrée: ${noteMin} à ${noteMax}`
-        : "Toutes les notes (0 à 10)";
+        : "Toutes les notes (0 à 100)";
     }
 
     function getFilteredRows() {
@@ -1164,7 +1164,7 @@
     }
 
     function rowNoteMatchesFilter(row) {
-      const raw = row?.note;
+      const raw = row?.score;
       if (raw === null || raw === undefined) return false;
       const text = String(raw).trim();
       if (!text) return false;
@@ -1191,7 +1191,7 @@
       const rowClass = [isDirty ? "row-dirty" : "", hasError ? "row-error" : ""].filter(Boolean).join(" ");
       const actionLabel = isCreateRow ? "AJOUTER" : "MODIFIER";
       const actionClass = isCreateRow ? "btn-add" : "btn-modify";
-      const rowLink = buildRowExternalLink(row.lien);
+      const rowLink = buildRowExternalLink(row.url);
 
       return `
         <tr data-row-key="${escapeHtml(row.rowKey)}" class="${rowClass}">
@@ -1203,11 +1203,11 @@
             </div>
           </td>
           <td class="col-id"><span class="cell-id">${escapeHtml(row.id ?? "(nouveau)")}</span></td>
-          <td class="col-link">${renderTextInput("lien", row.lien)}</td>
+          <td class="col-link">${renderTextInput("url", row.url)}</td>
           <td class="col-zone">${renderRelationZone(row, "sousthematique", canEditRelations)}</td>
           <td class="col-zone">${renderRelationZone(row, "categorie", canEditRelations)}</td>
-          <td class="col-note">${renderNoteInput(row.note)}</td>
-          <td class="col-date">${renderDateInput("date_maj", row.date_maj)}</td>
+          <td class="col-note">${renderNoteInput(row.score)}</td>
+          <td class="col-date">${renderDateInput("update_date", row.update_date)}</td>
           <td class="col-bool">${renderBooleanCheckbox("smart_scraping", row.smart_scraping)}</td>
           <td class="col-ts"><span class="cell-readonly">${escapeHtml(row.updated_at || "")}</span></td>
           <td class="col-ts"><span class="cell-readonly">${escapeHtml(row.scraped_at || "")}</span></td>
@@ -1220,7 +1220,7 @@
     }
 
     function renderNoteInput(value) {
-      return `<input class="cell-input" data-field="note" type="number" min="0" max="10" step="1" inputmode="numeric" value="${escapeHtml(value)}" />`;
+      return `<input class="cell-input" data-field="score" type="number" min="0" max="100" step="1" inputmode="numeric" value="${escapeHtml(value)}" />`;
     }
 
     function renderDateInput(field, value) {
@@ -1380,7 +1380,7 @@
       state.filters.sousthematiqueIds = [];
       state.filters.categorieIds = [];
       state.filters.noteMin = 0;
-      state.filters.noteMax = 10;
+      state.filters.noteMax = 100;
       state.filters.noteActive = false;
       state.activeFilterZone = null;
       state.filterZoneActivationGuard = null;
@@ -1415,7 +1415,7 @@
       }
       state.filters.noteMin = noteMin;
       state.filters.noteMax = noteMax;
-      state.filters.noteActive = !(noteMin === 0 && noteMax === 10);
+      state.filters.noteActive = !(noteMin === 0 && noteMax === 100);
       renderFilterNote();
       renderTable();
     }
@@ -1423,7 +1423,7 @@
     function clampNoteValue(value) {
       const numeric = Number(value);
       if (!Number.isFinite(numeric)) return 0;
-      return Math.min(10, Math.max(0, Math.round(numeric)));
+      return Math.min(100, Math.max(0, Math.round(numeric)));
     }
 
     function activateFilterZone(zoneType) {
@@ -1532,7 +1532,7 @@
       const rawValue = target.type === "checkbox" ? target.checked : target.value;
       row[field] = parseFieldValue(field, rawValue);
       updateRowDirtyState(rowKey);
-      if (field === "note" && state.filters.noteActive) {
+      if (field === "score" && state.filters.noteActive) {
         renderTable();
         return;
       }
@@ -1545,10 +1545,10 @@
         if (typeof value === "boolean") return value;
         return value === "true";
       }
-      if (field === "note") {
+      if (field === "score") {
         return value.trim() === "" ? "" : value.trim();
       }
-      if (field === "date_maj") {
+      if (field === "update_date") {
         return normalizeDateOnly(value);
       }
       return value;
@@ -1838,9 +1838,9 @@
 
     function areRowsEqual(a, b) {
       return a.id === b.id
-        && a.lien === b.lien
-        && String(a.note) === String(b.note)
-        && a.date_maj === b.date_maj
+        && a.url === b.url
+        && String(a.score) === String(b.score)
+        && a.update_date === b.update_date
         && a.smart_scraping === b.smart_scraping
         && a.updated_at === b.updated_at
         && a.scraped_at === b.scraped_at;
@@ -1853,9 +1853,9 @@
 
       const payload = {
         id: row.id,
-        lien: String(row.lien ?? ""),
-        note: row.note === "" ? null : Number(row.note),
-        date_maj: row.date_maj === "" ? null : row.date_maj,
+        url: String(row.url ?? ""),
+        score: row.score === "" ? null : Number(row.score),
+        update_date: row.update_date === "" ? null : row.update_date,
         smart_scraping: row.smart_scraping
       };
       if (type === "C" && (payload.id === null || payload.id === "")) {
@@ -1865,21 +1865,21 @@
     }
 
     function validateRowForCrud(row) {
-      const noteText = String(row.note ?? "").trim();
-      if (noteText !== "") {
-        if (!/^-?\d+$/.test(noteText)) {
-          return "Note invalide: entier requis entre 0 et 10.";
+      const scoreText = String(row.score ?? "").trim();
+      if (scoreText !== "") {
+        if (!/^-?\d+$/.test(scoreText)) {
+          return "Note invalide: entier requis entre 0 et 100.";
         }
-        const noteValue = Number(noteText);
-        if (!Number.isInteger(noteValue) || noteValue < 0 || noteValue > 10) {
-          return "Note invalide: entier requis entre 0 et 10.";
+        const scoreValue = Number(scoreText);
+        if (!Number.isInteger(scoreValue) || scoreValue < 0 || scoreValue > 100) {
+          return "Note invalide: entier requis entre 0 et 100.";
         }
       }
 
-      const dateText = String(row.date_maj ?? "").trim();
+      const dateText = String(row.update_date ?? "").trim();
       if (dateText !== "") {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
-          return "date_maj invalide: format attendu YYYY-MM-DD.";
+          return "Date invalide: format attendu YYYY-MM-DD.";
         }
       }
       return null;

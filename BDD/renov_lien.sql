@@ -1,8 +1,9 @@
 CREATE TABLE renov_lien (
     id SERIAL PRIMARY KEY,
-    lien VARCHAR(500) UNIQUE,
-    note INT CHECK (note BETWEEN 0 AND 100),
-    date_maj DATE,
+    url VARCHAR(500) UNIQUE,
+    title VARCHAR(150),
+    score INT CHECK (score BETWEEN 0 AND 100),
+    update_date DATE,
     smart_scraping BOOLEAN DEFAULT FALSE,
     updated_at TIMESTAMPTZ,
     scraped_at TIMESTAMPTZ
@@ -10,18 +11,18 @@ CREATE TABLE renov_lien (
 
 CREATE TABLE renov_thematique (
     id SERIAL PRIMARY KEY,
-    libelle VARCHAR(100) UNIQUE
+    description VARCHAR(100) UNIQUE
 );
 
 CREATE TABLE renov_sousthematique (
     id SERIAL PRIMARY KEY,
     st_id INT NOT NULL REFERENCES renov_thematique(id) ON DELETE CASCADE,
-    libelle VARCHAR(100) UNIQUE
+    description VARCHAR(100) UNIQUE
 );
 
 CREATE TABLE renov_categorie (
     id SERIAL PRIMARY KEY,
-    libelle VARCHAR(100) UNIQUE
+    description VARCHAR(100) UNIQUE
 );
 
 CREATE TABLE renov_lien_sousthematique (

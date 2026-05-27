@@ -545,7 +545,7 @@
       const payload = await apiCall("R", {}, PARENT_TABLE);
       const rows = normalizeReadPayload(payload);
       state.thematiques = rows
-        .map((row) => ({ id: Number(row.id), libelle: String(row.libelle || "") }))
+        .map((row) => ({ id: Number(row.id), libelle: String(row.description ?? row.libelle ?? "") }))
         .filter((row) => Number.isFinite(row.id));
       state.thematiqueIds = new Set(state.thematiques.map((row) => row.id));
     }
@@ -557,7 +557,8 @@
     }
 
     function rowKeyFromData(row) {
-      const rowId = row.id ?? row.st_id;
+      const isLegacyShape = row.t_id !== undefined || row.st_lib !== undefined;
+      const rowId = row.id ?? row.sousthematique_id ?? (isLegacyShape ? row.st_id : null);
       if (rowId === null || rowId === undefined || rowId === "") {
         state.sequence += 1;
         return `tmp:${Date.now()}:${state.sequence}`;
@@ -566,13 +567,17 @@
     }
 
     function normalizeRow(raw, key, isNew = false) {
-      const parentRaw = raw.t_id;
+      const isLegacyShape = raw.t_id !== undefined || raw.st_lib !== undefined;
+      const parentRaw = isLegacyShape
+        ? (raw.t_id ?? raw.thematique_id ?? raw.st_parent_id)
+        : (raw.st_id ?? raw.thematique_id ?? raw.t_id ?? raw.st_parent_id);
       const parentId = parentRaw === null || parentRaw === undefined || parentRaw === "" ? null : Number(parentRaw);
+      const rawId = raw.id ?? raw.sousthematique_id ?? (isLegacyShape ? raw.st_id : null);
       return {
         rowKey: key,
-        id: raw.st_id ?? null,
+        id: rawId ?? null,
         st_id: Number.isFinite(parentId) ? parentId : null,
-        libelle: String(raw.st_lib ?? ""),
+        libelle: String(raw.description ?? raw.libelle ?? raw.st_lib ?? ""),
         __isNew: isNew
       };
     }
@@ -825,7 +830,7 @@
       const payload = {
         id: row.id,
         st_id: row.st_id,
-        libelle: String(row.libelle ?? "").trim()
+        description: String(row.libelle ?? "").trim()
       };
 
       if (type === "C" && (payload.id === null || payload.id === "")) {

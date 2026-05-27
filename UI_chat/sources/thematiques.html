@@ -546,7 +546,7 @@
       return {
         rowKey: key,
         id: raw.id ?? null,
-        libelle: String(raw.libelle ?? ""),
+        libelle: String(raw.description ?? raw.libelle ?? ""),
         __isNew: isNew
       };
     }
@@ -774,7 +774,7 @@
 
       const payload = {
         id: row.id,
-        libelle: String(row.libelle ?? "").trim()
+        description: String(row.libelle ?? "").trim()
       };
 
       if (type === "C" && (payload.id === null || payload.id === "")) {
