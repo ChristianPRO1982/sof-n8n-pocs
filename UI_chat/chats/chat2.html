@@ -656,7 +656,7 @@
     };
 
     init().catch(() => {
-      showBlockingError("Configuration invalide. Vérifiez UI_chat/config.ini.");
+      showBlockingError("Configuration invalide. Vérifiez les paramètres de l'application.");
     });
 
     async function init() {
@@ -677,7 +677,7 @@
       window.addEventListener("scroll", onWindowScroll, { passive: true });
       state.lastScrollY = window.scrollY;
       updateScrollDownButton();
-      setStatus("Webhook configuré. Vous pouvez poser une question.");
+      setStatus("Assistant prêt. Vous pouvez poser une question.");
       dom.messageInput.focus();
     }
 
@@ -768,7 +768,7 @@
       } catch (error) {
         hideProcessing();
         if (error instanceof TypeError) {
-          setStatus("Erreur reseau vers n8n. Verifiez WEBHOOK_URL, CORS et protocole HTTP/HTTPS.", true);
+          setStatus("Impossible de contacter le service pour le moment. Vérifiez votre connexion et réessayez.", true);
         } else {
           setStatus(GENERIC_ERROR_MESSAGE, true);
         }

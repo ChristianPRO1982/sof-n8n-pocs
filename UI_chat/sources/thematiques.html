@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CRUD Thématiques - Sofinco</title>
+  <title>Gestion des thématiques - Sofinco</title>
   <style>
     :root {
       --bg-1: #f6f9ff;
@@ -338,9 +338,9 @@
             <table aria-label="Table des thématiques">
               <thead>
                 <tr>
-                  <th class="col-action">Action</th>
-                  <th>id</th>
-                  <th>libellé</th>
+                  <th class="col-action">Actions</th>
+                  <th>ID</th>
+                  <th>Libellé</th>
                 </tr>
               </thead>
               <tbody id="tableBody">
@@ -397,7 +397,7 @@
     };
 
     init().catch((error) => {
-      setStatus("Configuration invalide. Vérifiez UI_chat/config.ini.", true);
+      setStatus("Configuration invalide. Vérifiez les paramètres de l'application.", true);
       setTableMessage("Impossible d'initialiser la page.");
       debugWrite(`INIT ERROR\n${String(error)}`);
     });
@@ -717,7 +717,7 @@
       const actionType = meta.isNew ? "C" : "U";
       enqueueCrud(rowKey, actionType, buildPayload(actionType, row), true);
       debugAppend(`CLICK MODIFIER enqueue-priority ${actionType} row=${rowKey}\n`);
-      setStatus("Modification mise en file d'envoi.");
+      setStatus("Modification en cours de traitement.");
     }
 
     function onClickDelete(rowKey) {
@@ -742,7 +742,7 @@
 
       enqueueCrud(rowKey, "D", buildPayload("D", row), true);
       debugAppend(`CLICK SUPPRIMER enqueue D row=${rowKey}\n`);
-      setStatus("Suppression mise en file d'envoi.");
+      setStatus("Suppression en cours de traitement.");
     }
 
     function findRow(rowKey) {
@@ -792,9 +792,16 @@
       return null;
     }
 
+    function getActionSuccessMessage(actionType) {
+      if (actionType === "C") return "Ajout pris en compte.";
+      if (actionType === "U") return "Modification prise en compte.";
+      if (actionType === "D") return "Suppression prise en compte.";
+      return "Mise à jour prise en compte.";
+    }
+
     function validateRowIdentityForAction(actionType, row) {
       if ((actionType === "U" || actionType === "D") && (row.id === null || row.id === undefined || row.id === "")) {
-        return `${actionType} impossible: id manquant sur la ligne.`;
+        return "Enregistrement impossible : identifiant manquant.";
       }
       return null;
     }
@@ -889,7 +896,7 @@
       try {
         const responsePayload = await apiCall(entry.type, entry.payload);
         onCrudSuccess(rowKey, entry, responsePayload);
-        setStatus(`Action ${entry.type} envoyée avec succès.`, false, true);
+        setStatus(getActionSuccessMessage(entry.type), false, true);
       } catch (error) {
         onCrudFailure(rowKey, entry, error);
       } finally {
@@ -930,8 +937,8 @@
           meta.isNew = false;
         } else {
           meta.hasError = true;
-          meta.errorMessage = "CREATE OK mais aucun id retourné par le webhook.";
-          setStatus("CREATE réussi mais id manquant dans la réponse webhook.", true);
+          meta.errorMessage = "Ajout effectué sans identifiant retourné.";
+          setStatus("Ajout effectué, mais l'identifiant n'a pas pu être récupéré.", true);
         }
       }
 
@@ -955,11 +962,11 @@
         state.queueOrder = state.queueOrder.filter((key) => key !== rowKey);
         meta.hasError = true;
         meta.errorMessage = String(error.message || error);
-        setStatus(`Echec ${entry.type}: ${error.message || error}`, true);
+        setStatus("Une erreur est survenue pendant l'enregistrement.", true);
         debugAppend(`FAIL FINAL ${entry.type} row=${rowKey} ${String(error)}\n`);
       } else {
         state.queueByKey.set(rowKey, entry);
-        setStatus(`Retry ${entry.type} (${entry.retry}/${RETRY_MAX})...`);
+        setStatus(`Nouvel essai en cours...`);
         debugAppend(`RETRY ${entry.type} row=${rowKey} #${entry.retry} ${String(error)}\n`);
       }
     }
