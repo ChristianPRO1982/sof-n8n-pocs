@@ -963,11 +963,20 @@
           .filter((row) => Number.isFinite(row.id));
 
         state.catalog.sousthematiques = subThemesRaw
-          .map((raw) => ({
-            id: Number(raw.id ?? raw.sousthematique_id ?? raw.st_id),
-            thematiqueId: Number(raw.st_id ?? raw.thematique_id ?? raw.t_id ?? raw.st_parent_id),
-            libelle: String(raw.description ?? raw.libelle ?? raw.st_lib ?? "")
-          }))
+          .map((raw) => {
+            const isLegacyShape = raw.t_id !== undefined || raw.st_lib !== undefined;
+            const id = Number(raw.id ?? raw.sousthematique_id ?? (isLegacyShape ? raw.st_id : null));
+            const thematiqueId = Number(
+              isLegacyShape
+                ? (raw.t_id ?? raw.thematique_id ?? raw.st_parent_id)
+                : (raw.st_id ?? raw.thematique_id ?? raw.t_id ?? raw.st_parent_id)
+            );
+            return {
+              id,
+              thematiqueId,
+              libelle: String(raw.description ?? raw.libelle ?? raw.st_lib ?? "")
+            };
+          })
           .filter((row) => Number.isFinite(row.id));
 
         state.catalog.categories = categoriesRaw
