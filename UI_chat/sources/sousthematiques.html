@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CRUD Sous-thématiques - Sofinco</title>
+  <title>Gestion des sous-thématiques - Sofinco</title>
   <style>
     :root {
       --bg-1: #f6f9ff;
@@ -77,6 +77,29 @@
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
+    }
+
+    .nav-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .nav-group-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .nav-divider {
+      width: 1px;
+      height: 22px;
+      background: #c7d8f1;
+      border-radius: 999px;
     }
 
     .status { min-height: 24px; font-size: 0.93rem; color: var(--muted); padding: 0 4px; }
@@ -269,6 +292,8 @@
       .header { padding: 16px 14px 12px; }
       .main { padding: 14px; }
       .floating-dirty { right: 8px; top: 8px; }
+      .nav-group { width: 100%; }
+      .nav-divider { display: none; }
     }
 
     @media (max-width: 1100px) {
@@ -287,18 +312,22 @@
             <img src="https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png" alt="Logo MaPrimeRenov" class="logo" />
           </a>
           <div>
-            <h1>Gestion des sous-thématiques</h1>
-            <p>Table <code>renov_sousthematique</code> avec envoi asynchrone CUD.</p>
+            <h1>Gérer les sous-thématiques</h1>
+            <p>Affinez les thématiques avec des sous-thèmes pour mieux classer les liens.</p>
           </div>
         </header>
 
         <div class="main">
           <div class="nav-toolbar">
-            <nav class="nav-links" aria-label="Navigation tables sources">
-              <a class="btn btn-nav" href="sources.html">Sources</a>
-              <a class="btn btn-nav" href="thematiques.html">Thématiques</a>
-              <a class="btn btn-nav active" href="sousthematiques.html" aria-current="page">Sous-thématiques</a>
-              <a class="btn btn-nav" href="categories.html">Catégories</a>
+            <nav class="nav-links" aria-label="Navigation tables et paramétrage">
+              <a class="btn btn-nav" href="sources.html">Sources URLs</a>
+              <div class="nav-group">
+                <span class="nav-divider" aria-hidden="true"></span>
+                <span class="nav-group-label">Paramétrage</span>
+                <a class="btn btn-nav" href="thematiques.html">Thématiques</a>
+                <a class="btn btn-nav active" href="sousthematiques.html" aria-current="page">Sous-thématiques</a>
+                <a class="btn btn-nav" href="categories.html">Catégories</a>
+              </div>
             </nav>
             <div class="action-stack">
               <button id="refreshBtn" class="btn btn-ghost" type="button">Rafraîchir</button>
@@ -311,10 +340,10 @@
             <table aria-label="Table des sous-thématiques">
               <thead>
                 <tr>
-                  <th class="col-action">Action</th>
-                  <th>id</th>
-                  <th>thématique parent</th>
-                  <th>libellé</th>
+                  <th class="col-action">Actions</th>
+                  <th>ID</th>
+                  <th>Thématique parent</th>
+                  <th>Libellé</th>
                 </tr>
               </thead>
               <tbody id="tableBody">
@@ -374,7 +403,7 @@
     };
 
     init().catch((error) => {
-      setStatus("Configuration invalide. Vérifiez UI_chat/config.ini.", true);
+      setStatus("Configuration invalide. Vérifiez les paramètres de l'application.", true);
       setTableMessage("Impossible d'initialiser la page.");
       debugWrite(`INIT ERROR\n${String(error)}`);
     });
@@ -516,7 +545,7 @@
       const payload = await apiCall("R", {}, PARENT_TABLE);
       const rows = normalizeReadPayload(payload);
       state.thematiques = rows
-        .map((row) => ({ id: Number(row.id), libelle: String(row.libelle || "") }))
+        .map((row) => ({ id: Number(row.id), libelle: String(row.description ?? row.libelle ?? "") }))
         .filter((row) => Number.isFinite(row.id));
       state.thematiqueIds = new Set(state.thematiques.map((row) => row.id));
     }
@@ -528,21 +557,27 @@
     }
 
     function rowKeyFromData(row) {
-      if (row.id === null || row.id === undefined || row.id === "") {
+      const isLegacyShape = row.t_id !== undefined || row.st_lib !== undefined;
+      const rowId = row.id ?? row.sousthematique_id ?? (isLegacyShape ? row.st_id : null);
+      if (rowId === null || rowId === undefined || rowId === "") {
         state.sequence += 1;
         return `tmp:${Date.now()}:${state.sequence}`;
       }
-      return `id:${row.id}`;
+      return `id:${rowId}`;
     }
 
     function normalizeRow(raw, key, isNew = false) {
-      const stRaw = raw.st_id;
-      const stId = stRaw === null || stRaw === undefined || stRaw === "" ? null : Number(stRaw);
+      const isLegacyShape = raw.t_id !== undefined || raw.st_lib !== undefined;
+      const parentRaw = isLegacyShape
+        ? (raw.t_id ?? raw.thematique_id ?? raw.st_parent_id)
+        : (raw.st_id ?? raw.thematique_id ?? raw.t_id ?? raw.st_parent_id);
+      const parentId = parentRaw === null || parentRaw === undefined || parentRaw === "" ? null : Number(parentRaw);
+      const rawId = raw.id ?? raw.sousthematique_id ?? (isLegacyShape ? raw.st_id : null);
       return {
         rowKey: key,
-        id: raw.id ?? null,
-        st_id: Number.isFinite(stId) ? stId : null,
-        libelle: String(raw.libelle ?? ""),
+        id: rawId ?? null,
+        st_id: Number.isFinite(parentId) ? parentId : null,
+        libelle: String(raw.description ?? raw.libelle ?? raw.st_lib ?? ""),
         __isNew: isNew
       };
     }
@@ -740,7 +775,7 @@
       const actionType = meta.isNew ? "C" : "U";
       enqueueCrud(rowKey, actionType, buildPayload(actionType, row), true);
       debugAppend(`CLICK MODIFIER enqueue-priority ${actionType} row=${rowKey}\n`);
-      setStatus("Modification mise en file d'envoi.");
+      setStatus("Modification en cours de traitement.");
     }
 
     function onClickDelete(rowKey) {
@@ -760,7 +795,7 @@
 
       enqueueCrud(rowKey, "D", buildPayload("D", row), true);
       debugAppend(`CLICK SUPPRIMER enqueue D row=${rowKey}\n`);
-      setStatus("Suppression mise en file d'envoi.");
+      setStatus("Suppression en cours de traitement.");
     }
 
     function findRow(rowKey) {
@@ -795,7 +830,7 @@
       const payload = {
         id: row.id,
         st_id: row.st_id,
-        libelle: String(row.libelle ?? "").trim()
+        description: String(row.libelle ?? "").trim()
       };
 
       if (type === "C" && (payload.id === null || payload.id === "")) {
@@ -824,9 +859,16 @@
       return null;
     }
 
+    function getActionSuccessMessage(actionType) {
+      if (actionType === "C") return "Ajout pris en compte.";
+      if (actionType === "U") return "Modification prise en compte.";
+      if (actionType === "D") return "Suppression prise en compte.";
+      return "Mise à jour prise en compte.";
+    }
+
     function validateRowIdentityForAction(actionType, row) {
       if ((actionType === "U" || actionType === "D") && (row.id === null || row.id === undefined || row.id === "")) {
-        return `${actionType} impossible: id manquant sur la ligne.`;
+        return "Enregistrement impossible : identifiant manquant.";
       }
       return null;
     }
@@ -924,7 +966,7 @@
       try {
         const responsePayload = await apiCall(entry.type, entry.payload);
         await onCrudSuccess(rowKey, entry, responsePayload);
-        setStatus(`Action ${entry.type} envoyée avec succès.`, false, true);
+        setStatus(getActionSuccessMessage(entry.type), false, true);
       } catch (error) {
         await onCrudFailure(rowKey, entry, error);
       } finally {
@@ -946,16 +988,15 @@
 
       if (entry.type === "D") {
         removeRowLocal(rowKey);
-        await refreshThematiquesCache();
-        renderTable();
         return;
       }
 
       if (entry.type === "C" && row) {
         const created = Array.isArray(responsePayload) ? responsePayload[0] : responsePayload;
         let hasCreatedId = false;
-        if (created && typeof created === "object" && created.id !== undefined && created.id !== null && created.id !== "") {
-          row.id = created.id;
+        const createdId = created && typeof created === "object" ? (created.id ?? created.st_id) : null;
+        if (createdId !== undefined && createdId !== null && createdId !== "") {
+          row.id = createdId;
           hasCreatedId = true;
           if (row.rowKey.startsWith("tmp:")) {
             const newKey = `id:${row.id}`;
@@ -967,12 +1008,10 @@
           meta.isNew = false;
         } else {
           meta.hasError = true;
-          meta.errorMessage = "CREATE OK mais aucun id retourné par le webhook.";
-          setStatus("CREATE réussi mais id manquant dans la réponse webhook.", true);
+          meta.errorMessage = "Ajout effectué sans identifiant retourné.";
+          setStatus("Ajout effectué, mais l'identifiant n'a pas pu être récupéré.", true);
         }
       }
-
-      await refreshThematiquesCache();
 
       if (row) {
         row.libelle = String(row.libelle ?? "").trim();
@@ -1005,7 +1044,6 @@
 
         if ((entry.type === "C" || entry.type === "U") && row) {
           try {
-            await refreshThematiquesCache();
             if (!isValidThematiqueId(row.st_id)) {
               row.st_id = null;
               meta.errorMessage = "Thématique parent invalide après mise à jour concurrente. Re-sélection requise.";
@@ -1016,11 +1054,11 @@
           }
         }
 
-        setStatus(`Echec ${entry.type}: ${meta.errorMessage}`, true);
+        setStatus("Une erreur est survenue pendant l'enregistrement.", true);
         debugAppend(`FAIL FINAL ${entry.type} row=${rowKey} ${String(error)}\n`);
       } else {
         state.queueByKey.set(rowKey, entry);
-        setStatus(`Retry ${entry.type} (${entry.retry}/${RETRY_MAX})...`);
+        setStatus(`Nouvel essai en cours...`);
         debugAppend(`RETRY ${entry.type} row=${rowKey} #${entry.retry} ${String(error)}\n`);
       }
     }

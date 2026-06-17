@@ -39,7 +39,7 @@
       padding: 28px 16px 40px;
     }
 
-    .app { max-width: 1600px; margin: 0 auto; display: grid; gap: 16px; }
+    .app { width: 100%; max-width: none; margin: 0; display: grid; gap: 16px; }
 
     .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
     .layout.debug-active { grid-template-columns: minmax(0, 1fr) minmax(320px, 380px); }
@@ -70,6 +70,104 @@
 
     .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 
+    .filters-panel {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      padding: 10px 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .filters-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filters-title {
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #294a73;
+      letter-spacing: 0.01em;
+    }
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      align-items: start;
+    }
+
+    .filter-group {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .filter-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: #4f6585;
+    }
+
+    .filter-zone {
+      display: grid;
+      gap: 6px;
+      width: 100%;
+      border: 1px solid #d8e4f5;
+      border-radius: 10px;
+      background: #f7fbff;
+      padding: 6px 8px;
+      min-height: 34px;
+      cursor: pointer;
+      transition: border-color 120ms ease, box-shadow 120ms ease;
+    }
+
+    .filter-zone.is-editing {
+      border-color: #7fb0ec;
+      box-shadow: 0 0 0 3px rgba(0, 91, 187, 0.12);
+      background: #fff;
+    }
+
+    .filter-note-wrap {
+      border: 1px solid #d8e4f5;
+      border-radius: 10px;
+      background: #f7fbff;
+      padding: 8px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .filter-note-values {
+      font-size: 0.82rem;
+      color: #294a73;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .filter-note-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .filter-note-row label {
+      font-size: 0.78rem;
+      color: #4f6585;
+      display: grid;
+      gap: 4px;
+    }
+
+    .filter-note-row input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+    }
+
     .nav-toolbar {
       display: flex;
       align-items: center;
@@ -83,6 +181,29 @@
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
+    }
+
+    .nav-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .nav-group-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .nav-divider {
+      width: 1px;
+      height: 22px;
+      background: #c7d8f1;
+      border-radius: 999px;
     }
 
     .status { min-height: 24px; font-size: 0.93rem; color: var(--muted); padding: 0 4px; }
@@ -156,7 +277,7 @@
       overflow: auto;
     }
 
-    table { width: 100%; border-collapse: collapse; min-width: 1300px; font-size: 0.9rem; }
+    table { width: 100%; border-collapse: collapse; min-width: 1200px; font-size: 0.9rem; }
 
     thead th {
       text-align: left;
@@ -201,6 +322,15 @@
       box-shadow: 0 0 0 3px rgba(0, 91, 187, 0.12);
     }
 
+    .cell-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      display: block;
+      margin: 7px auto;
+    }
+
     .cell-id {
       font-weight: 700;
       color: #0b2d56;
@@ -218,8 +348,82 @@
       min-height: 34px;
     }
 
-    .col-action { width: 220px; }
-    .col-note { width: 80px; }
+    .col-action { width: 8%; }
+    .col-id { width: 84px; display: none; }
+    .layout.debug-active .col-id { display: table-cell; }
+    .col-link { width: 20%; }
+    .col-zone { width: 20%; min-width: 0; }
+    .col-note { width: 5%; }
+    .col-date { width: 8%; }
+    .col-bool { width: 5%; }
+    .col-ts { width: 7%; }
+
+    .relation-zone {
+      display: grid;
+      gap: 6px;
+      width: 100%;
+      border: 1px solid #d8e4f5;
+      border-radius: 10px;
+      background: #f7fbff;
+      padding: 6px 8px;
+      min-height: 34px;
+      cursor: pointer;
+      transition: border-color 120ms ease, box-shadow 120ms ease;
+    }
+
+    .relation-zone.is-editing {
+      border-color: #7fb0ec;
+      box-shadow: 0 0 0 3px rgba(0, 91, 187, 0.12);
+      background: #fff;
+    }
+
+    .relation-zone.is-disabled {
+      cursor: not-allowed;
+      opacity: 0.65;
+      background: #f2f5fa;
+    }
+
+    .relation-chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-height: 20px;
+    }
+
+    .relation-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #c4d9f6;
+      background: #eaf3ff;
+      color: #164171;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.82rem;
+      line-height: 1.35;
+      white-space: nowrap;
+    }
+
+    .relation-chip-remove {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      margin: 0;
+      color: #8f1f16;
+      font-size: 0.8rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .relation-empty {
+      color: #5c7498;
+      font-size: 0.82rem;
+      font-style: italic;
+    }
+
+    .relation-select {
+      margin-top: 2px;
+    }
 
     .action-stack {
       display: flex;
@@ -227,6 +431,32 @@
       gap: 6px;
       align-items: center;
       flex-wrap: nowrap;
+    }
+
+    .row-actions .btn {
+      font-size: 0.72rem;
+      padding: 9px 7px;
+      letter-spacing: 0.01em;
+    }
+
+    .row-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      min-height: 28px;
+      border: 1px solid #d5e2f5;
+      border-radius: 8px;
+      background: #eef3fb;
+      color: #2c4f7d;
+      text-decoration: none;
+      font-size: 0.9rem;
+      line-height: 1;
+      padding: 0 6px;
+    }
+
+    .row-link:hover {
+      background: #e4edfb;
     }
 
     .empty { padding: 26px 16px; text-align: center; color: var(--muted); }
@@ -288,6 +518,10 @@
       .header { padding: 16px 14px 12px; }
       .main { padding: 14px; }
       .floating-dirty { right: 8px; top: 8px; }
+      .nav-group { width: 100%; }
+      .nav-divider { display: none; }
+      .filters-grid { grid-template-columns: 1fr; }
+      .filter-note-row { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 1100px) {
@@ -306,18 +540,22 @@
             <img src="https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png" alt="Logo MaPrimeRenov" class="logo" />
           </a>
           <div>
-            <h1>Table `renov_lien` - Edition CUD</h1>
-            <p>Chaque ligne peut être modifiée/supprimée avec synchronisation webhook asynchrone.</p>
+            <h1>Gérer les sources d'information</h1>
+            <p>Ajoutez, modifiez ou supprimez les liens utilisés par l'assistant.</p>
           </div>
         </header>
 
         <div class="main">
           <div class="nav-toolbar">
-            <nav class="nav-links" aria-label="Navigation tables sources">
-              <a class="btn btn-nav active" href="sources.html" aria-current="page">Sources</a>
-              <a class="btn btn-nav" href="thematiques.html">Thématiques</a>
-              <a class="btn btn-nav" href="sousthematiques.html">Sous-thématiques</a>
-              <a class="btn btn-nav" href="categories.html">Catégories</a>
+            <nav class="nav-links" aria-label="Navigation tables et paramétrage">
+              <a class="btn btn-nav active" href="sources.html" aria-current="page">Sources URLs</a>
+              <div class="nav-group">
+                <span class="nav-divider" aria-hidden="true"></span>
+                <span class="nav-group-label">Paramétrage</span>
+                <a class="btn btn-nav" href="thematiques.html">Thématiques</a>
+                <a class="btn btn-nav" href="sousthematiques.html">Sous-thématiques</a>
+                <a class="btn btn-nav" href="categories.html">Catégories</a>
+              </div>
             </nav>
             <div class="action-stack">
               <button id="refreshBtn" class="btn btn-ghost" type="button">Rafraîchir</button>
@@ -328,22 +566,57 @@
             <div id="status" class="status" role="status" aria-live="polite">Chargement des données...</div>
           </div>
 
+          <section id="filtersPanel" class="filters-panel" aria-label="Filtres des sources">
+            <div class="filters-head">
+              <span class="filters-title">Filtres dynamiques (OR)</span>
+              <button id="resetFiltersBtn" class="btn btn-ghost" type="button">Retirer tous les filtres</button>
+            </div>
+            <div class="filters-grid">
+              <div class="filter-group">
+                <span class="filter-label">Thématiques</span>
+                <div id="filterThemeZone"></div>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Catégories</span>
+                <div id="filterCategoryZone"></div>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Note</span>
+                <div class="filter-note-wrap">
+                  <div id="filterNoteValues" class="filter-note-values">Toutes les notes (0 à 100)</div>
+                  <div class="filter-note-row">
+                    <label for="filterNoteMin">
+                      Minimum
+                      <input id="filterNoteMin" type="range" min="0" max="100" step="1" value="0" data-filter-note="min" />
+                    </label>
+                    <label for="filterNoteMax">
+                      Maximum
+                      <input id="filterNoteMax" type="range" min="0" max="100" step="1" value="100" data-filter-note="max" />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <div class="table-wrap" aria-label="Conteneur table renov_lien">
             <table aria-label="Table renov_lien">
               <thead>
                 <tr>
-                  <th class="col-action">Action</th>
-                  <th>id</th>
-                  <th>lien</th>
-                  <th class="col-note">note</th>
-                  <th>date_maj</th>
-                  <th>smart_scraping</th>
-                  <th>updated_at</th>
-                  <th>scraped_at</th>
+                  <th class="col-action">Actions</th>
+                  <th class="col-id">ID</th>
+                  <th class="col-link">Lien</th>
+                  <th class="col-zone">Thématiques</th>
+                  <th class="col-zone">Catégories</th>
+                  <th class="col-note">Note</th>
+                  <th class="col-date"><span title="Date de mise à jour de la source. Elle est différente de la date MAJ qui correspond à la modification de cette ligne et de la date de scraping qui correspond à la date où le robot à récupérer le texte de la page cible.">Date ⓘ</span></th>
+                  <th class="col-bool"><span title="Scraping intelligent avec IA et profondeur de 3">scrap ⓘ</span></th>
+                  <th class="col-ts">MAJ</th>
+                  <th class="col-ts">Scraping</th>
                 </tr>
               </thead>
               <tbody id="table-body">
-                <tr><td class="empty" colspan="8">Chargement en cours...</td></tr>
+                <tr><td class="empty" colspan="10">Chargement en cours...</td></tr>
               </tbody>
             </table>
           </div>
@@ -364,7 +637,13 @@
       U: "http://15.236.66.128/n8n/webhook-test/8d598b6a-9384-4d75-b299-0af11bd852c8",
       D: "http://15.236.66.128/n8n/webhook-test/9b0a4b1f-f1be-46c4-af5e-97148320cc19"
     };
-
+    const FALLBACK_TAGS_ENDPOINTS = {
+      C: "http://15.236.66.128/n8n/webhook-test/51b0418f-a18b-419d-814d-b0d6a6d8ba8d",
+      R: "http://15.236.66.128/n8n/webhook-test/e99e3774-1dfb-49a6-aeb8-348046a412a2",
+      U: "http://15.236.66.128/n8n/webhook-test/fb72fc88-369d-41ec-ac63-7d3e623dd119",
+      D: "http://15.236.66.128/n8n/webhook-test/476cf9cd-2cd6-4240-bf0f-0052ff5ccc24"
+    };
+    const FALLBACK_TAG_LINK_ENDPOINT = "http://15.236.66.128/n8n/webhook-test/12ec5861-7d20-4098-8084-85751cdb5ece";
     const MIN_DISPATCH_MS = 500;
     const RETRY_MAX = 2;
 
@@ -372,7 +651,30 @@
       config: null,
       debugMode: false,
       endpoints: { ...FALLBACK_ENDPOINTS },
+      tagsEndpoints: { ...FALLBACK_TAGS_ENDPOINTS },
+      tagLinkEndpoints: { C: FALLBACK_TAG_LINK_ENDPOINT, D: FALLBACK_TAG_LINK_ENDPOINT },
       rows: [],
+      catalog: {
+        thematiques: [],
+        sousthematiques: [],
+        categories: [],
+        thematiqueById: new Map(),
+        sousthematiqueById: new Map(),
+        categorieById: new Map(),
+        sousthematiquesByThematique: new Map()
+      },
+      filters: {
+        sousthematiqueIds: [],
+        categorieIds: [],
+        noteMin: 0,
+        noteMax: 100,
+        noteActive: false
+      },
+      activeFilterZone: null,
+      filterZoneActivationGuard: null,
+      activeZone: null,
+      zoneActivationGuard: null,
+      relationPendingKeys: new Set(),
       metaByKey: new Map(),
       queueByKey: new Map(),
       queueOrder: [],
@@ -380,7 +682,6 @@
       lastDispatchAt: 0,
       workerTimer: null,
       sequence: 0,
-      activeRowFocus: null,
       blockedNavigation: false
     };
 
@@ -392,11 +693,18 @@
       debugOutput: document.getElementById("debugOutput"),
       refreshBtn: document.getElementById("refreshBtn"),
       newRowBtn: document.getElementById("newRowBtn"),
-      floatingDirty: document.getElementById("floatingDirty")
+      floatingDirty: document.getElementById("floatingDirty"),
+      filtersPanel: document.getElementById("filtersPanel"),
+      resetFiltersBtn: document.getElementById("resetFiltersBtn"),
+      filterThemeZone: document.getElementById("filterThemeZone"),
+      filterCategoryZone: document.getElementById("filterCategoryZone"),
+      filterNoteValues: document.getElementById("filterNoteValues"),
+      filterNoteMin: document.getElementById("filterNoteMin"),
+      filterNoteMax: document.getElementById("filterNoteMax")
     };
 
     init().catch((error) => {
-      setStatus("Configuration invalide. Vérifiez UI_chat/config.ini.", true);
+      setStatus("Configuration invalide. Vérifiez les paramètres de l'application.", true);
       setTableMessage("Impossible d'initialiser la page.");
       debugWrite(`INIT ERROR\n${String(error)}`);
     });
@@ -410,6 +718,16 @@
         U: state.config.SOURCES_WEBHOOK_U || FALLBACK_ENDPOINTS.U,
         D: state.config.SOURCES_WEBHOOK_D || FALLBACK_ENDPOINTS.D
       };
+      state.tagsEndpoints = {
+        C: state.config.TAGS_WEBHOOK_C || FALLBACK_TAGS_ENDPOINTS.C,
+        R: state.config.TAGS_WEBHOOK_R || FALLBACK_TAGS_ENDPOINTS.R,
+        U: state.config.TAGS_WEBHOOK_U || FALLBACK_TAGS_ENDPOINTS.U,
+        D: state.config.TAGS_WEBHOOK_D || FALLBACK_TAGS_ENDPOINTS.D
+      };
+      state.tagLinkEndpoints = {
+        C: state.config.SOURCES_TAG_LINK_WEBHOOK_C || FALLBACK_TAG_LINK_ENDPOINT,
+        D: state.config.SOURCES_TAG_LINK_WEBHOOK_D || FALLBACK_TAG_LINK_ENDPOINT
+      };
 
       setDebugModeUi(state.debugMode);
       debugWrite([
@@ -419,17 +737,25 @@
         `C=${state.endpoints.C}`,
         `U=${state.endpoints.U}`,
         `D=${state.endpoints.D}`,
+        `TAGS_R=${state.tagsEndpoints.R}`,
+        `LINK_C=${state.tagLinkEndpoints.C}`,
+        `LINK_D=${state.tagLinkEndpoints.D}`,
         ""
       ].join("\n"));
 
       dom.refreshBtn.addEventListener("click", onRefreshClick);
       dom.newRowBtn.addEventListener("click", onCreateRow);
       dom.tableBody.addEventListener("input", onTableInput);
-      dom.tableBody.addEventListener("focusin", onTableFocusIn);
       dom.tableBody.addEventListener("focusout", onTableFocusOut);
       dom.tableBody.addEventListener("click", onTableClick);
+      dom.filtersPanel.addEventListener("click", onFiltersClick);
+      dom.filtersPanel.addEventListener("input", onFiltersInput);
+      dom.filtersPanel.addEventListener("focusout", onFiltersFocusOut);
+      dom.resetFiltersBtn.addEventListener("click", onResetFiltersClick);
       window.addEventListener("beforeunload", onBeforeUnload);
 
+      await loadTagReferences();
+      renderFilters();
       await loadRows();
       startQueueWorker();
       refreshDirtyUi();
@@ -490,7 +816,7 @@
     }
 
     function setTableMessage(message) {
-      dom.tableBody.innerHTML = `<tr><td class="empty" colspan="8">${escapeHtml(message)}</td></tr>`;
+      dom.tableBody.innerHTML = `<tr><td class="empty" colspan="10">${escapeHtml(message)}</td></tr>`;
     }
 
     function escapeHtml(value) {
@@ -500,6 +826,53 @@
         .replace(/>/g, "&gt;")
         .replace(/\"/g, "&quot;")
         .replace(/'/g, "&#39;");
+    }
+
+    function normalizeReadPayload(payload) {
+      if (Array.isArray(payload)) return payload;
+      if (payload && Array.isArray(payload.data)) return payload.data;
+      if (payload && Array.isArray(payload.rows)) return payload.rows;
+      return [];
+    }
+
+    function normalizeIdArray(value) {
+      if (Array.isArray(value)) {
+        return uniqueNumericIds(value.map((item) => extractAnyId(item)));
+      }
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (!trimmed) return [];
+        const parsed = safeJsonParse(trimmed);
+        if (Array.isArray(parsed)) {
+          return uniqueNumericIds(parsed.map((item) => extractAnyId(item)));
+        }
+        return uniqueNumericIds(trimmed.split(",").map((item) => Number(item.trim())));
+      }
+      return [];
+    }
+
+    function uniqueNumericIds(values) {
+      const seen = new Set();
+      const out = [];
+      for (const raw of values) {
+        const value = Number(raw);
+        if (!Number.isFinite(value)) continue;
+        if (seen.has(value)) continue;
+        seen.add(value);
+        out.push(value);
+      }
+      return out;
+    }
+
+    function extractAnyId(value) {
+      if (typeof value === "number") return value;
+      if (value && typeof value === "object") {
+        if (value.id !== undefined) return value.id;
+        if (value.target_id !== undefined) return value.target_id;
+        if (value.sousthematique_id !== undefined) return value.sousthematique_id;
+        if (value.categorie_id !== undefined) return value.categorie_id;
+      }
+      return value;
     }
 
     function rowKeyFromData(row) {
@@ -514,9 +887,11 @@
       return {
         rowKey: key,
         id: raw.id ?? null,
-        lien: raw.lien ?? "",
-        note: raw.note ?? "",
-        date_maj: normalizeDateOnly(raw.date_maj),
+        url: raw.url ?? raw.lien ?? "",
+        sousthematique_ids: normalizeIdArray(raw.sousthematique_ids),
+        categorie_ids: normalizeIdArray(raw.categorie_ids),
+        score: raw.score ?? raw.note ?? "",
+        update_date: normalizeDateOnly(raw.update_date ?? raw.date_maj),
         smart_scraping: typeof raw.smart_scraping === "boolean" ? raw.smart_scraping : false,
         updated_at: formatTimestampToMinute(raw.updated_at),
         scraped_at: formatTimestampToMinute(raw.scraped_at),
@@ -541,6 +916,91 @@
       return text;
     }
 
+    async function apiCallTags(action, data, table) {
+      const endpoint = state.tagsEndpoints[action];
+      const payload = { action, table, data };
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/plain, */*"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const raw = await response.text();
+      let parsed;
+      try {
+        parsed = raw ? JSON.parse(raw) : null;
+      } catch {
+        parsed = raw;
+      }
+
+      debugAppend(`API TAGS ${action} ${table} HTTP ${response.status} ${response.statusText}\n${raw}\n\n`);
+      if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
+      return parsed;
+    }
+
+    async function readTagTable(table) {
+      const payload = await apiCallTags("R", {}, table);
+      return normalizeReadPayload(payload);
+    }
+
+    async function loadTagReferences() {
+      setStatus("Chargement des thématiques/sous-thématiques/catégories...");
+      try {
+        const [themesRaw, subThemesRaw, categoriesRaw] = await Promise.all([
+          readTagTable("renov_thematique"),
+          readTagTable("renov_sousthematique"),
+          readTagTable("renov_categorie")
+        ]);
+
+        state.catalog.thematiques = themesRaw
+          .map((raw) => ({
+            id: Number(raw.id ?? raw.t_id),
+            libelle: String(raw.description ?? raw.libelle ?? raw.t_lib ?? "")
+          }))
+          .filter((row) => Number.isFinite(row.id));
+
+        state.catalog.sousthematiques = subThemesRaw
+          .map((raw) => {
+            const isLegacyShape = raw.t_id !== undefined || raw.st_lib !== undefined;
+            const id = Number(raw.id ?? raw.sousthematique_id ?? (isLegacyShape ? raw.st_id : null));
+            const thematiqueId = Number(
+              isLegacyShape
+                ? (raw.t_id ?? raw.thematique_id ?? raw.st_parent_id)
+                : (raw.st_id ?? raw.thematique_id ?? raw.t_id ?? raw.st_parent_id)
+            );
+            return {
+              id,
+              thematiqueId,
+              libelle: String(raw.description ?? raw.libelle ?? raw.st_lib ?? "")
+            };
+          })
+          .filter((row) => Number.isFinite(row.id));
+
+        state.catalog.categories = categoriesRaw
+          .map((raw) => ({
+            id: Number(raw.id ?? raw.c_id ?? raw.categorie_id),
+            libelle: String(raw.description ?? raw.libelle ?? raw.c_lib ?? "")
+          }))
+          .filter((row) => Number.isFinite(row.id));
+
+        state.catalog.thematiqueById = new Map(state.catalog.thematiques.map((item) => [item.id, item]));
+        state.catalog.sousthematiqueById = new Map(state.catalog.sousthematiques.map((item) => [item.id, item]));
+        state.catalog.categorieById = new Map(state.catalog.categories.map((item) => [item.id, item]));
+        state.catalog.sousthematiquesByThematique = new Map();
+
+        for (const item of state.catalog.sousthematiques) {
+          const bucket = state.catalog.sousthematiquesByThematique.get(item.thematiqueId) || [];
+          bucket.push(item);
+          state.catalog.sousthematiquesByThematique.set(item.thematiqueId, bucket);
+        }
+      } catch (error) {
+        throw new Error(`Chargement référentiels impossible: ${error.message}`);
+      }
+    }
+
     async function loadRows() {
       setStatus("Chargement des données...");
       try {
@@ -549,7 +1009,7 @@
         if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
         const payload = await response.json();
         debugAppend(`LOAD PAYLOAD\n${JSON.stringify(payload, null, 2)}\n\n`);
-        if (!Array.isArray(payload)) throw new Error("Le payload webhook R n'est pas un tableau JSON");
+        if (!Array.isArray(payload)) throw new Error("Format de données invalide reçu du service.");
 
         state.rows = payload.map((raw) => {
           const key = rowKeyFromData(raw);
@@ -577,9 +1037,9 @@
     function snapshotRow(row) {
       return {
         id: row.id,
-        lien: row.lien,
-        note: row.note,
-        date_maj: row.date_maj,
+        url: row.url,
+        score: row.score,
+        update_date: row.update_date,
         smart_scraping: row.smart_scraping,
         updated_at: row.updated_at,
         scraped_at: row.scraped_at
@@ -591,10 +1051,143 @@
         setTableMessage("Aucune donnée.");
         return;
       }
-
-      const html = state.rows.map((row) => renderRowHtml(row)).join("");
+      const filteredRows = getFilteredRows();
+      if (!filteredRows.length) {
+        setTableMessage("Aucune ligne ne correspond aux filtres.");
+        return;
+      }
+      const html = filteredRows.map((row) => renderRowHtml(row)).join("");
       dom.tableBody.innerHTML = html;
       refreshDirtyUi();
+    }
+
+    function renderFilters() {
+      dom.filterThemeZone.innerHTML = renderFilterZone("sousthematique");
+      dom.filterCategoryZone.innerHTML = renderFilterZone("categorie");
+      renderFilterNote();
+    }
+
+    function renderFilterZone(zoneType) {
+      const selectedIds = zoneType === "sousthematique" ? state.filters.sousthematiqueIds : state.filters.categorieIds;
+      const isEditing = isFilterZoneEditing(zoneType);
+      const zoneClass = ["filter-zone", isEditing ? "is-editing" : ""].filter(Boolean).join(" ");
+      const chipsHtml = renderFilterChips(selectedIds, zoneType, isEditing);
+      const selectHtml = isEditing ? renderFilterSelect(zoneType, selectedIds) : "";
+      return `
+        <div class="${zoneClass}" data-filter-zone="${zoneType}" tabindex="0">
+          <div class="relation-chip-list">${chipsHtml}</div>
+          ${selectHtml}
+        </div>
+      `;
+    }
+
+    function renderFilterChips(selectedIds, zoneType, editable) {
+      if (!selectedIds.length) {
+        return `<span class="relation-empty">Aucun filtre</span>`;
+      }
+      const chips = [];
+      for (const id of selectedIds) {
+        const label = zoneType === "sousthematique" ? getSousthematiqueDisplay(id) : getCategorieDisplay(id);
+        const remove = editable
+          ? `<button class="relation-chip-remove js-filter-remove" type="button" data-filter-zone="${zoneType}" data-target-id="${id}" aria-label="Retirer">✖</button>`
+          : "";
+        chips.push(`<span class="relation-chip">${escapeHtml(label)}${remove}</span>`);
+      }
+      return chips.join("");
+    }
+
+    function renderFilterSelect(zoneType, selectedIds) {
+      if (zoneType === "sousthematique") {
+        const selectedSet = new Set(selectedIds.map((value) => Number(value)));
+        const groups = [];
+        for (const thematique of state.catalog.thematiques) {
+          const options = (state.catalog.sousthematiquesByThematique.get(thematique.id) || [])
+            .filter((item) => !selectedSet.has(item.id))
+            .map((item) => `<option value="${item.id}">${escapeHtml(item.libelle)}</option>`)
+            .join("");
+          if (options) {
+            groups.push(`<optgroup label="${escapeHtml(thematique.libelle)}">${options}</optgroup>`);
+          }
+        }
+        const orphanOptions = state.catalog.sousthematiques
+          .filter((item) => !state.catalog.thematiqueById.has(item.thematiqueId) && !selectedSet.has(item.id))
+          .map((item) => `<option value="${item.id}">${escapeHtml(item.libelle)}</option>`)
+          .join("");
+        if (orphanOptions) {
+          groups.push(`<optgroup label="Sans thématique">${orphanOptions}</optgroup>`);
+        }
+        if (!groups.length) {
+          return `<select class="cell-select relation-select" data-filter-zone-select="${zoneType}" disabled><option>Aucune sous-thématique disponible</option></select>`;
+        }
+        return `
+          <select class="cell-select relation-select" data-filter-zone-select="${zoneType}">
+            <option value="">Ajouter un filtre thématique...</option>
+            ${groups.join("")}
+          </select>
+        `;
+      }
+
+      const selectedSet = new Set(selectedIds.map((value) => Number(value)));
+      const options = state.catalog.categories
+        .filter((item) => !selectedSet.has(item.id))
+        .map((item) => `<option value="${item.id}">${escapeHtml(item.libelle)}</option>`)
+        .join("");
+      if (!options) {
+        return `<select class="cell-select relation-select" data-filter-zone-select="${zoneType}" disabled><option>Aucune catégorie disponible</option></select>`;
+      }
+      return `
+        <select class="cell-select relation-select" data-filter-zone-select="${zoneType}">
+          <option value="">Ajouter un filtre catégorie...</option>
+          ${options}
+        </select>
+      `;
+    }
+
+    function renderFilterNote() {
+      const { noteMin, noteMax, noteActive } = state.filters;
+      dom.filterNoteMin.value = String(noteMin);
+      dom.filterNoteMax.value = String(noteMax);
+      dom.filterNoteValues.textContent = noteActive
+        ? `Note filtrée: ${noteMin} à ${noteMax}`
+        : "Toutes les notes (0 à 100)";
+    }
+
+    function getFilteredRows() {
+      if (!hasActiveFilters()) return state.rows;
+      return state.rows.filter((row) => rowMatchesFilters(row));
+    }
+
+    function hasActiveFilters() {
+      return state.filters.sousthematiqueIds.length > 0
+        || state.filters.categorieIds.length > 0
+        || state.filters.noteActive;
+    }
+
+    function rowMatchesFilters(row) {
+      const matchTheme = state.filters.sousthematiqueIds.length > 0
+        && hasIntersection(row.sousthematique_ids, state.filters.sousthematiqueIds);
+      const matchCategorie = state.filters.categorieIds.length > 0
+        && hasIntersection(row.categorie_ids, state.filters.categorieIds);
+      const matchNote = state.filters.noteActive && rowNoteMatchesFilter(row);
+      return matchTheme || matchCategorie || matchNote;
+    }
+
+    function rowNoteMatchesFilter(row) {
+      const raw = row?.score;
+      if (raw === null || raw === undefined) return false;
+      const text = String(raw).trim();
+      if (!text) return false;
+      const value = Number(text);
+      if (!Number.isFinite(value)) return false;
+      return value >= state.filters.noteMin && value <= state.filters.noteMax;
+    }
+
+    function hasIntersection(left, right) {
+      const rightSet = new Set((right || []).map((value) => Number(value)));
+      for (const value of left || []) {
+        if (rightSet.has(Number(value))) return true;
+      }
+      return false;
     }
 
     function renderRowHtml(row) {
@@ -602,26 +1195,31 @@
       const isDirty = Boolean(meta && meta.dirty);
       const hasError = Boolean(meta && meta.hasError);
       const isCreateRow = Boolean(meta && meta.isNew);
+      const canEditRelations = isPersistedRow(row);
       const modDisabled = isDirty ? "" : "disabled";
       const rowClass = [isDirty ? "row-dirty" : "", hasError ? "row-error" : ""].filter(Boolean).join(" ");
       const actionLabel = isCreateRow ? "AJOUTER" : "MODIFIER";
       const actionClass = isCreateRow ? "btn-add" : "btn-modify";
+      const rowLink = buildRowExternalLink(row.url);
 
       return `
         <tr data-row-key="${escapeHtml(row.rowKey)}" class="${rowClass}">
           <td class="col-action">
-            <div class="action-stack">
+            <div class="action-stack row-actions">
               <button class="btn ${actionClass} js-modify" type="button" ${modDisabled}>${actionLabel}</button>
               <button class="btn btn-danger js-delete" type="button">SUPPRIMER</button>
+              ${rowLink}
             </div>
           </td>
-          <td><span class="cell-id">${escapeHtml(row.id ?? "(nouveau)")}</span></td>
-          <td>${renderTextInput("lien", row.lien)}</td>
-          <td class="col-note">${renderNoteInput(row.note)}</td>
-          <td>${renderDateInput("date_maj", row.date_maj)}</td>
-          <td>${renderBooleanSelect("smart_scraping", row.smart_scraping)}</td>
-          <td><span class="cell-readonly">${escapeHtml(row.updated_at || "")}</span></td>
-          <td><span class="cell-readonly">${escapeHtml(row.scraped_at || "")}</span></td>
+          <td class="col-id"><span class="cell-id">${escapeHtml(row.id ?? "(nouveau)")}</span></td>
+          <td class="col-link">${renderTextInput("url", row.url)}</td>
+          <td class="col-zone">${renderRelationZone(row, "sousthematique", canEditRelations)}</td>
+          <td class="col-zone">${renderRelationZone(row, "categorie", canEditRelations)}</td>
+          <td class="col-note">${renderNoteInput(row.score)}</td>
+          <td class="col-date">${renderDateInput("update_date", row.update_date)}</td>
+          <td class="col-bool">${renderBooleanCheckbox("smart_scraping", row.smart_scraping)}</td>
+          <td class="col-ts"><span class="cell-readonly">${escapeHtml(row.updated_at || "")}</span></td>
+          <td class="col-ts"><span class="cell-readonly">${escapeHtml(row.scraped_at || "")}</span></td>
         </tr>
       `;
     }
@@ -631,22 +1229,271 @@
     }
 
     function renderNoteInput(value) {
-      return `<input class="cell-input" data-field="note" type="number" min="0" max="10" step="1" inputmode="numeric" value="${escapeHtml(value)}" />`;
+      return `<input class="cell-input" data-field="score" type="number" min="0" max="100" step="1" inputmode="numeric" value="${escapeHtml(value)}" />`;
     }
 
     function renderDateInput(field, value) {
       return `<input class="cell-input" data-field="${field}" type="date" value="${escapeHtml(value)}" />`;
     }
 
-    function renderBooleanSelect(field, value) {
-      const selectedTrue = value === true ? "selected" : "";
-      const selectedFalse = value === false ? "selected" : "";
+    function renderBooleanCheckbox(field, value) {
+      const checked = value === true ? "checked" : "";
+      return `<input class="cell-checkbox" data-field="${field}" type="checkbox" ${checked} aria-label="Activer le scraping intelligent" />`;
+    }
+
+    function buildRowExternalLink(urlValue) {
+      const href = String(urlValue ?? "").trim();
+      if (!href) return `<span class="row-link" aria-hidden="true">🔗</span>`;
+      return `<a class="row-link" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" title="Ouvrir le lien dans un nouvel onglet" aria-label="Ouvrir le lien dans un nouvel onglet">🔗</a>`;
+    }
+
+    function renderRelationZone(row, zoneType, enabled) {
+      const selectedIds = zoneType === "sousthematique" ? row.sousthematique_ids : row.categorie_ids;
+      const isEditing = isZoneEditing(row.rowKey, zoneType) && enabled;
+      const zoneClass = ["relation-zone", isEditing ? "is-editing" : "", enabled ? "" : "is-disabled"].filter(Boolean).join(" ");
+      const chipsHtml = renderRelationChips(selectedIds, zoneType, isEditing);
+      const selectHtml = isEditing ? renderRelationSelect(zoneType, selectedIds) : "";
+      const disabledHint = enabled ? "" : `<div class="relation-empty">Enregistrer la ligne pour modifier</div>`;
       return `
-        <select class="cell-select" data-field="${field}">
-          <option value="true" ${selectedTrue}>true</option>
-          <option value="false" ${selectedFalse}>false</option>
+        <div class="${zoneClass}" data-zone="${zoneType}" data-row-key="${escapeHtml(row.rowKey)}" tabindex="${enabled ? "0" : "-1"}">
+          <div class="relation-chip-list">${chipsHtml}</div>
+          ${disabledHint}
+          ${selectHtml}
+        </div>
+      `;
+    }
+
+    function renderRelationChips(selectedIds, zoneType, editable) {
+      if (!selectedIds.length) {
+        return `<span class="relation-empty">Aucun</span>`;
+      }
+      const chips = [];
+      for (const id of selectedIds) {
+        const label = zoneType === "sousthematique" ? getSousthematiqueDisplay(id) : getCategorieDisplay(id);
+        const remove = editable
+          ? `<button class="relation-chip-remove js-zone-remove" type="button" data-zone="${zoneType}" data-target-id="${id}" aria-label="Supprimer">✖</button>`
+          : "";
+        chips.push(`<span class="relation-chip">${escapeHtml(label)}${remove}</span>`);
+      }
+      return chips.join("");
+    }
+
+    function renderRelationSelect(zoneType, selectedIds) {
+      if (zoneType === "sousthematique") {
+        const selectedSet = new Set(selectedIds.map((value) => Number(value)));
+        const groups = [];
+        for (const thematique of state.catalog.thematiques) {
+          const options = (state.catalog.sousthematiquesByThematique.get(thematique.id) || [])
+            .filter((item) => !selectedSet.has(item.id))
+            .map((item) => `<option value="${item.id}">${escapeHtml(item.libelle)}</option>`)
+            .join("");
+          if (options) {
+            groups.push(`<optgroup label="${escapeHtml(thematique.libelle)}">${options}</optgroup>`);
+          }
+        }
+        const orphanOptions = state.catalog.sousthematiques
+          .filter((item) => !state.catalog.thematiqueById.has(item.thematiqueId) && !selectedSet.has(item.id))
+          .map((item) => `<option value="${item.id}">${escapeHtml(item.libelle)}</option>`)
+          .join("");
+        if (orphanOptions) {
+          groups.push(`<optgroup label="Sans thématique">${orphanOptions}</optgroup>`);
+        }
+        if (!groups.length) {
+          return `<select class="cell-select relation-select" data-zone-select="${zoneType}" disabled><option>Aucune sous-thématique disponible</option></select>`;
+        }
+        return `
+          <select class="cell-select relation-select" data-zone-select="${zoneType}">
+            <option value="">Ajouter une sous-thématique...</option>
+            ${groups.join("")}
+          </select>
+        `;
+      }
+
+      const selectedSet = new Set(selectedIds.map((value) => Number(value)));
+      const options = state.catalog.categories
+        .filter((item) => !selectedSet.has(item.id))
+        .map((item) => `<option value="${item.id}">${escapeHtml(item.libelle)}</option>`)
+        .join("");
+      if (!options) {
+        return `<select class="cell-select relation-select" data-zone-select="${zoneType}" disabled><option>Aucune catégorie disponible</option></select>`;
+      }
+      return `
+        <select class="cell-select relation-select" data-zone-select="${zoneType}">
+          <option value="">Ajouter une catégorie...</option>
+          ${options}
         </select>
       `;
+    }
+
+    function getSousthematiqueDisplay(id) {
+      const item = state.catalog.sousthematiqueById.get(Number(id));
+      if (!item) return `#${id}`;
+      const parent = state.catalog.thematiqueById.get(Number(item.thematiqueId));
+      if (!parent || !parent.libelle) return item.libelle || `#${id}`;
+      return `${parent.libelle} / ${item.libelle}`;
+    }
+
+    function getCategorieDisplay(id) {
+      const item = state.catalog.categorieById.get(Number(id));
+      if (!item) return `#${id}`;
+      return item.libelle || `#${id}`;
+    }
+
+    function onFiltersClick(event) {
+      const removeBtn = event.target.closest(".js-filter-remove");
+      if (removeBtn) {
+        event.preventDefault();
+        const zoneType = removeBtn.dataset.filterZone;
+        const targetId = Number(removeBtn.dataset.targetId);
+        removeFilterSelection(zoneType, targetId);
+        return;
+      }
+
+      const zoneEl = event.target.closest("[data-filter-zone]");
+      if (!zoneEl) return;
+      const zoneType = zoneEl.dataset.filterZone;
+      activateFilterZone(zoneType);
+    }
+
+    function onFiltersInput(event) {
+      const target = event.target;
+      if (!target) return;
+
+      if (target.matches("[data-filter-zone-select]")) {
+        const zoneType = target.dataset.filterZoneSelect;
+        const rawValue = String(target.value ?? "").trim();
+        if (!rawValue) return;
+        const targetId = Number(rawValue);
+        if (!Number.isFinite(targetId)) return;
+        addFilterSelection(zoneType, targetId);
+        return;
+      }
+
+      if (target.matches("[data-filter-note]")) {
+        updateNoteFilterRange(target.dataset.filterNote);
+      }
+    }
+
+    function onFiltersFocusOut(event) {
+      const zoneEl = event.target.closest("[data-filter-zone]");
+      if (!zoneEl) return;
+      const zoneType = zoneEl.dataset.filterZone;
+      window.setTimeout(() => {
+        if (isFilterZoneGuardActive(zoneType)) return;
+        if (isFocusInsideCurrentFilterZone(zoneType)) return;
+        closeActiveFilterZoneIfMatch(zoneType);
+      }, 0);
+    }
+
+    function onResetFiltersClick() {
+      state.filters.sousthematiqueIds = [];
+      state.filters.categorieIds = [];
+      state.filters.noteMin = 0;
+      state.filters.noteMax = 100;
+      state.filters.noteActive = false;
+      state.activeFilterZone = null;
+      state.filterZoneActivationGuard = null;
+      renderFilters();
+      renderTable();
+    }
+
+    function addFilterSelection(zoneType, targetId) {
+      const field = zoneType === "sousthematique" ? "sousthematiqueIds" : "categorieIds";
+      state.filters[field] = uniqueNumericIds([...(state.filters[field] || []), Number(targetId)]);
+      renderFilters();
+      renderTable();
+      focusFilterSelect(zoneType);
+    }
+
+    function removeFilterSelection(zoneType, targetId) {
+      const field = zoneType === "sousthematique" ? "sousthematiqueIds" : "categorieIds";
+      state.filters[field] = (state.filters[field] || []).filter((value) => Number(value) !== Number(targetId));
+      renderFilters();
+      renderTable();
+      focusFilterSelect(zoneType);
+    }
+
+    function updateNoteFilterRange(changedBound) {
+      let noteMin = clampNoteValue(dom.filterNoteMin.value);
+      let noteMax = clampNoteValue(dom.filterNoteMax.value);
+      if (changedBound === "min" && noteMin > noteMax) {
+        noteMax = noteMin;
+      }
+      if (changedBound === "max" && noteMax < noteMin) {
+        noteMin = noteMax;
+      }
+      state.filters.noteMin = noteMin;
+      state.filters.noteMax = noteMax;
+      state.filters.noteActive = !(noteMin === 0 && noteMax === 100);
+      renderFilterNote();
+      renderTable();
+    }
+
+    function clampNoteValue(value) {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) return 0;
+      return Math.min(100, Math.max(0, Math.round(numeric)));
+    }
+
+    function activateFilterZone(zoneType) {
+      if (!zoneType) return;
+      if (state.activeFilterZone === zoneType) return;
+      state.activeFilterZone = zoneType;
+      setFilterZoneActivationGuard(zoneType);
+      renderFilters();
+      focusFilterSelect(zoneType);
+    }
+
+    function focusFilterSelect(zoneType) {
+      window.setTimeout(() => {
+        const selectEl = dom.filtersPanel.querySelector(`[data-filter-zone="${zoneType}"] [data-filter-zone-select="${zoneType}"]`);
+        if (selectEl) selectEl.focus();
+        clearFilterZoneActivationGuard(zoneType);
+      }, 0);
+    }
+
+    function closeActiveFilterZoneIfMatch(zoneType) {
+      if (state.activeFilterZone !== zoneType) return;
+      state.activeFilterZone = null;
+      renderFilters();
+    }
+
+    function isFilterZoneEditing(zoneType) {
+      return state.activeFilterZone === zoneType;
+    }
+
+    function getCurrentFilterZoneElement(zoneType) {
+      return dom.filtersPanel.querySelector(`[data-filter-zone="${zoneType}"]`);
+    }
+
+    function isFocusInsideCurrentFilterZone(zoneType) {
+      const zone = getCurrentFilterZoneElement(zoneType);
+      const active = document.activeElement;
+      if (!zone || !active) return false;
+      return zone.contains(active);
+    }
+
+    function setFilterZoneActivationGuard(zoneType) {
+      state.filterZoneActivationGuard = {
+        zoneType,
+        expiresAt: Date.now() + 1000
+      };
+    }
+
+    function isFilterZoneGuardActive(zoneType) {
+      const guard = state.filterZoneActivationGuard;
+      if (!guard) return false;
+      if (Date.now() > guard.expiresAt) {
+        state.filterZoneActivationGuard = null;
+        return false;
+      }
+      return guard.zoneType === zoneType;
+    }
+
+    function clearFilterZoneActivationGuard(zoneType) {
+      if (!state.filterZoneActivationGuard) return;
+      if (state.filterZoneActivationGuard.zoneType !== zoneType) return;
+      state.filterZoneActivationGuard = null;
     }
 
     function onRefreshClick() {
@@ -672,52 +1519,70 @@
 
     function onTableInput(event) {
       const target = event.target;
-      if (!target || !target.matches("[data-field]")) return;
+      if (!target) return;
+
+      if (target.matches("[data-zone-select]")) {
+        const rowEl = target.closest("tr[data-row-key]");
+        if (!rowEl) return;
+        const rowKey = rowEl.dataset.rowKey;
+        const zoneType = target.dataset.zoneSelect;
+        onRelationSelect(rowKey, zoneType, target.value, target);
+        return;
+      }
+
+      if (!target.matches("[data-field]")) return;
       const rowEl = target.closest("tr[data-row-key]");
       if (!rowEl) return;
-
       const rowKey = rowEl.dataset.rowKey;
       const row = findRow(rowKey);
       if (!row) return;
 
       const field = target.dataset.field;
-      row[field] = parseFieldValue(field, target.value);
+      const rawValue = target.type === "checkbox" ? target.checked : target.value;
+      row[field] = parseFieldValue(field, rawValue);
       updateRowDirtyState(rowKey);
+      if (field === "score" && state.filters.noteActive) {
+        renderTable();
+        return;
+      }
       refreshRowUi(rowEl, rowKey);
       refreshDirtyUi();
     }
 
     function parseFieldValue(field, value) {
       if (field === "smart_scraping") {
-        if (value === "true") return true;
-        return false;
+        if (typeof value === "boolean") return value;
+        return value === "true";
       }
-      if (field === "note") {
+      if (field === "score") {
         return value.trim() === "" ? "" : value.trim();
       }
-      if (field === "date_maj") {
+      if (field === "update_date") {
         return normalizeDateOnly(value);
       }
       return value;
     }
 
-    function onTableFocusIn(event) {
-      const rowEl = event.target.closest("tr[data-row-key]");
-      if (!rowEl) return;
-      state.activeRowFocus = rowEl.dataset.rowKey;
-    }
-
     function onTableFocusOut(event) {
+      const zoneEl = event.target.closest(".relation-zone");
+      if (zoneEl) {
+        const rowKey = zoneEl.dataset.rowKey;
+        const zoneType = zoneEl.dataset.zone;
+        window.setTimeout(() => {
+          if (isZoneGuardActive(rowKey, zoneType)) return;
+          if (isFocusInsideCurrentZone(rowKey, zoneType)) return;
+          closeActiveZoneIfMatch(rowKey, zoneType);
+        }, 0);
+      }
+
       const rowEl = event.target.closest("tr[data-row-key]");
       if (!rowEl) return;
-
       window.setTimeout(() => {
         const active = document.activeElement;
         if (active && rowEl.contains(active)) return;
         const rowKey = rowEl.dataset.rowKey;
         const meta = state.metaByKey.get(rowKey);
         if (!meta || !meta.dirty) return;
-
         const row = findRow(rowKey);
         if (!row) return;
 
@@ -734,20 +1599,115 @@
     }
 
     function onTableClick(event) {
-      const button = event.target.closest("button");
-      if (!button) return;
-      const rowEl = button.closest("tr[data-row-key]");
-      if (!rowEl) return;
-      const rowKey = rowEl.dataset.rowKey;
-
-      if (button.classList.contains("js-modify")) {
-        onClickModify(rowKey);
+      const removeBtn = event.target.closest(".js-zone-remove");
+      if (removeBtn) {
+        const rowEl = removeBtn.closest("tr[data-row-key]");
+        if (!rowEl) return;
+        const rowKey = rowEl.dataset.rowKey;
+        const zoneType = removeBtn.dataset.zone;
+        const targetId = Number(removeBtn.dataset.targetId);
+        event.preventDefault();
+        mutateRelation(rowKey, zoneType, targetId, "D");
         return;
       }
 
-      if (button.classList.contains("js-delete")) {
-        onClickDelete(rowKey);
+      const button = event.target.closest("button");
+      if (button) {
+        const rowEl = button.closest("tr[data-row-key]");
+        if (!rowEl) return;
+        const rowKey = rowEl.dataset.rowKey;
+        if (button.classList.contains("js-modify")) {
+          onClickModify(rowKey);
+          return;
+        }
+        if (button.classList.contains("js-delete")) {
+          onClickDelete(rowKey);
+          return;
+        }
       }
+
+      const zoneEl = event.target.closest(".relation-zone");
+      if (!zoneEl) return;
+      const rowKey = zoneEl.dataset.rowKey;
+      const zoneType = zoneEl.dataset.zone;
+      activateZone(rowKey, zoneType);
+    }
+
+    function activateZone(rowKey, zoneType) {
+      const row = findRow(rowKey);
+      if (!row || !isPersistedRow(row)) {
+        setStatus("Enregistrez la ligne avant de modifier les thématiques/catégories.", true);
+        return;
+      }
+
+      const previous = state.activeZone;
+      if (previous && previous.rowKey === rowKey && previous.zoneType === zoneType) return;
+      state.activeZone = { rowKey, zoneType };
+      setZoneActivationGuard(rowKey, zoneType);
+      if (previous) refreshRow(previous.rowKey);
+      refreshRow(rowKey);
+
+      window.setTimeout(() => {
+        const rowEl = dom.tableBody.querySelector(`tr[data-row-key="${cssEscape(rowKey)}"]`);
+        if (!rowEl) return;
+        const selectEl = rowEl.querySelector(`.relation-zone[data-zone="${zoneType}"] [data-zone-select="${zoneType}"]`);
+        if (selectEl) selectEl.focus();
+        clearZoneActivationGuard(rowKey, zoneType);
+      }, 0);
+    }
+
+    function closeActiveZoneIfMatch(rowKey, zoneType) {
+      if (!state.activeZone) return;
+      if (state.activeZone.rowKey !== rowKey || state.activeZone.zoneType !== zoneType) return;
+      state.activeZone = null;
+      refreshRow(rowKey);
+    }
+
+    function isZoneEditing(rowKey, zoneType) {
+      return Boolean(state.activeZone && state.activeZone.rowKey === rowKey && state.activeZone.zoneType === zoneType);
+    }
+
+    function getCurrentZoneElement(rowKey, zoneType) {
+      return dom.tableBody.querySelector(`.relation-zone[data-row-key="${cssEscape(rowKey)}"][data-zone="${zoneType}"]`);
+    }
+
+    function isFocusInsideCurrentZone(rowKey, zoneType) {
+      const zone = getCurrentZoneElement(rowKey, zoneType);
+      const active = document.activeElement;
+      if (!zone || !active) return false;
+      return zone.contains(active);
+    }
+
+    function setZoneActivationGuard(rowKey, zoneType) {
+      state.zoneActivationGuard = {
+        rowKey,
+        zoneType,
+        expiresAt: Date.now() + 1000
+      };
+    }
+
+    function isZoneGuardActive(rowKey, zoneType) {
+      const guard = state.zoneActivationGuard;
+      if (!guard) return false;
+      if (Date.now() > guard.expiresAt) {
+        state.zoneActivationGuard = null;
+        return false;
+      }
+      return guard.rowKey === rowKey && guard.zoneType === zoneType;
+    }
+
+    function clearZoneActivationGuard(rowKey, zoneType) {
+      if (!state.zoneActivationGuard) return;
+      if (state.zoneActivationGuard.rowKey !== rowKey || state.zoneActivationGuard.zoneType !== zoneType) return;
+      state.zoneActivationGuard = null;
+    }
+
+    async function onRelationSelect(rowKey, zoneType, value, selectEl) {
+      if (!value) return;
+      const targetId = Number(value);
+      if (!Number.isFinite(targetId)) return;
+      if (selectEl) selectEl.value = "";
+      await mutateRelation(rowKey, zoneType, targetId, "C");
     }
 
     function onClickModify(rowKey) {
@@ -765,7 +1725,7 @@
       const actionType = meta.isNew ? "C" : "U";
       enqueueCrud(rowKey, actionType, buildPayload(actionType, row), true);
       debugAppend(`CLICK MODIFIER enqueue-priority ${actionType} row=${rowKey}\n`);
-      setStatus("Modification mise en file d'envoi.");
+      setStatus("Modification en cours de traitement.");
     }
 
     function onClickDelete(rowKey) {
@@ -773,9 +1733,7 @@
       const meta = state.metaByKey.get(rowKey);
       if (!row || !meta) return;
 
-      if (!window.confirm("Confirmer la suppression de cette ligne ?")) {
-        return;
-      }
+      if (!window.confirm("Confirmer la suppression de cette ligne ?")) return;
 
       if (meta.isNew && !row.id) {
         removeRowLocal(rowKey);
@@ -785,7 +1743,89 @@
 
       enqueueCrud(rowKey, "D", buildPayload("D", row), true);
       debugAppend(`CLICK SUPPRIMER enqueue D row=${rowKey}\n`);
-      setStatus("Suppression mise en file d'envoi.");
+      setStatus("Suppression en cours de traitement.");
+    }
+
+    function isPersistedRow(row) {
+      return row && row.id !== null && row.id !== undefined && row.id !== "";
+    }
+
+    function relationFieldForType(zoneType) {
+      return zoneType === "sousthematique" ? "sousthematique_ids" : "categorie_ids";
+    }
+
+    function relationTableNameForType(zoneType) {
+      return zoneType === "sousthematique" ? "renov_lien_sousthematique" : "renov_lien_categorie";
+    }
+
+    async function mutateRelation(rowKey, zoneType, targetId, action) {
+      const row = findRow(rowKey);
+      const meta = state.metaByKey.get(rowKey);
+      if (!row || !meta) return;
+      if (!isPersistedRow(row)) {
+        setStatus("Enregistrez la ligne avant de modifier les thématiques/catégories.", true);
+        return;
+      }
+
+      const field = relationFieldForType(zoneType);
+      const current = row[field] || [];
+      const prevIds = [...current];
+      const targetValue = Number(targetId);
+      if (!Number.isFinite(targetValue)) return;
+      const hasTarget = current.includes(targetValue);
+      if ((action === "C" && hasTarget) || (action === "D" && !hasTarget)) return;
+
+      const pendingKey = `${rowKey}:${zoneType}:${targetValue}:${action}`;
+      if (state.relationPendingKeys.has(pendingKey)) return;
+      state.relationPendingKeys.add(pendingKey);
+
+      row[field] = action === "C"
+        ? uniqueNumericIds([...current, targetValue])
+        : current.filter((value) => Number(value) !== targetValue);
+      meta.hasError = false;
+      meta.errorMessage = "";
+      if (hasActiveFilters()) renderTable();
+      else refreshRow(rowKey);
+      refreshDirtyUi();
+
+      try {
+        const relationTable = relationTableNameForType(zoneType);
+        await postRelationCrud(action, relationTable, Number(row.id), targetValue);
+        setStatus(action === "C" ? "Liaison ajoutée." : "Liaison supprimée.", false, true);
+      } catch (error) {
+        row[field] = prevIds;
+        meta.hasError = true;
+        meta.errorMessage = String(error.message || error);
+        setStatus("Impossible de mettre à jour les associations.", true);
+        if (hasActiveFilters()) renderTable();
+        else refreshRow(rowKey);
+        refreshDirtyUi();
+      } finally {
+        state.relationPendingKeys.delete(pendingKey);
+      }
+    }
+
+    async function postRelationCrud(action, relation, lienId, targetId) {
+      const endpoint = state.tagLinkEndpoints[action];
+      const payload = {
+        action,
+        relation,
+        lien_id: lienId,
+        target_id: targetId
+      };
+      debugAppend(`LINK ${action} ${relation}\n${JSON.stringify(payload, null, 2)}\n`);
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json, text/plain, */*"
+        },
+        body: JSON.stringify(payload)
+      });
+      const raw = await response.text();
+      debugAppend(`LINK RESP ${response.status} ${response.statusText}\n${raw}\n\n`);
+      if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
+      return safeJsonParse(raw);
     }
 
     function findRow(rowKey) {
@@ -796,7 +1836,6 @@
       const row = findRow(rowKey);
       const meta = state.metaByKey.get(rowKey);
       if (!row || !meta) return;
-
       const current = snapshotRow(row);
       const original = meta.original;
       meta.dirty = !areRowsEqual(current, original);
@@ -808,9 +1847,9 @@
 
     function areRowsEqual(a, b) {
       return a.id === b.id
-        && a.lien === b.lien
-        && String(a.note) === String(b.note)
-        && a.date_maj === b.date_maj
+        && a.url === b.url
+        && String(a.score) === String(b.score)
+        && a.update_date === b.update_date
         && a.smart_scraping === b.smart_scraping
         && a.updated_at === b.updated_at
         && a.scraped_at === b.scraped_at;
@@ -823,9 +1862,9 @@
 
       const payload = {
         id: row.id,
-        lien: String(row.lien ?? ""),
-        note: row.note === "" ? null : Number(row.note),
-        date_maj: row.date_maj === "" ? null : row.date_maj,
+        url: String(row.url ?? ""),
+        score: row.score === "" ? null : Number(row.score),
+        update_date: row.update_date === "" ? null : row.update_date,
         smart_scraping: row.smart_scraping
       };
       if (type === "C" && (payload.id === null || payload.id === "")) {
@@ -835,30 +1874,36 @@
     }
 
     function validateRowForCrud(row) {
-      const noteText = String(row.note ?? "").trim();
-      if (noteText !== "") {
-        if (!/^-?\d+$/.test(noteText)) {
-          return "Note invalide: entier requis entre 0 et 10.";
+      const scoreText = String(row.score ?? "").trim();
+      if (scoreText !== "") {
+        if (!/^-?\d+$/.test(scoreText)) {
+          return "Note invalide: entier requis entre 0 et 100.";
         }
-        const noteValue = Number(noteText);
-        if (!Number.isInteger(noteValue) || noteValue < 0 || noteValue > 10) {
-          return "Note invalide: entier requis entre 0 et 10.";
+        const scoreValue = Number(scoreText);
+        if (!Number.isInteger(scoreValue) || scoreValue < 0 || scoreValue > 100) {
+          return "Note invalide: entier requis entre 0 et 100.";
         }
       }
 
-      const dateText = String(row.date_maj ?? "").trim();
+      const dateText = String(row.update_date ?? "").trim();
       if (dateText !== "") {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
-          return "date_maj invalide: format attendu YYYY-MM-DD.";
+          return "Date invalide: format attendu YYYY-MM-DD.";
         }
       }
-
       return null;
+    }
+
+    function getActionSuccessMessage(actionType) {
+      if (actionType === "C") return "Ajout pris en compte.";
+      if (actionType === "U") return "Modification prise en compte.";
+      if (actionType === "D") return "Suppression prise en compte.";
+      return "Mise à jour prise en compte.";
     }
 
     function validateRowIdentityForAction(actionType, row) {
       if ((actionType === "U" || actionType === "D") && (row.id === null || row.id === undefined || row.id === "")) {
-        return `${actionType} impossible: id manquant sur la ligne.`;
+        return "Enregistrement impossible : identifiant manquant.";
       }
       return null;
     }
@@ -877,8 +1922,7 @@
     function enqueueCrud(rowKey, type, payload, priority = false) {
       const meta = state.metaByKey.get(rowKey);
       const row = findRow(rowKey);
-      if (!meta) return;
-      if (!row) return;
+      if (!meta || !row) return;
 
       const identityError = validateRowIdentityForAction(type, row);
       if (identityError) {
@@ -887,9 +1931,7 @@
       }
 
       const existing = state.queueByKey.get(rowKey);
-
       if (existing && existing.type === "C" && type === "D" && meta.isNew) {
-        // create followed by delete before dispatch: cancel both
         state.queueByKey.delete(rowKey);
         state.queueOrder = state.queueOrder.filter((key) => key !== rowKey);
         removeRowLocal(rowKey);
@@ -906,11 +1948,8 @@
       }
 
       if (!state.queueOrder.includes(rowKey)) {
-        if (priority) {
-          state.queueOrder.unshift(rowKey);
-        } else {
-          state.queueOrder.push(rowKey);
-        }
+        if (priority) state.queueOrder.unshift(rowKey);
+        else state.queueOrder.push(rowKey);
       } else if (priority) {
         state.queueOrder = [rowKey, ...state.queueOrder.filter((key) => key !== rowKey)];
       }
@@ -968,17 +2007,15 @@
 
         const text = await response.text();
         debugAppend(`RESP ${entry.type} ${response.status} ${response.statusText}\n${text}\n\n`);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status} ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
 
         onCrudSuccess(rowKey, entry, text);
-        setStatus(`Action ${entry.type} envoyée avec succès.`, false, true);
+        setStatus(getActionSuccessMessage(entry.type), false, true);
       } catch (error) {
         onCrudFailure(rowKey, entry, error);
       } finally {
-        meta.isSending = false;
+        const freshMeta = state.metaByKey.get(rowKey);
+        if (freshMeta) freshMeta.isSending = false;
         state.inFlight = false;
         refreshRow(rowKey);
         refreshDirtyUi();
@@ -1015,8 +2052,8 @@
           meta.isNew = false;
         } else {
           meta.hasError = true;
-          meta.errorMessage = "CREATE OK mais aucun id retourné par le webhook.";
-          setStatus("CREATE réussi mais id manquant dans la réponse webhook.", true);
+          meta.errorMessage = "Ajout effectué sans identifiant retourné.";
+          setStatus("Ajout effectué, mais l'identifiant n'a pas pu être récupéré.", true);
         }
       }
 
@@ -1025,8 +2062,9 @@
         meta.dirty = false;
       }
 
-      meta.hasError = false;
-      meta.errorMessage = "";
+      if (!meta.errorMessage) {
+        meta.hasError = false;
+      }
       refreshRow(rowKey);
     }
 
@@ -1040,11 +2078,11 @@
         state.queueOrder = state.queueOrder.filter((key) => key !== rowKey);
         meta.hasError = true;
         meta.errorMessage = String(error.message || error);
-        setStatus(`Echec ${entry.type}: ${error.message || error}`, true);
+        setStatus("Une erreur est survenue pendant l'enregistrement.", true);
         debugAppend(`FAIL FINAL ${entry.type} row=${rowKey} ${String(error)}\n`);
       } else {
         state.queueByKey.set(rowKey, entry);
-        setStatus(`Retry ${entry.type} (${entry.retry}/${RETRY_MAX})...`, false);
+        setStatus(`Nouvel essai en cours...`, false);
         debugAppend(`RETRY ${entry.type} row=${rowKey} #${entry.retry} ${String(error)}\n`);
       }
     }
@@ -1067,8 +2105,11 @@
         state.queueByKey.set(newKey, queue);
         state.queueByKey.delete(oldKey);
       }
-
       state.queueOrder = state.queueOrder.map((key) => (key === oldKey ? newKey : key));
+
+      if (state.activeZone && state.activeZone.rowKey === oldKey) {
+        state.activeZone = { ...state.activeZone, rowKey: newKey };
+      }
     }
 
     function removeRowLocal(rowKey) {
@@ -1076,6 +2117,9 @@
       state.metaByKey.delete(rowKey);
       state.queueByKey.delete(rowKey);
       state.queueOrder = state.queueOrder.filter((key) => key !== rowKey);
+      if (state.activeZone && state.activeZone.rowKey === rowKey) {
+        state.activeZone = null;
+      }
       renderTable();
       refreshDirtyUi();
     }
@@ -1086,27 +2130,21 @@
         renderTable();
         return;
       }
-
       const rowEl = dom.tableBody.querySelector(`tr[data-row-key="${cssEscape(rowKey)}"]`);
       if (!rowEl) {
         renderTable();
         return;
       }
-
       rowEl.outerHTML = renderRowHtml(row);
     }
 
     function refreshRowUi(rowEl, rowKey) {
       const meta = state.metaByKey.get(rowKey);
       if (!meta) return;
-
       rowEl.classList.toggle("row-dirty", Boolean(meta.dirty));
       rowEl.classList.toggle("row-error", Boolean(meta.hasError));
-
       const modifyBtn = rowEl.querySelector(".js-modify");
-      if (modifyBtn) {
-        modifyBtn.disabled = !meta.dirty;
-      }
+      if (modifyBtn) modifyBtn.disabled = !meta.dirty;
     }
 
     function cssEscape(value) {
@@ -1121,7 +2159,6 @@
       const queueCount = state.queueOrder.length;
       const sendingCount = Array.from(state.metaByKey.values()).filter((meta) => meta.isSending).length;
       const hasPendingWork = dirtyCount > 0 || queueCount > 0 || sendingCount > 0;
-
       dom.floatingDirty.classList.toggle("visible", hasPendingWork);
       if (hasPendingWork) {
         dom.floatingDirty.textContent = `Modifs: ${dirtyCount} | Queue: ${queueCount} | Envoi: ${sendingCount}`;
