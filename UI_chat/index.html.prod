@@ -218,10 +218,10 @@
         <p>Interfaces disponibles pour le même moteur :</p>
         <p>1. Chat classique<br />2. Chat avec panneau latéral des liens<br />3. Chat classique avec nouvelle charte<br />4. Chat avec panneau latéral + nouvelle charte</p>
         <div class="actions">
-          <span class="btn btn-secondary">Ouvrir Chat 1</span>
-          <span class="btn btn-secondary">Ouvrir Chat 2</span>
-          <span class="btn btn-secondary">Ouvrir Chat 3</span>
-          <span class="btn btn-secondary">Ouvrir Chat 4</span>
+          <a class="btn btn-primary" href="chats/chat1.html">Ouvrir Chat 1</a>
+          <a class="btn btn-primary" href="chats/chat2.html">Ouvrir Chat 2</a>
+          <a class="btn btn-primary" href="chats/chat3.html">Ouvrir Chat 3</a>
+          <a class="btn btn-primary" href="chats/chat4.html">Ouvrir Chat 4</a>
         </div>
       </article>
 
