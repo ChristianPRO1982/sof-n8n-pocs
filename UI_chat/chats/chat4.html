@@ -616,13 +616,14 @@
     const DEFAULT_TYPEWRITER_DELAY_MS = 4;
     const GENERIC_ERROR_MESSAGE = "Une erreur est survenue. Veuillez réessayer.";
     const NEAR_BOTTOM_THRESHOLD_PX = 80;
-    const PROCESSING_STEP_MAP = [
-      { key: "message1", label: "Compréhension de la question" },
-      { key: "message2", label: "Recherche dans la documentation" },
-      { key: "message3", label: "Rédaction de la réponse" },
-      { key: "comprehension de la question", label: "Compréhension de la question" },
-      { key: "recherche dans la documentation", label: "Recherche dans la documentation" },
-      { key: "redaction de la reponse", label: "Rédaction de la réponse" }
+    const INITIAL_PROCESSING_MESSAGE = "Connexion au webhook...";
+    const LEGACY_PROCESSING_STEP_MAP = [
+      { key: "message1", label: "Analyse de la question" },
+      { key: "message2", label: "Recherche des sources d'information" },
+      { key: "message3", label: "Génération de la réponse" },
+      { key: "comprehension de la question", label: "Analyse de la question" },
+      { key: "recherche dans la documentation", label: "Recherche des sources d'information" },
+      { key: "redaction de la reponse", label: "Génération de la réponse" }
     ];
 
     const state = {
@@ -636,9 +637,7 @@
       typewriterDelayMs: DEFAULT_TYPEWRITER_DELAY_MS,
       autoScrollEnabled: true,
       lastScrollY: 0,
-      processingTimerId: null,
-      processingStepIndex: -1,
-      lastStreamProcessingIndex: -1
+      lastProcessingMessage: ""
     };
 
     const dom = {
@@ -742,13 +741,13 @@
           body: JSON.stringify(payload)
         });
         debugWrite(`HTTP ${response.status} ${response.statusText}\n\n`);
-        const { rawText, streamItems } = await readResponsePayload(response);
+        const { rawText, finalAnswer } = await readResponsePayload(response);
 
         if (!response.ok) {
           throw new Error(`HTTP_${response.status}`);
         }
 
-        const answerText = extractAnswerText(rawText, streamItems);
+        const answerText = finalAnswer || extractAnswerText(rawText);
         if (!answerText) {
           throw new Error("INVALID_PAYLOAD");
         }
@@ -957,21 +956,19 @@
       dom.chatZone.appendChild(dom.processing);
       dom.processing.classList.add("visible");
       clearProcessingStep();
-      startProcessingTicker();
+      setProcessingStepText(INITIAL_PROCESSING_MESSAGE);
       maybeAutoScroll({ smooth: true });
       updateScrollDownButton();
     }
 
     function hideProcessing() {
-      stopProcessingTicker();
       dom.processing.classList.remove("visible");
       clearProcessingStep();
       updateScrollDownButton();
     }
 
     function clearProcessingStep() {
-      state.processingStepIndex = -1;
-      state.lastStreamProcessingIndex = -1;
+      state.lastProcessingMessage = "";
       if (!dom.processingStepCurrent) return;
       dom.processingStepCurrent.textContent = "";
     }
@@ -979,34 +976,7 @@
     function setProcessingStepText(label) {
       if (!dom.processingStepCurrent) return;
       dom.processingStepCurrent.textContent = label;
-    }
-
-    function getProcessingStepLabels() {
-      return PROCESSING_STEP_MAP.map((step) => step.label);
-    }
-
-    function showNextProcessingStep() {
-      const labels = getProcessingStepLabels();
-      if (!labels.length) return;
-      if (state.processingStepIndex >= labels.length - 1) {
-        stopProcessingTicker();
-        return;
-      }
-      state.processingStepIndex += 1;
-      setProcessingStepText(labels[state.processingStepIndex]);
-    }
-
-    function startProcessingTicker() {
-      stopProcessingTicker();
-      showNextProcessingStep();
-      // Keep step 1 as visual fallback. Progress to next steps must come from n8n stream signals.
-      state.processingTimerId = null;
-    }
-
-    function stopProcessingTicker() {
-      if (state.processingTimerId === null) return;
-      window.clearInterval(state.processingTimerId);
-      state.processingTimerId = null;
+      state.lastProcessingMessage = label;
     }
 
     function setStatus(message, isError = false) {
@@ -1128,60 +1098,139 @@
         .replace(/[\u0300-\u036f]/g, "");
     }
 
-    function mapIncomingProcessingStep(text) {
+    function mapLegacyProcessingStep(text) {
       const normalized = normalizeProgressText(normalizeIncomingText(text)).trim();
-      for (let i = 0; i < PROCESSING_STEP_MAP.length; i += 1) {
-        if (normalized.includes(PROCESSING_STEP_MAP[i].key)) {
-          const label = PROCESSING_STEP_MAP[i].label;
-          const index = getProcessingStepLabels().indexOf(label);
-          if (index === -1) return null;
-          return { index, label };
+      for (let i = 0; i < LEGACY_PROCESSING_STEP_MAP.length; i += 1) {
+        if (normalized.includes(LEGACY_PROCESSING_STEP_MAP[i].key)) {
+          return LEGACY_PROCESSING_STEP_MAP[i].label;
         }
       }
       return null;
     }
 
     function updateProcessingFromStreamText(text) {
-      const mapped = mapIncomingProcessingStep(text);
-      if (!mapped) return;
-      // Track duplicates based on stream progression only (not on timer fallback progression).
-      if (mapped.index <= state.lastStreamProcessingIndex) return;
-      state.lastStreamProcessingIndex = mapped.index;
-      state.processingStepIndex = mapped.index;
-      // Stream events are the source of truth when present.
-      stopProcessingTicker();
-      setProcessingStepText(mapped.label);
+      const message = normalizeIncomingText(text).trim();
+      if (!message || message === state.lastProcessingMessage) return;
+      setProcessingStepText(message);
     }
 
-    function updateProcessingFromMetadata(nodeName) {
-      if (typeof nodeName !== "string" || !nodeName.trim()) return;
-      updateProcessingFromStreamText(nodeName);
+    function parseDomainStreamEvent(obj) {
+      if (!obj || typeof obj !== "object") return null;
+
+      if (obj.type === "progress" && typeof obj.message === "string") {
+        return {
+          kind: "progress",
+          message: normalizeIncomingText(obj.message).trim()
+        };
+      }
+
+      if (obj.type === "final") {
+        if (typeof obj.answer === "string") {
+          return {
+            kind: "final",
+            answer: normalizeIncomingText(obj.answer).trim()
+          };
+        }
+
+        if (typeof obj.message === "string") {
+          return {
+            kind: "final",
+            answer: normalizeIncomingText(obj.message).trim()
+          };
+        }
+      }
+
+      if (typeof obj.answer === "string") {
+        return {
+          kind: "final",
+          answer: normalizeIncomingText(obj.answer).trim()
+        };
+      }
+
+      return null;
     }
 
     function parseStreamEventLine(line) {
       const eventObj = safeJsonParse(line);
       if (!eventObj || typeof eventObj !== "object") {
-        return { text: null, event: null };
+        return { kind: "unknown", event: null };
+      }
+
+      const directDomainEvent = parseDomainStreamEvent(eventObj);
+      if (directDomainEvent) {
+        return { ...directDomainEvent, event: eventObj };
       }
 
       if (eventObj.metadata && typeof eventObj.metadata.nodeName === "string") {
-        updateProcessingFromMetadata(eventObj.metadata.nodeName);
+        const legacyMetadataMessage = mapLegacyProcessingStep(eventObj.metadata.nodeName);
+        if (legacyMetadataMessage) {
+          return { kind: "progress", message: legacyMetadataMessage, event: eventObj };
+        }
       }
 
       if (eventObj.type !== "item" || typeof eventObj.content !== "string") {
-        return { text: null, event: eventObj };
+        return { kind: "unknown", event: eventObj };
       }
 
       const contentObj = safeJsonParse(eventObj.content);
-      if (contentObj && typeof contentObj.text === "string") {
-        return { text: normalizeIncomingText(contentObj.text), event: eventObj };
+      const wrappedDomainEvent = parseDomainStreamEvent(contentObj);
+      if (wrappedDomainEvent) {
+        return { ...wrappedDomainEvent, event: eventObj };
       }
 
-      // Some n8n stream items are plain text tokens, not JSON objects.
-      return { text: normalizeIncomingText(eventObj.content), event: eventObj };
+      if (contentObj && typeof contentObj.text === "string") {
+        const contentText = normalizeIncomingText(contentObj.text).trim();
+        const legacyContentMessage = mapLegacyProcessingStep(contentText);
+        if (legacyContentMessage) {
+          return { kind: "progress", message: legacyContentMessage, event: eventObj };
+        }
+        return { kind: "final_candidate", answer: contentText, event: eventObj };
+      }
+
+      const rawContentText = normalizeIncomingText(eventObj.content).trim();
+      const legacyRawMessage = mapLegacyProcessingStep(rawContentText);
+      if (legacyRawMessage) {
+        return { kind: "progress", message: legacyRawMessage, event: eventObj };
+      }
+
+      return { kind: "final_candidate", answer: rawContentText, event: eventObj };
     }
 
-    function consumeStreamBuffer(buffer, streamItems) {
+    function createResponseState() {
+      return {
+        finalAnswer: "",
+        finalCandidates: []
+      };
+    }
+
+    function applyParsedEvent(parsedEvent, responseState) {
+      if (!parsedEvent || !responseState) return;
+
+      if (parsedEvent.kind === "progress" && parsedEvent.message) {
+        updateProcessingFromStreamText(parsedEvent.message);
+        return;
+      }
+
+      if (parsedEvent.kind === "final" && parsedEvent.answer) {
+        responseState.finalAnswer = parsedEvent.answer;
+        return;
+      }
+
+      if (parsedEvent.kind === "final_candidate" && parsedEvent.answer) {
+        responseState.finalCandidates.push(parsedEvent.answer);
+      }
+    }
+
+    function resolveFinalAnswer(responseState) {
+      if (responseState.finalAnswer) return responseState.finalAnswer;
+
+      return responseState.finalCandidates
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .at(-1) || "";
+    }
+
+    function consumeStreamBuffer(buffer, responseState) {
       let pending = buffer;
 
       while (true) {
@@ -1192,11 +1241,7 @@
         pending = pending.slice(newlineIndex + 1);
         if (!line) continue;
 
-        const parsed = parseStreamEventLine(line);
-        const streamText = parsed.text;
-        if (!streamText) continue;
-        streamItems.push(streamText);
-        updateProcessingFromStreamText(streamText);
+        applyParsedEvent(parseStreamEventLine(line), responseState);
       }
 
       return pending;
@@ -1206,12 +1251,12 @@
       if (!response.body || typeof response.body.getReader !== "function") {
         const rawText = await response.text();
         debugAppend(rawText);
-        return { rawText, streamItems: [] };
+        return { rawText, finalAnswer: extractAnswerText(rawText) };
       }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      const streamItems = [];
+      const responseState = createResponseState();
       let rawText = "";
       let lineBuffer = "";
 
@@ -1222,7 +1267,7 @@
         rawText += chunk;
         debugAppend(chunk);
         lineBuffer += chunk;
-        lineBuffer = consumeStreamBuffer(lineBuffer, streamItems);
+        lineBuffer = consumeStreamBuffer(lineBuffer, responseState);
       }
 
       const tail = decoder.decode();
@@ -1234,15 +1279,10 @@
 
       const finalLine = lineBuffer.trim();
       if (finalLine) {
-        const parsed = parseStreamEventLine(finalLine);
-        const streamText = parsed.text;
-        if (streamText) {
-          streamItems.push(streamText);
-          updateProcessingFromStreamText(streamText);
-        }
+        applyParsedEvent(parseStreamEventLine(finalLine), responseState);
       }
 
-      return { rawText, streamItems };
+      return { rawText, finalAnswer: resolveFinalAnswer(responseState) };
     }
 
     function safeJsonParse(text) {
@@ -1261,42 +1301,7 @@
       return rawText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
     }
 
-    function extractAnswerFromNdjsonLines(lines) {
-      const textParts = [];
-
-      for (const line of lines) {
-        const eventObj = safeJsonParse(line);
-        if (!eventObj || eventObj.type !== "item" || typeof eventObj.content !== "string") {
-          continue;
-        }
-
-        const contentObj = safeJsonParse(eventObj.content);
-        if (!contentObj || typeof contentObj.text !== "string") {
-          continue;
-        }
-
-        textParts.push(normalizeIncomingText(contentObj.text));
-      }
-
-      if (!textParts.length) return null;
-
-      // In n8n streaming mode, intermediary progress messages can also be emitted as items.
-      // Keep the longest text block, which corresponds to the final answer payload.
-      return textParts
-        .map((item) => item.trim())
-        .filter(Boolean)
-        .sort((a, b) => b.length - a.length)[0] || null;
-    }
-
-    function extractAnswerText(rawText, streamItems = []) {
-      if (Array.isArray(streamItems) && streamItems.length) {
-        const longest = streamItems
-          .map((item) => item.trim())
-          .filter(Boolean)
-          .sort((a, b) => b.length - a.length)[0];
-        if (longest) return longest;
-      }
-
+    function extractAnswerText(rawText) {
       const parsed = safeJsonParse(rawText);
 
       // Legacy payload contract: { "answer": "..." }
@@ -1306,7 +1311,12 @@
 
       // n8n streaming payload: NDJSON events, sometimes wrapped as a JSON string.
       const lines = toLinesFromPossiblyQuotedPayload(rawText);
-      const streamAnswer = extractAnswerFromNdjsonLines(lines);
+      const responseState = createResponseState();
+      for (const line of lines) {
+        applyParsedEvent(parseStreamEventLine(line), responseState);
+      }
+
+      const streamAnswer = resolveFinalAnswer(responseState);
       if (streamAnswer) return streamAnswer;
 
       return null;
