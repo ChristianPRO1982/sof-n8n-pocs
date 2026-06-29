@@ -408,14 +408,26 @@
       floatingDirty: document.getElementById("floatingDirty")
     };
 
-    window.UIChatSimpleAuth.guardPage({ accessPage: "../access.html" }).then(() => init()).catch((error) => {
-      setStatus("Configuration invalide. Vérifiez les paramètres de l'application.", true);
-      setTableMessage("Impossible d'initialiser la page.");
-      debugWrite(`INIT ERROR\n${String(error)}`);
+    debugBootstrap("Boot guardPage ../access.html");
+
+    window.UIChatSimpleAuth.guardPage({ accessPage: "../access.html" }).then(() => {
+      debugBootstrap("guardPage OK");
+      return init();
+    }).catch((error) => {
+      const errorDetails = formatInitError(error);
+      forceDebugPanelVisible();
+      setStatus(`Initialisation impossible: ${errorDetails}`, true);
+      setTableMessage(`Impossible d'initialiser la page. Détail: ${escapeHtml(errorDetails)}`);
+      debugWrite(`INIT ERROR\n${errorDetails}\n`);
+      if (error && error.stack) {
+        debugAppend(`STACK\n${error.stack}\n`);
+      }
     });
 
     async function init() {
+      debugAppend("INIT start\n");
       state.config = await loadConfig("../config.ini");
+      debugAppend("CONFIG loaded successfully\n");
       state.debugMode = isTruthy(state.config.DEBUG_MODE);
       state.endpoints = {
         C: state.config.TAGS_WEBHOOK_C || FALLBACK_ENDPOINTS.C,
@@ -449,9 +461,16 @@
     }
 
     async function loadConfig(path) {
+      debugBootstrap(`loadConfig ${path}`);
       const response = await fetch(path, { cache: "no-store" });
-      if (!response.ok) throw new Error("CONFIG_NOT_FOUND");
-      return parseIni(await response.text());
+      debugBootstrap(`loadConfig HTTP ${response.status} ${response.statusText}`);
+      if (!response.ok) throw new Error(`CONFIG_HTTP_${response.status}`);
+      const text = await response.text();
+      const parsed = parseIni(text);
+      if (!Object.keys(parsed).length) {
+        throw new Error("CONFIG_EMPTY_OR_INVALID");
+      }
+      return parsed;
     }
 
     function parseIni(content) {
@@ -476,6 +495,16 @@
       dom.layout.classList.toggle("debug-active", enabled);
     }
 
+    function forceDebugPanelVisible() {
+      dom.debugPanel.classList.add("visible");
+      dom.layout.classList.add("debug-active");
+    }
+
+    function debugBootstrap(text) {
+      dom.debugOutput.textContent += `${text}\n`;
+      forceDebugScrollToEnd();
+    }
+
     function debugWrite(text) {
       if (!state.debugMode) return;
       dom.debugOutput.textContent = text;
@@ -492,6 +521,17 @@
       window.requestAnimationFrame(() => {
         dom.debugOutput.scrollTop = dom.debugOutput.scrollHeight;
       });
+    }
+
+    function formatInitError(error) {
+      if (!error) return "unknown error";
+      if (error instanceof Error) return `${error.name}: ${error.message}`;
+      if (typeof error === "string") return error;
+      try {
+        return JSON.stringify(error);
+      } catch {
+        return String(error);
+      }
     }
 
     function setStatus(message, isError = false, isSuccess = false) {

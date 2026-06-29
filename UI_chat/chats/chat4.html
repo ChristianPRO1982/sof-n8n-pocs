@@ -666,12 +666,25 @@
       scrollDownBtn: document.getElementById("scrollDownBtn")
     };
 
-    window.UIChatSimpleAuth.guardPage({ accessPage: "../access.html" }).then(() => init()).catch(() => {
-      showBlockingError("Configuration invalide. Vérifiez les paramètres de l'application.");
+    debugBootstrap("Boot guardPage ../access.html");
+
+    window.UIChatSimpleAuth.guardPage({ accessPage: "../access.html" }).then(() => {
+      debugBootstrap("guardPage OK");
+      return init();
+    }).catch((error) => {
+      const errorDetails = formatInitError(error);
+      forceDebugPanelVisible();
+      showBlockingError(`Initialisation impossible: ${errorDetails}`);
+      debugWrite(`INIT ERROR\n${errorDetails}\n`);
+      if (error && error.stack) {
+        debugAppend(`STACK\n${error.stack}\n`);
+      }
     });
 
     async function init() {
+      debugBootstrap("INIT start");
       state.config = await loadConfigFromKnownPaths();
+      debugBootstrap("CONFIG loaded successfully");
       state.config.WEBHOOK_URL = normalizeWebhookUrl(state.config.WEBHOOK_URL);
       if (!isValidWebhookUrl(state.config.WEBHOOK_URL)) {
         throw new Error("Invalid WEBHOOK_URL");
@@ -1058,13 +1071,19 @@
     }
 
     async function loadConfig(path) {
+      debugBootstrap(`loadConfig ${path}`);
       const response = await fetch(path, { cache: "no-store" });
+      debugBootstrap(`loadConfig HTTP ${response.status} ${response.statusText}`);
       if (!response.ok) {
-        throw new Error("CONFIG_NOT_FOUND");
+        throw new Error(`CONFIG_HTTP_${response.status}`);
       }
 
       const text = await response.text();
-      return parseIni(text);
+      const parsed = parseIni(text);
+      if (!Object.keys(parsed).length) {
+        throw new Error("CONFIG_EMPTY_OR_INVALID");
+      }
+      return parsed;
     }
 
     function parseIni(content) {
@@ -1115,6 +1134,15 @@
       dom.layout.classList.toggle("debug-active", enabled);
     }
 
+    function forceDebugPanelVisible() {
+      dom.debugPanel.classList.add("visible");
+      dom.layout.classList.add("debug-active");
+    }
+
+    function debugBootstrap(text) {
+      dom.debugOutput.textContent += `${text}\n`;
+    }
+
     function debugWrite(text) {
       if (!state.debugMode) return;
       dom.debugOutput.textContent = text;
@@ -1123,6 +1151,17 @@
     function debugAppend(text) {
       if (!state.debugMode) return;
       dom.debugOutput.textContent += text;
+    }
+
+    function formatInitError(error) {
+      if (!error) return "unknown error";
+      if (error instanceof Error) return `${error.name}: ${error.message}`;
+      if (typeof error === "string") return error;
+      try {
+        return JSON.stringify(error);
+      } catch {
+        return String(error);
+      }
     }
 
     function normalizeProgressText(text) {
