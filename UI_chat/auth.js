@@ -33,7 +33,10 @@
           try {
             const response = await fetch(path, { cache: "no-store" });
             if (!response.ok) throw new Error(`CONFIG_HTTP_${response.status}`);
-            return parseIni(await response.text());
+            const parsed = parseIni(await response.text());
+            if (!Object.keys(parsed).length) throw new Error(`CONFIG_INVALID_${path}`);
+            if (!normalizeConfigKey(parsed.ADMIN_ACCESS_KEY)) throw new Error(`CONFIG_MISSING_ADMIN_ACCESS_KEY_${path}`);
+            return parsed;
           } catch (error) {
             lastError = error;
           }
