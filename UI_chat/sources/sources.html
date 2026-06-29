@@ -274,7 +274,8 @@
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
       background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-      overflow: auto;
+      overflow-x: auto;
+      overflow-y: visible;
     }
 
     table { width: 100%; border-collapse: collapse; min-width: 1200px; font-size: 0.9rem; }
@@ -287,7 +288,7 @@
       border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
-      z-index: 1;
+      z-index: 5;
       white-space: nowrap;
     }
 
@@ -348,15 +349,16 @@
       min-height: 34px;
     }
 
-    .col-action { width: 8%; }
+    .col-action { width: 120px; }
     .col-id { width: 84px; display: none; }
     .layout.debug-active .col-id { display: table-cell; }
-    .col-link { width: 20%; }
-    .col-zone { width: 20%; min-width: 0; }
-    .col-note { width: 5%; }
+    .col-link { width: 25%; }
+    .col-zone { width: 14%; min-width: 0; }
+    .col-note { width: 8%; }
     .col-date { width: 8%; }
     .col-bool { width: 5%; }
-    .col-ts { width: 7%; }
+    .col-ts { width: 8%; }
+    .col-embedded { width: 8%; }
 
     .relation-zone {
       display: grid;
@@ -397,11 +399,13 @@
       border: 1px solid #c4d9f6;
       background: #eaf3ff;
       color: #164171;
-      border-radius: 999px;
+      border-radius: 10px;
       padding: 2px 8px;
       font-size: 0.82rem;
       line-height: 1.35;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      align-items: flex-start;
     }
 
     .relation-chip-remove {
@@ -427,9 +431,9 @@
 
     .action-stack {
       display: flex;
-      flex-direction: row;
+      flex-direction: column;
       gap: 6px;
-      align-items: center;
+      align-items: stretch;
       flex-wrap: nowrap;
     }
 
@@ -437,13 +441,14 @@
       font-size: 0.72rem;
       padding: 9px 7px;
       letter-spacing: 0.01em;
+      width: 100%;
     }
 
     .row-link {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 28px;
+      width: 100%;
       min-height: 28px;
       border: 1px solid #d5e2f5;
       border-radius: 8px;
@@ -457,6 +462,16 @@
 
     .row-link:hover {
       background: #e4edfb;
+    }
+
+    .link-cell-stack {
+      display: grid;
+      gap: 6px;
+    }
+
+    .link-cell-stack .row-link {
+      width: fit-content;
+      min-width: 36px;
     }
 
     .empty { padding: 26px 16px; text-align: center; color: var(--muted); }
@@ -613,10 +628,11 @@
                   <th class="col-bool"><span title="Scraping intelligent avec IA et profondeur de 3">scrap ⓘ</span></th>
                   <th class="col-ts">MAJ</th>
                   <th class="col-ts">Scraping</th>
+                  <th class="col-embedded">Chatbot</th>
                 </tr>
               </thead>
               <tbody id="table-body">
-                <tr><td class="empty" colspan="10">Chargement en cours...</td></tr>
+                <tr><td class="empty" colspan="11">Chargement en cours...</td></tr>
               </tbody>
             </table>
           </div>
@@ -816,7 +832,7 @@
     }
 
     function setTableMessage(message) {
-      dom.tableBody.innerHTML = `<tr><td class="empty" colspan="10">${escapeHtml(message)}</td></tr>`;
+      dom.tableBody.innerHTML = `<tr><td class="empty" colspan="11">${escapeHtml(message)}</td></tr>`;
     }
 
     function escapeHtml(value) {
@@ -895,6 +911,7 @@
         smart_scraping: typeof raw.smart_scraping === "boolean" ? raw.smart_scraping : false,
         updated_at: formatTimestampToMinute(raw.updated_at),
         scraped_at: formatTimestampToMinute(raw.scraped_at),
+        embedded_at: formatTimestampToMinute(raw.embedded_at),
         __isNew: isNew
       };
     }
@@ -1042,7 +1059,8 @@
         update_date: row.update_date,
         smart_scraping: row.smart_scraping,
         updated_at: row.updated_at,
-        scraped_at: row.scraped_at
+        scraped_at: row.scraped_at,
+        embedded_at: row.embedded_at
       };
     }
 
@@ -1208,11 +1226,15 @@
             <div class="action-stack row-actions">
               <button class="btn ${actionClass} js-modify" type="button" ${modDisabled}>${actionLabel}</button>
               <button class="btn btn-danger js-delete" type="button">SUPPRIMER</button>
-              ${rowLink}
             </div>
           </td>
           <td class="col-id"><span class="cell-id">${escapeHtml(row.id ?? "(nouveau)")}</span></td>
-          <td class="col-link">${renderTextInput("url", row.url)}</td>
+          <td class="col-link">
+            <div class="link-cell-stack">
+              ${renderTextInput("url", row.url)}
+              ${rowLink}
+            </div>
+          </td>
           <td class="col-zone">${renderRelationZone(row, "sousthematique", canEditRelations)}</td>
           <td class="col-zone">${renderRelationZone(row, "categorie", canEditRelations)}</td>
           <td class="col-note">${renderNoteInput(row.score)}</td>
@@ -1220,6 +1242,7 @@
           <td class="col-bool">${renderBooleanCheckbox("smart_scraping", row.smart_scraping)}</td>
           <td class="col-ts"><span class="cell-readonly">${escapeHtml(row.updated_at || "")}</span></td>
           <td class="col-ts"><span class="cell-readonly">${escapeHtml(row.scraped_at || "")}</span></td>
+          <td class="col-embedded"><span class="cell-readonly">${escapeHtml(row.embedded_at || "")}</span></td>
         </tr>
       `;
     }
@@ -1852,7 +1875,8 @@
         && a.update_date === b.update_date
         && a.smart_scraping === b.smart_scraping
         && a.updated_at === b.updated_at
-        && a.scraped_at === b.scraped_at;
+        && a.scraped_at === b.scraped_at
+        && a.embedded_at === b.embedded_at;
     }
 
     function buildPayload(type, row) {
