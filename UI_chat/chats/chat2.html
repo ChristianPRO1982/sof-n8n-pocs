@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="fr">
 <head>
@@ -38,6 +39,10 @@
         linear-gradient(140deg, var(--bg-1), var(--bg-2));
       min-height: 100vh;
       padding: 28px 16px 40px;
+    }
+
+    body[data-auth-state="pending"] {
+      visibility: hidden;
     }
 
     .app {
@@ -541,12 +546,12 @@
     }
   </style>
 </head>
-<body>
+<body data-auth-state="pending">
   <main class="app">
     <div id="layout" class="layout">
       <section class="panel">
         <header class="header">
-          <a href="../index.html"><img src="https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png"
+          <a href="../admin.html"><img src="https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png"
           alt="Sofinco" class="logo" /></a>
           <div>
             <h1>Assistant MaPrimeRenov'</h1>
@@ -607,18 +612,18 @@
   </main>
   <button id="scrollDownBtn" class="scroll-down-btn" type="button" aria-label="Aller en bas de la conversation">↓</button>
 
+  <script src="../auth.js"></script>
   <script>
     const DEFAULT_TYPEWRITER_DELAY_MS = 4;
     const GENERIC_ERROR_MESSAGE = "Une erreur est survenue. Veuillez réessayer.";
     const NEAR_BOTTOM_THRESHOLD_PX = 80;
-    const INITIAL_PROCESSING_MESSAGE = "Connexion au webhook...";
-    const LEGACY_PROCESSING_STEP_MAP = [
-      { key: "message1", label: "Analyse de la question" },
-      { key: "message2", label: "Recherche des sources d'information" },
-      { key: "message3", label: "Génération de la réponse" },
-      { key: "comprehension de la question", label: "Analyse de la question" },
-      { key: "recherche dans la documentation", label: "Recherche des sources d'information" },
-      { key: "redaction de la reponse", label: "Génération de la réponse" }
+    const PROCESSING_STEP_MAP = [
+      { key: "message1", label: "Compréhension de la question" },
+      { key: "message2", label: "Recherche dans la documentation" },
+      { key: "message3", label: "Rédaction de la réponse" },
+      { key: "comprehension de la question", label: "Compréhension de la question" },
+      { key: "recherche dans la documentation", label: "Recherche dans la documentation" },
+      { key: "redaction de la reponse", label: "Rédaction de la réponse" }
     ];
 
     const state = {
@@ -632,7 +637,9 @@
       typewriterDelayMs: DEFAULT_TYPEWRITER_DELAY_MS,
       autoScrollEnabled: true,
       lastScrollY: 0,
-      lastProcessingMessage: ""
+      processingStepIndex: -1,
+      lastStreamProcessingIndex: -1,
+      processingTimerId: null
     };
 
     const dom = {
@@ -654,7 +661,7 @@
       scrollDownBtn: document.getElementById("scrollDownBtn")
     };
 
-    init().catch(() => {
+    window.UIChatSimpleAuth.guardPage({ accessPage: "../access.html" }).then(() => init()).catch(() => {
       showBlockingError("Configuration invalide. Vérifiez les paramètres de l'application.");
     });
 
@@ -736,13 +743,13 @@
           body: JSON.stringify(payload)
         });
         debugWrite(`HTTP ${response.status} ${response.statusText}\n\n`);
-        const { rawText, finalAnswer } = await readResponsePayload(response);
+        const { rawText, streamItems } = await readResponsePayload(response);
 
         if (!response.ok) {
           throw new Error(`HTTP_${response.status}`);
         }
 
-        const answerText = finalAnswer || extractAnswerText(rawText);
+        const answerText = extractAnswerText(rawText, streamItems);
         if (!answerText) {
           throw new Error("INVALID_PAYLOAD");
         }
@@ -951,19 +958,21 @@
       dom.chatZone.appendChild(dom.processing);
       dom.processing.classList.add("visible");
       clearProcessingStep();
-      setProcessingStepText(INITIAL_PROCESSING_MESSAGE);
+      startProcessingTicker();
       maybeAutoScroll({ smooth: true });
       updateScrollDownButton();
     }
 
     function hideProcessing() {
+      stopProcessingTicker();
       dom.processing.classList.remove("visible");
       clearProcessingStep();
       updateScrollDownButton();
     }
 
     function clearProcessingStep() {
-      state.lastProcessingMessage = "";
+      state.processingStepIndex = -1;
+      state.lastStreamProcessingIndex = -1;
       if (!dom.processingStepCurrent) return;
       dom.processingStepCurrent.textContent = "";
     }
@@ -971,7 +980,30 @@
     function setProcessingStepText(label) {
       if (!dom.processingStepCurrent) return;
       dom.processingStepCurrent.textContent = label;
-      state.lastProcessingMessage = label;
+    }
+
+    function getProcessingStepLabels() {
+      return PROCESSING_STEP_MAP.slice(0, 3).map((step) => step.label);
+    }
+
+    function showNextProcessingStep() {
+      const labels = getProcessingStepLabels();
+      if (!labels.length) return;
+      if (state.processingStepIndex >= labels.length - 1) return;
+      state.processingStepIndex += 1;
+      setProcessingStepText(labels[state.processingStepIndex]);
+    }
+
+    function startProcessingTicker() {
+      stopProcessingTicker();
+      showNextProcessingStep();
+      state.processingTimerId = null;
+    }
+
+    function stopProcessingTicker() {
+      if (state.processingTimerId === null) return;
+      window.clearInterval(state.processingTimerId);
+      state.processingTimerId = null;
     }
 
     function setStatus(message, isError = false) {
@@ -1093,139 +1125,57 @@
         .replace(/[\u0300-\u036f]/g, "");
     }
 
-    function mapLegacyProcessingStep(text) {
+    function mapIncomingProcessingStep(text) {
       const normalized = normalizeProgressText(normalizeIncomingText(text)).trim();
-      for (let i = 0; i < LEGACY_PROCESSING_STEP_MAP.length; i += 1) {
-        if (normalized.includes(LEGACY_PROCESSING_STEP_MAP[i].key)) {
-          return LEGACY_PROCESSING_STEP_MAP[i].label;
+      for (let i = 0; i < PROCESSING_STEP_MAP.length; i += 1) {
+        if (normalized.includes(PROCESSING_STEP_MAP[i].key)) {
+          const label = PROCESSING_STEP_MAP[i].label;
+          const index = getProcessingStepLabels().indexOf(label);
+          if (index === -1) return null;
+          return { index, label };
         }
       }
       return null;
     }
 
     function updateProcessingFromStreamText(text) {
-      const message = normalizeIncomingText(text).trim();
-      if (!message || message === state.lastProcessingMessage) return;
-      setProcessingStepText(message);
+      const mapped = mapIncomingProcessingStep(text);
+      if (!mapped) return;
+      if (mapped.index <= state.lastStreamProcessingIndex) return;
+      state.lastStreamProcessingIndex = mapped.index;
+      state.processingStepIndex = mapped.index;
+      stopProcessingTicker();
+      setProcessingStepText(mapped.label);
     }
 
-    function parseDomainStreamEvent(obj) {
-      if (!obj || typeof obj !== "object") return null;
-
-      if (obj.type === "progress" && typeof obj.message === "string") {
-        return {
-          kind: "progress",
-          message: normalizeIncomingText(obj.message).trim()
-        };
-      }
-
-      if (obj.type === "final") {
-        if (typeof obj.answer === "string") {
-          return {
-            kind: "final",
-            answer: normalizeIncomingText(obj.answer).trim()
-          };
-        }
-
-        if (typeof obj.message === "string") {
-          return {
-            kind: "final",
-            answer: normalizeIncomingText(obj.message).trim()
-          };
-        }
-      }
-
-      if (typeof obj.answer === "string") {
-        return {
-          kind: "final",
-          answer: normalizeIncomingText(obj.answer).trim()
-        };
-      }
-
-      return null;
+    function updateProcessingFromMetadata(nodeName) {
+      if (typeof nodeName !== "string" || !nodeName.trim()) return;
+      updateProcessingFromStreamText(nodeName);
     }
 
     function parseStreamEventLine(line) {
       const eventObj = safeJsonParse(line);
       if (!eventObj || typeof eventObj !== "object") {
-        return { kind: "unknown", event: null };
-      }
-
-      const directDomainEvent = parseDomainStreamEvent(eventObj);
-      if (directDomainEvent) {
-        return { ...directDomainEvent, event: eventObj };
+        return { text: null, event: null };
       }
 
       if (eventObj.metadata && typeof eventObj.metadata.nodeName === "string") {
-        const legacyMetadataMessage = mapLegacyProcessingStep(eventObj.metadata.nodeName);
-        if (legacyMetadataMessage) {
-          return { kind: "progress", message: legacyMetadataMessage, event: eventObj };
-        }
+        updateProcessingFromMetadata(eventObj.metadata.nodeName);
       }
 
       if (eventObj.type !== "item" || typeof eventObj.content !== "string") {
-        return { kind: "unknown", event: eventObj };
+        return { text: null, event: eventObj };
       }
 
       const contentObj = safeJsonParse(eventObj.content);
-      const wrappedDomainEvent = parseDomainStreamEvent(contentObj);
-      if (wrappedDomainEvent) {
-        return { ...wrappedDomainEvent, event: eventObj };
-      }
-
       if (contentObj && typeof contentObj.text === "string") {
-        const contentText = normalizeIncomingText(contentObj.text).trim();
-        const legacyContentMessage = mapLegacyProcessingStep(contentText);
-        if (legacyContentMessage) {
-          return { kind: "progress", message: legacyContentMessage, event: eventObj };
-        }
-        return { kind: "final_candidate", answer: contentText, event: eventObj };
+        return { text: normalizeIncomingText(contentObj.text), event: eventObj };
       }
 
-      const rawContentText = normalizeIncomingText(eventObj.content).trim();
-      const legacyRawMessage = mapLegacyProcessingStep(rawContentText);
-      if (legacyRawMessage) {
-        return { kind: "progress", message: legacyRawMessage, event: eventObj };
-      }
-
-      return { kind: "final_candidate", answer: rawContentText, event: eventObj };
+      return { text: normalizeIncomingText(eventObj.content), event: eventObj };
     }
 
-    function createResponseState() {
-      return {
-        finalAnswer: "",
-        finalCandidates: []
-      };
-    }
-
-    function applyParsedEvent(parsedEvent, responseState) {
-      if (!parsedEvent || !responseState) return;
-
-      if (parsedEvent.kind === "progress" && parsedEvent.message) {
-        updateProcessingFromStreamText(parsedEvent.message);
-        return;
-      }
-
-      if (parsedEvent.kind === "final" && parsedEvent.answer) {
-        responseState.finalAnswer = parsedEvent.answer;
-        return;
-      }
-
-      if (parsedEvent.kind === "final_candidate" && parsedEvent.answer) {
-        responseState.finalCandidates.push(parsedEvent.answer);
-      }
-    }
-
-    function resolveFinalAnswer(responseState) {
-      if (responseState.finalAnswer) return responseState.finalAnswer;
-
-      return responseState.finalCandidates
-        .map((item) => item.trim())
-        .filter(Boolean)
-        .at(-1) || "";
-    }
-
-    function consumeStreamBuffer(buffer, responseState) {
+    function consumeStreamBuffer(buffer, streamItems) {
       let pending = buffer;
 
       while (true) {
@@ -1236,7 +1186,11 @@
         pending = pending.slice(newlineIndex + 1);
         if (!line) continue;
 
-        applyParsedEvent(parseStreamEventLine(line), responseState);
+        const parsed = parseStreamEventLine(line);
+        const streamText = parsed.text;
+        if (!streamText) continue;
+        streamItems.push(streamText);
+        updateProcessingFromStreamText(streamText);
       }
 
       return pending;
@@ -1246,12 +1200,12 @@
       if (!response.body || typeof response.body.getReader !== "function") {
         const rawText = await response.text();
         debugAppend(rawText);
-        return { rawText, finalAnswer: extractAnswerText(rawText) };
+        return { rawText, streamItems: [] };
       }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      const responseState = createResponseState();
+      const streamItems = [];
       let rawText = "";
       let lineBuffer = "";
 
@@ -1262,7 +1216,7 @@
         rawText += chunk;
         debugAppend(chunk);
         lineBuffer += chunk;
-        lineBuffer = consumeStreamBuffer(lineBuffer, responseState);
+        lineBuffer = consumeStreamBuffer(lineBuffer, streamItems);
       }
 
       const tail = decoder.decode();
@@ -1274,10 +1228,15 @@
 
       const finalLine = lineBuffer.trim();
       if (finalLine) {
-        applyParsedEvent(parseStreamEventLine(finalLine), responseState);
+        const parsed = parseStreamEventLine(finalLine);
+        const streamText = parsed.text;
+        if (streamText) {
+          streamItems.push(streamText);
+          updateProcessingFromStreamText(streamText);
+        }
       }
 
-      return { rawText, finalAnswer: resolveFinalAnswer(responseState) };
+      return { rawText, streamItems };
     }
 
     function safeJsonParse(text) {
@@ -1296,7 +1255,42 @@
       return rawText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
     }
 
-    function extractAnswerText(rawText) {
+    function extractAnswerFromNdjsonLines(lines) {
+      const textParts = [];
+
+      for (const line of lines) {
+        const eventObj = safeJsonParse(line);
+        if (!eventObj || eventObj.type !== "item" || typeof eventObj.content !== "string") {
+          continue;
+        }
+
+        const contentObj = safeJsonParse(eventObj.content);
+        if (!contentObj || typeof contentObj.text !== "string") {
+          continue;
+        }
+
+        textParts.push(normalizeIncomingText(contentObj.text));
+      }
+
+      if (!textParts.length) return null;
+
+      // In n8n streaming mode, intermediary progress messages can also be emitted as items.
+      // Keep the longest text block, which corresponds to the final answer payload.
+      return textParts
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .sort((a, b) => b.length - a.length)[0] || null;
+    }
+
+    function extractAnswerText(rawText, streamItems = []) {
+      if (Array.isArray(streamItems) && streamItems.length) {
+        const longest = streamItems
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .sort((a, b) => b.length - a.length)[0];
+        if (longest) return longest;
+      }
+
       const parsed = safeJsonParse(rawText);
 
       // Legacy payload contract: { "answer": "..." }
@@ -1306,12 +1300,7 @@
 
       // n8n streaming payload: NDJSON events, sometimes wrapped as a JSON string.
       const lines = toLinesFromPossiblyQuotedPayload(rawText);
-      const responseState = createResponseState();
-      for (const line of lines) {
-        applyParsedEvent(parseStreamEventLine(line), responseState);
-      }
-
-      const streamAnswer = resolveFinalAnswer(responseState);
+      const streamAnswer = extractAnswerFromNdjsonLines(lines);
       if (streamAnswer) return streamAnswer;
 
       return null;

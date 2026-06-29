@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="fr">
 <head>
@@ -39,6 +40,10 @@
         linear-gradient(145deg, var(--bg-1), var(--bg-2));
       min-height: 100vh;
       padding: 28px 16px 40px;
+    }
+
+    body[data-auth-state="pending"] {
+      visibility: hidden;
     }
 
     .app {
@@ -409,12 +414,12 @@
     }
   </style>
 </head>
-<body>
+<body data-auth-state="pending">
   <main class="app">
     <div id="layout" class="layout">
       <section class="panel">
         <header class="header">
-          <a href="../index.html"><img src="https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png"
+          <a href="../admin.html"><img src="https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png"
           alt="Sofinco" class="logo" /></a>
           <div>
             <h1>Assistant MaPrimeRenov'</h1>
@@ -466,6 +471,7 @@
     </aside>
   </main>
 
+  <script src="../auth.js"></script>
   <script>
     const DEFAULT_TYPEWRITER_DELAY_MS = 4;
     const GENERIC_ERROR_MESSAGE = "Une erreur est survenue. Veuillez réessayer.";
@@ -507,7 +513,7 @@
       debugOutput: document.getElementById("debugOutput")
     };
 
-    init().catch(() => {
+    window.UIChatSimpleAuth.guardPage({ accessPage: "../access.html" }).then(() => init()).catch(() => {
       showBlockingError("Configuration invalide. Vérifiez les paramètres de l'application.");
     });
 
