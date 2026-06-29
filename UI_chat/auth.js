@@ -108,9 +108,10 @@
 
   async function getExpectedHash() {
     const config = await loadConfig();
-    const clearKey = normalizeConfigKey(config.ADMIN_ACCESS_KEY);
-    if (!clearKey) throw new Error("ADMIN_ACCESS_KEY_MISSING");
-    return md5(clearKey);
+    const storedHash = normalizeConfigKey(config.ADMIN_ACCESS_KEY).toLowerCase();
+    if (!storedHash) throw new Error("ADMIN_ACCESS_KEY_MISSING");
+    if (!/^[a-f0-9]{32}$/.test(storedHash)) throw new Error("ADMIN_ACCESS_KEY_INVALID_MD5");
+    return storedHash;
   }
 
   async function hasValidCookie() {
