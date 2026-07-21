@@ -2,16 +2,33 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pdftools.pdftools import pdf_copy
 from PyPDF2 import PdfFileReader
 
 app = FastAPI(title="SOF POC API", version="0.1.0")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+UI_CHAT_DIR = BASE_DIR / "UI_chat"
+TAXON_DIR = UI_CHAT_DIR / "taxon"
 PDF_DIRECTORIES = (
     BASE_DIR / "n8n_files" / "poc2" / "pdf",
     BASE_DIR / "n8n_files" / "pocs2" / "pdf",
 )
+UI_SHARED_FILES = {
+    "auth.js": UI_CHAT_DIR / "auth.js",
+    "access.html": UI_CHAT_DIR / "access.html",
+    "admin.html": UI_CHAT_DIR / "admin.html",
+    "config.ini": UI_CHAT_DIR / "config.ini",
+    "logo-sofinco.png": UI_CHAT_DIR / "logo-sofinco.png",
+    "md5.html": UI_CHAT_DIR / "md5.html",
+}
+
+
+def _ui_file_response(file_path: Path) -> FileResponse:
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="UI file not found")
+    return FileResponse(file_path)
 
 
 def _safe_pdf_name(filename: str) -> str:
@@ -72,6 +89,46 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/taxon")
+def taxon_redirect() -> FileResponse:
+    return _ui_file_response(TAXON_DIR / "index.html")
+
+
+@app.get("/auth.js")
+def auth_js() -> FileResponse:
+    return _ui_file_response(UI_SHARED_FILES["auth.js"])
+
+
+@app.get("/access.html")
+def access_page() -> FileResponse:
+    return _ui_file_response(UI_SHARED_FILES["access.html"])
+
+
+@app.get("/admin.html")
+def admin_page() -> FileResponse:
+    return _ui_file_response(UI_SHARED_FILES["admin.html"])
+
+
+@app.get("/config.ini")
+def ui_config() -> FileResponse:
+    return _ui_file_response(UI_SHARED_FILES["config.ini"])
+
+
+@app.get("/logo-sofinco.png")
+def logo_sofinco() -> FileResponse:
+    return _ui_file_response(UI_SHARED_FILES["logo-sofinco.png"])
+
+
+@app.get("/md5.html")
+def md5_page() -> FileResponse:
+    return _ui_file_response(UI_SHARED_FILES["md5.html"])
+
+
+@app.get("/UI_chat/config.ini")
+def ui_chat_config() -> FileResponse:
+    return _ui_file_response(UI_SHARED_FILES["config.ini"])
+
+
 @app.get("/pdf/exists/{filename}")
 def pdf_exists(filename: str) -> dict[str, str | bool]:
     safe_filename = _safe_pdf_name(filename)
@@ -104,3 +161,6 @@ def pdf_extract(
         media_type="application/pdf",
         filename=f"{source_path.stem}_p{startPage}-{endPage}.pdf",
     )
+
+
+app.mount("/taxon", StaticFiles(directory=str(TAXON_DIR), html=True), name="taxon")
