@@ -79,6 +79,13 @@
       gap: 16px;
     }
 
+    .header-copy {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+
     .logo {
       width: 170px;
       height: auto;
@@ -97,6 +104,38 @@
       margin: 4px 0 0;
       color: var(--muted);
       font-size: 0.95rem;
+    }
+
+    .header-nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 1px solid #c5d9f7;
+      background: #eef5ff;
+      color: var(--primary-dark);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.92rem;
+      transition: transform 130ms ease, background 160ms ease, border-color 160ms ease;
+    }
+
+    .nav-link:hover {
+      transform: translateY(-1px);
+      background: #e3efff;
+    }
+
+    .nav-link.active {
+      background: linear-gradient(180deg, #0b66cf 0%, #005bbb 100%);
+      color: #ffffff;
+      border-color: #005bbb;
     }
 
     .main {
@@ -457,9 +496,15 @@
       <section class="panel">
         <header class="header">
           <a href="../admin.html"><img src="https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png" alt="Sofinco" class="logo" /></a>
-          <div>
+          <div class="header-copy">
+            <div>
             <h1>Taxon Upload</h1>
             <p>Déposez un fichier documentaire et suivez le traitement n8n en temps réel.</p>
+            </div>
+            <nav class="header-nav" aria-label="Navigation taxon">
+              <a class="nav-link active" href="index.html" aria-current="page">Upload</a>
+              <a class="nav-link" href="liste.html">Listes</a>
+            </nav>
           </div>
         </header>
 
