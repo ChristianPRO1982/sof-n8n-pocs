@@ -77,6 +77,8 @@ services:
       - "80:80"
     depends_on:
       - n8n
+    volumes:
+      - ./n8n_files/taxon/docs:/var/www/taxon-docs:ro
     restart: unless-stopped
 
 volumes:

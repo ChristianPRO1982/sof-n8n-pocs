@@ -425,14 +425,16 @@
             stateEl: dom.pendingState,
             listEl: dom.pendingList,
             rawEl: dom.pendingRaw,
-            emptyLabel: "Aucun fichier à traiter retourné."
+            emptyLabel: "Aucun fichier à traiter retourné.",
+            allowLinks: false
           }),
           loadWebhookList({
             endpoint: withWebhookContext(state.config.TAXON_FILES_WEBHOOK_URL, PROCESSED_FILES_CONTEXT_VALUE),
             stateEl: dom.processedState,
             listEl: dom.processedList,
             rawEl: dom.processedRaw,
-            emptyLabel: "Aucun fichier traité retourné."
+            emptyLabel: "Aucun fichier traité retourné.",
+            allowLinks: true
           })
         ]);
         setStatus("Listes chargées.", false, true);
@@ -444,7 +446,7 @@
       }
     }
 
-    async function loadWebhookList({ endpoint, stateEl, listEl, rawEl, emptyLabel }) {
+    async function loadWebhookList({ endpoint, stateEl, listEl, rawEl, emptyLabel, allowLinks }) {
       try {
         const response = await fetch(endpoint, {
           method: "GET",
@@ -459,7 +461,7 @@
         }
 
         const payload = parseWebhookPayload(rawText);
-        renderWebhookPayload({ payload, rawText, stateEl, listEl, rawEl, emptyLabel });
+        renderWebhookPayload({ payload, stateEl, listEl, rawEl, emptyLabel, allowLinks });
       } catch (error) {
         listEl.innerHTML = "";
         rawEl.hidden = true;
@@ -469,8 +471,10 @@
       }
     }
 
-    function renderWebhookPayload({ payload, rawText, stateEl, listEl, rawEl, emptyLabel }) {
+    function renderWebhookPayload({ payload, stateEl, listEl, rawEl, emptyLabel, allowLinks }) {
       listEl.innerHTML = "";
+      // Les webhooks renvoient uniquement les noms de fichiers: ne pas exposer
+      // le JSON technique sous la liste.
       rawEl.hidden = true;
       rawEl.textContent = "";
 
@@ -478,21 +482,18 @@
       if (!entries.length) {
         stateEl.textContent = emptyLabel;
         stateEl.className = "panel-state";
-        if (String(rawText || "").trim()) {
-          rawEl.hidden = false;
-          rawEl.textContent = rawText;
-        }
         return;
       }
 
       for (const entry of entries) {
-        listEl.appendChild(buildEntryNode(entry));
+        if (allowLinks) {
+          entry.href = buildTaxonDocumentUrl(entry.label);
+        }
+        listEl.appendChild(buildEntryNode(entry, allowLinks));
       }
 
       stateEl.textContent = `${entries.length} élément(s) reçu(s).`;
       stateEl.className = "panel-state";
-      rawEl.hidden = false;
-      rawEl.textContent = typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
     }
 
     function normalizePayloadToEntries(payload) {
@@ -543,7 +544,7 @@
         return {
           label: deriveLabelFromString(trimmed, index),
           href: looksLikeUrl(trimmed) ? trimmed : "",
-          meta: looksLikeUrl(trimmed) ? trimmed : trimmed
+          meta: looksLikeUrl(trimmed) ? trimmed : ""
         };
       }
 
@@ -613,14 +614,22 @@
       return value;
     }
 
-    function buildEntryNode(entry) {
+    function buildTaxonDocumentUrl(filename) {
+      const safeFilename = String(filename || "").trim();
+      if (!safeFilename || safeFilename === "." || safeFilename === ".." || /[\\/]/.test(safeFilename)) {
+        return "";
+      }
+      return `./docs/${encodeURIComponent(safeFilename)}`;
+    }
+
+    function buildEntryNode(entry, allowLinks) {
       const item = document.createElement("li");
       item.className = "file-card";
 
-      if (entry.href) {
+      if (allowLinks && entry.href) {
         const link = document.createElement("a");
         link.className = "file-link";
-        link.href = entry.href;
+        link.setAttribute("href", entry.href);
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         link.textContent = entry.label;
