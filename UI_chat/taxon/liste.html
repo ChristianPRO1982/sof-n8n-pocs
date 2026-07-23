@@ -373,6 +373,10 @@
 
   <script src="../auth.js"></script>
   <script>
+    const WEBHOOK_CONTEXT_PARAM = "source";
+    const PENDING_FILES_CONTEXT_VALUE = "in";
+    const PROCESSED_FILES_CONTEXT_VALUE = "docs";
+
     const state = {
       config: null,
       isRefreshing: false
@@ -397,11 +401,8 @@
 
     async function init() {
       state.config = await loadConfigFromKnownPaths();
-      if (!isValidWebhookUrl(state.config.TAXON_PENDING_FILES_WEBHOOK_URL)) {
-        throw new Error("Invalid TAXON_PENDING_FILES_WEBHOOK_URL");
-      }
-      if (!isValidWebhookUrl(state.config.TAXON_PROCESSED_FILES_WEBHOOK_URL)) {
-        throw new Error("Invalid TAXON_PROCESSED_FILES_WEBHOOK_URL");
+      if (!isValidWebhookUrl(state.config.TAXON_FILES_WEBHOOK_URL)) {
+        throw new Error("Invalid TAXON_FILES_WEBHOOK_URL");
       }
 
       dom.refreshBtn.addEventListener("click", refreshLists);
@@ -420,14 +421,14 @@
       try {
         await Promise.all([
           loadWebhookList({
-            endpoint: state.config.TAXON_PENDING_FILES_WEBHOOK_URL,
+            endpoint: withWebhookContext(state.config.TAXON_FILES_WEBHOOK_URL, PENDING_FILES_CONTEXT_VALUE),
             stateEl: dom.pendingState,
             listEl: dom.pendingList,
             rawEl: dom.pendingRaw,
             emptyLabel: "Aucun fichier à traiter retourné."
           }),
           loadWebhookList({
-            endpoint: state.config.TAXON_PROCESSED_FILES_WEBHOOK_URL,
+            endpoint: withWebhookContext(state.config.TAXON_FILES_WEBHOOK_URL, PROCESSED_FILES_CONTEXT_VALUE),
             stateEl: dom.processedState,
             listEl: dom.processedList,
             rawEl: dom.processedRaw,
@@ -496,19 +497,19 @@
 
     function normalizePayloadToEntries(payload) {
       if (Array.isArray(payload)) {
-        return payload.map(normalizeEntry).filter(Boolean);
+        return payload.flatMap((item, index) => normalizeEntries(item, index));
       }
 
       if (payload && typeof payload === "object") {
         const nested = findNestedArray(payload);
         if (nested) {
-          return nested.map(normalizeEntry).filter(Boolean);
+          return nested.flatMap((item, index) => normalizeEntries(item, index));
         }
-        return [normalizeEntry(payload)].filter(Boolean);
+        return normalizeEntries(payload);
       }
 
       if (typeof payload === "string" && payload.trim()) {
-        return [normalizeEntry(payload)].filter(Boolean);
+        return normalizeEntries(payload);
       }
 
       return [];
@@ -524,6 +525,17 @@
       return null;
     }
 
+    function normalizeEntries(item, index = 0) {
+      if (item && typeof item === "object" && Array.isArray(item.stdout)) {
+        return item.stdout
+          .map((entry, stdoutIndex) => normalizeEntry(entry, stdoutIndex))
+          .filter(Boolean);
+      }
+
+      const entry = normalizeEntry(item, index);
+      return entry ? [entry] : [];
+    }
+
     function normalizeEntry(item, index = 0) {
       if (typeof item === "string") {
         const trimmed = item.trim();
@@ -536,6 +548,14 @@
       }
 
       if (item && typeof item === "object") {
+        if (typeof item.stdout === "string" && item.stdout.trim()) {
+          return {
+            label: item.stdout.trim(),
+            href: "",
+            meta: ""
+          };
+        }
+
         const href = extractCandidateUrl(item);
         const label = extractCandidateLabel(item, href) || `Fichier ${index + 1}`;
         return {
@@ -695,6 +715,16 @@
         return parsed.protocol === "http:" || parsed.protocol === "https:";
       } catch {
         return false;
+      }
+    }
+
+    function withWebhookContext(url, value) {
+      try {
+        const parsed = new URL(url, window.location.href);
+        parsed.searchParams.set(WEBHOOK_CONTEXT_PARAM, value);
+        return parsed.href;
+      } catch {
+        return url;
       }
     }
 
