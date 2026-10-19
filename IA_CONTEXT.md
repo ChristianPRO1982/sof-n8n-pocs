@@ -58,6 +58,7 @@ Volumes n8n : `./n8n_data` → `/home/node/.n8n`, `./n8n_files` → `/home/node/
 | Portail d’administration et liens vers les variantes | `UI_chat/admin.html` |
 | Variantes de chat | `UI_chat/chats/chat1.html`, `chat2.html`, `chat3.html`, `chat4.html` |
 | Variante de pré-test avec webhook dédié | `UI_chat/chats/chat3_v11.html` |
+| Moteur RAG n8n V12, copie de la v11 avec webhook de test dédié | `UI_chat/chats/chat3_v12.html` |
 | URLs des webhooks, animation, debug | `UI_chat/config.ini` |
 | Contrôle d’accès de l’interface | `UI_chat/auth.js`, `UI_chat/access.html`, `UI_chat/md5.html` |
 | Gestion des sources documentaires | `UI_chat/sources/sources.html` |
@@ -82,6 +83,7 @@ Les fichiers `.old`, `index.html.prod` et `index.html.maintenance` sont des vari
 
 - `WEBHOOK_URL` : chatbot principal et plusieurs variantes ; pointe actuellement vers une URL `webhook-test`.
 - `CHAT3_V11_WEBHOOK_URL` : variante `chat3_v11.html`.
+- `CHAT3_V12_WEBHOOK_URL` : variante `chat3_v12.html`, accessible depuis la carte « MOTEUR RAG N8N V12 » de l’administration ; webhook `webhook-test/e5ab868a-abbf-432a-8835-fa883d07cd38`.
 - `SOURCES_WEBHOOK_C/R/U/D` : CRUD des sources.
 - `SOURCES_TAG_LINK_WEBHOOK_C/D` : associations entre sources et classifications.
 - `TAGS_WEBHOOK_C/R/U/D` : CRUD des classifications.
