@@ -1,6 +1,6 @@
 # Contexte du projet pour les agents de développement
 
-Dernière mise à jour : **22 octobre 2026** (initialisation de `km` ; vérification générale du socle le 19 octobre 2026). Ce document décrit les fichiers locaux ; il ne certifie pas l’état du déploiement AWS ni des workflows distants.
+Dernière mise à jour : **22 octobre 2026** (socle et documentation fonctionnelle de `km` ; vérification générale du socle le 19 octobre 2026). Ce document décrit les fichiers locaux ; il ne certifie pas l’état du déploiement AWS ni des workflows distants.
 
 ## Lire en début de session
 
@@ -15,6 +15,8 @@ Site web professionnel hébergé sur AWS, servant de socle à plusieurs projets 
 Le principal cas d’usage présent est un assistant destiné aux conseillers clientèle sur les aides à la rénovation : MaPrimeRénov’, MaPrimeAdapt’, ANAH. La chaîne documentaire vise la sélection de sources, le scraping, les embeddings, la recherche RAG et la génération de réponses sourcées. Un autre module, **Taxon**, propose l’envoi de fichiers et la consultation des fichiers à traiter ou traités.
 
 **Knowledge Manager**, identifiant unique **`km`** en minuscules, est un module POC indépendant pour transformer les documents Sofinco en connaissances atomiques, normalisées, liées et validées humainement. Lire `UI_chat/km/CONTEXT.md` avant d'y intervenir. L'accueil présente la légende des cinq statuts de développement et onze écrans provisoires partagent un gabarit responsive, un menu redimensionnable mémorisé dans le navigateur et un tiroir sur petits écrans. Le champ `status` du registre de pages pilote les pastilles dans les deux menus ; aucun workflow ni webhook `km` n'est implémenté.
+
+Le parcours fonctionnel documenté de `km` prend pour référence `UI_chat/km/docs/Poc_n8n.pdf` : Word relu → contrôles de format sans LLM → écarts et rapport → métadonnées par règles/LLM → validation métier → Word publié → conversion Markdown sans LLM → couple Markdown/JSON AI Ready, avec journal transversal. Lire [la vue d'ensemble et les onze fiches](UI_chat/km/docs/README.md) avant le développement métier. `01_processed_files` est un ajout utilisateur : archivage des sources après prise en charge initiale, avant validation. Le multiformat et le découpage atomique restent des extensions. Les interactions Microsoft 365 du PDF sont à adapter au POC INNO ; les schémas et règles encore absents sont explicitement signalés.
 
 - **Interface** : saisie, appels aux webhooks, chargement/progression, rendu Markdown, liens, erreurs et réinitialisation.
 - **n8n** : orchestration, accès aux données, ingestion, RAG, appels LLM et contenu des réponses.
@@ -68,7 +70,7 @@ Volumes n8n : `./n8n_data` → `/home/node/.n8n`, `./n8n_files` → `/home/node/
 | Gestion des classifications | `UI_chat/sources/thematiques.html`, `sousthematiques.html`, `categories.html` |
 | Taxon : envoi de fichier / choix Prod ou Test | `UI_chat/taxon/index.html` |
 | Taxon : listes de fichiers et liens vers les documents | `UI_chat/taxon/liste.html` |
-| Knowledge Manager (`km`) : contexte, page initiale et documentation à venir | `UI_chat/km/CONTEXT.md`, `UI_chat/km/index.html`, `UI_chat/km/docs/` |
+| Knowledge Manager (`km`) : contexte, accueil, PDF de référence et documentation fonctionnelle | `UI_chat/km/CONTEXT.md`, `UI_chat/km/index.html`, `UI_chat/km/docs/README.md` puis fiche de l'étape concernée |
 | Knowledge Manager (`km`) : gabarit, styles, registre de navigation et écrans provisoires | `UI_chat/km/template.html`, `UI_chat/km/assets/km.css`, `UI_chat/km/assets/km.js`, `UI_chat/km/pages/` |
 | API PDF et routes UI complémentaires | `app/main.py` |
 | Routage web et exposition des documents | `nginx/default.conf` |

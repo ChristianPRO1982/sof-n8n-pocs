@@ -11,7 +11,10 @@ routes, clés de configuration et futurs webhooks.
   services et montages des fichiers.
 - `../config.ini` : configuration navigateur existante, à consulter lors de la
   future intégration n8n ; aucune clé ni aucun webhook `km` n'est encore défini.
-- `docs/` : emplacement réservé à la documentation détaillée à venir.
+- [docs/README.md](docs/README.md) : vue d'ensemble fonctionnelle, circulation,
+  correspondance des onze fiches avec les pages HTML et recette cible.
+- [docs/Poc_n8n.pdf](docs/Poc_n8n.pdf) : référence fonctionnelle à lire avec la
+  fiche de l'étape concernée avant d'implémenter son traitement.
 
 Les chemins ci-dessus sont relatifs à ce fichier. Les fichiers exécutés font
 référence si le contexte devient obsolète.
@@ -21,6 +24,10 @@ référence si le contexte devient obsolète.
 POC INNO de transformation des documents Sofinco (PDF, Word, etc.) volumineux et
 parfois redondants en connaissances atomiques, normalisées, structurées et liées
 entre elles. Préserver la traçabilité vers les documents et passages sources.
+
+Le périmètre actuellement documenté suit `Poc_n8n.pdf` : un Word relu jusqu'à sa
+publication en Markdown et JSON. L'import multiformat et le découpage atomique
+restent des extensions du cadrage initial, hors de ce parcours de référence.
 
 Le module est indépendant des autres projets, avec n8n mutualisé. Les interfaces
 sont en HTML/CSS/JavaScript natifs ; n8n porte l'orchestration et les traitements
@@ -107,16 +114,41 @@ la préférence de réduction des mouvements.
 
 ## Chaîne cible
 
-1. Importer les documents sources et les découper en fichiers plus petits suivant
-   des templates fournis ultérieurement.
-2. Qualifier les fichiers et produire leurs métadonnées via un LLM.
-3. Soumettre les résultats à une validation humaine.
-4. Transformer les connaissances validées en Markdown et JSON de métadonnées.
-5. Déposer les résultats dans `09_AI_Ready`, la base de connaissances exploitable.
+1. Déposer et prendre en charge un Word relu (`01_upload_raw_files`).
+2. Contrôler format/template sans LLM (`02_format_controls`).
+3. Vérifier les écarts par rapport à une référence avec extraction JSON LLM
+   (`03_deltas`), puis consolider le rapport et les orientations (`04_reports`).
+4. Proposer les métadonnées par règles et LLM, contrôlées par JSON Schema
+   (`05_metadata`).
+5. Obtenir la validation métier ou le refus avec retour `draft`
+   (`06_business_validation`).
+6. Publier le Word validé, archiver les versions antérieures et passer à
+   `published` (`07_knowledges`).
+7. Convertir le Word en Markdown sans LLM avec contrôle de structure
+   (`08_markdown`), puis déposer `{doc_id}.md` et `{doc_id}.json`
+   dans `09_AI_Ready`.
 
-Les règles détaillées des contrôles, deltas, rapports, liens et statuts restent à
-documenter avant le développement métier. Les noms de dossiers seuls ne
-constituent pas un contrat de workflow.
+Le journal `10_tracking_journal` suit l'ensemble du parcours, pas seulement sa fin.
+Les numéros AUTO du PDF ne fixent pas l'ordre métier ; suivre son EPIC et la
+circulation documentée dans [docs/README.md](docs/README.md).
+
+**Décision utilisateur :** `01_processed_files` archive les fichiers sources
+après leur prise en charge initiale et l'enregistrement des résultats associés,
+sans attendre la validation métier ou AI Ready. Il s'agit d'une branche
+d'archivage, distincte des connaissances validées et des archives de versions
+publiées. La définition technique de cette prise en charge reste à préciser.
+
+Chaque fiche de `docs/` porte le même nom que sa page HTML et distingue les
+exigences du PDF, les décisions utilisateur et les propositions INNO/interface.
+Les renvois aux pages du PDF permettent de retrouver la source. Les schémas,
+contrats d'échange et fonctionnalités décrits comme cibles ne sont pas implémentés.
+
+Les templates, règles YAML, JSON Schema, vocabulaires, clés JSON finales et
+règle `doc_id` restent à fournir. Les règles de transition `en_validation` et
+d'acceptation des justifications restent à préciser. Les statuts documentaires
+`draft`, `en_validation`, validé et `published` sont distincts des pastilles de
+développement du registre JavaScript. Ne pas inventer de contrat de workflow à
+partir des noms de dossiers ou d'un état publié du Word.
 
 ## Stockage de traitement sur EC2
 
@@ -155,6 +187,10 @@ par Nginx.
 - Les connecteurs n8n vers Outlook Sofinco et Teams seront probablement
   indisponibles. Des emails et interactions sont envisagés ; leurs simulations
   éventuelles devront être explicites dans les futurs écrans et scénarios.
+- Le PDF prévoit SharePoint et une approbation Teams/Outlook. Dans INNO, le
+  stockage de fichiers EC2 et une validation via l'interface ou des simulations
+  constituent l'adaptation proposée, encore à développer. Le mapping des listes
+  Glossaire/Référentiels et des archives de versions reste à définir.
 - Le POC doit démontrer la faisabilité de la chaîne et la capacité d'un LLM,
   initialement OpenAI, à réaliser les tâches demandées.
 - L'orchestrateur initial est n8n ; la cible pourra être Microsoft Power
