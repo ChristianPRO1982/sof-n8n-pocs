@@ -14,7 +14,7 @@ Site web professionnel hébergé sur AWS, servant de socle à plusieurs projets 
 
 Le principal cas d’usage présent est un assistant destiné aux conseillers clientèle sur les aides à la rénovation : MaPrimeRénov’, MaPrimeAdapt’, ANAH. La chaîne documentaire vise la sélection de sources, le scraping, les embeddings, la recherche RAG et la génération de réponses sourcées. Un autre module, **Taxon**, propose l’envoi de fichiers et la consultation des fichiers à traiter ou traités.
 
-**Knowledge Manager**, identifiant unique **`km`** en minuscules, est un module POC indépendant pour transformer les documents Sofinco en connaissances atomiques, normalisées, liées et validées humainement. Lire `UI_chat/km/CONTEXT.md` avant d'y intervenir. À ce stade, seule la page initiale `Hello world!` est présente ; aucun workflow ni webhook `km` n'est implémenté.
+**Knowledge Manager**, identifiant unique **`km`** en minuscules, est un module POC indépendant pour transformer les documents Sofinco en connaissances atomiques, normalisées, liées et validées humainement. Lire `UI_chat/km/CONTEXT.md` avant d'y intervenir. L'accueil `Hello world!` et onze écrans provisoires partagent un gabarit responsive, un menu redimensionnable mémorisé dans le navigateur et un tiroir sur petits écrans ; aucun workflow ni webhook `km` n'est implémenté.
 
 - **Interface** : saisie, appels aux webhooks, chargement/progression, rendu Markdown, liens, erreurs et réinitialisation.
 - **n8n** : orchestration, accès aux données, ingestion, RAG, appels LLM et contenu des réponses.
@@ -69,6 +69,7 @@ Volumes n8n : `./n8n_data` → `/home/node/.n8n`, `./n8n_files` → `/home/node/
 | Taxon : envoi de fichier / choix Prod ou Test | `UI_chat/taxon/index.html` |
 | Taxon : listes de fichiers et liens vers les documents | `UI_chat/taxon/liste.html` |
 | Knowledge Manager (`km`) : contexte, page initiale et documentation à venir | `UI_chat/km/CONTEXT.md`, `UI_chat/km/index.html`, `UI_chat/km/docs/` |
+| Knowledge Manager (`km`) : gabarit, styles, registre de navigation et écrans provisoires | `UI_chat/km/template.html`, `UI_chat/km/assets/km.css`, `UI_chat/km/assets/km.js`, `UI_chat/km/pages/` |
 | API PDF et routes UI complémentaires | `app/main.py` |
 | Routage web et exposition des documents | `nginx/default.conf` |
 | Services, images, ports, volumes | `docker-compose.yml`, `Dockerfile`, `Dockerfile.nginx_front` |

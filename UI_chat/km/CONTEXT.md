@@ -26,9 +26,59 @@ Le module est indépendant des autres projets, avec n8n mutualisé. Les interfac
 sont en HTML/CSS/JavaScript natifs ; n8n porte l'orchestration et les traitements
 métier. Aucun framework front ni nouveau service n'est nécessaire.
 
-À cette étape, `index.html` affiche uniquement `Hello world!`, sans appel réseau
-ni contrôle d'accès supplémentaire. Aucun workflow, webhook, connecteur, template
-métier ou écran de traitement n'est implémenté. Ne pas supposer qu'ils existent.
+À cette étape, `index.html` affiche `Hello world!` dans un gabarit partagé avec
+onze écrans provisoires sous `pages/`. Chaque écran affiche le titre de l'étape
+et `Contenu à venir`. Seuls les fichiers statiques locaux sont chargés, sans
+appel métier ni contrôle d'accès supplémentaire. Aucun workflow, webhook,
+connecteur, template métier ou écran de traitement fonctionnel n'est implémenté.
+
+## Gabarit et ajout d'une page
+
+- `template.html` : modèle HTML à copier, avec les points d'insertion du contenu
+  et des options contextuelles. Le modèle lui-même est consultable sous
+  `/km/template.html` mais n'est pas une étape de la chaîne.
+- `assets/km.css` : styles partagés inspirés de `../chats/chat3.html` (palette,
+  typographie, fonds clairs et panneaux arrondis), sans limiter la largeur du site.
+- `assets/km.js` : registre `pages` des identifiants, libellés exacts des dossiers,
+  titres et destinations ; construction de la navigation et du bandeau communs.
+
+Pour ajouter une page :
+
+1. Copier `template.html` sous `pages/<identifiant>.html`, avec un nom en minuscules.
+2. Adapter les liens CSS et JS en `../assets/km.css` et `../assets/km.js`.
+3. Définir `data-km-page` sur le `body` et ajouter une entrée portant le même `id`
+   au registre `pages`. Par défaut, le lien généré est `pages/<id>.html` ; le champ
+   `path`, relatif à `/km/`, permet une autre destination. Les titres du bandeau
+   et de l'onglet proviennent du registre. `data-km-title` est le titre de repli
+   pour une page non enregistrée, comme le modèle.
+4. Remplacer le contenu de `main#km-content` en conservant son identifiant et
+   `tabindex="-1"`. Utiliser un `h2` pour le titre du corps : le bandeau fournit
+   déjà le `h1` de la page.
+5. Ajouter les options propres à la page dans `nav[data-km-context]`. Le script
+   ajoute les liens communs avant ces options sans supprimer leur contenu.
+
+La racine du module et le logo sont résolus depuis l'URL du script partagé ; les
+liens fonctionnent aussi depuis les pages imbriquées. Les onze pages actuelles
+restent statiques ; le gabarit n'implique aucun chargement de données métier.
+
+### Navigation et préférences navigateur
+
+Sur ordinateur, le menu occupe initialement 22 % de la largeur intérieure du
+gabarit. La poignée utilise Pointer Events et la capture du pointeur ; les
+flèches gauche/droite ajustent d'un point, Home et End atteignent 15 % et 33 %.
+La préférence est conservée dans `localStorage` sous `km.sidebarWidthPercent`.
+Les valeurs numériques sont bornées ; les valeurs invalides sont ignorées. Un
+stockage indisponible n'empêche pas l'utilisation du gabarit.
+
+À 1 100 px et moins, le menu devient un tiroir superposé de largeur
+`min(360px, 90vw)`, ouvert par le hamburger. Le voile, Échap, le bouton de
+fermeture ou la navigation ferment le tiroir. Le contenu arrière est inerte et
+son défilement bloqué ; le focus reste dans le tiroir puis revient au déclencheur.
+Le retour au mode ordinateur conserve le pourcentage mémorisé.
+
+Le menu et le corps défilent indépendamment, le bandeau reste visible. Les
+éléments de navigation sont accessibles au clavier et les animations respectent
+la préférence de réduction des mouvements.
 
 ## Chaîne cible
 
@@ -99,7 +149,9 @@ transfert des changements, reconstruire uniquement le service web :
 docker compose up -d --build --no-deps nginx
 ```
 
-Vérifier `/km/` (200 et texte `Hello world!`), `/km` (301 vers `/km/`), une URL
-inexistante (404), `/km/CONTEXT.md` et `/km/docs/` (404). Aucun appel aux webhooks
-distants n'est nécessaire pour ces contrôles. Maintenir ce contexte lors de
-l'ajout de points d'entrée ou de contrats d'échange.
+Vérifier `/km/` (200 et corps `Hello world!`), les onze liens et leur état actif,
+`/km` (301 vers `/km/`), une URL inexistante (404), `/km/CONTEXT.md` et `/km/docs/`
+(404). Vérifier les tailles 1 920, 1 366, 1 100, 768 et 390 px, les bornes et la
+persistance du menu ainsi que l'ouverture, la fermeture et le focus du tiroir.
+Aucun appel aux webhooks distants n'est nécessaire pour ces contrôles. Maintenir
+ce contexte lors de l'ajout de points d'entrée ou de contrats d'échange.
