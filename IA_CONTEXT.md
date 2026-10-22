@@ -1,6 +1,6 @@
 # Contexte du projet pour les agents de développement
 
-Dernière vérification du dépôt : **19 octobre 2026**. Ce document décrit les fichiers locaux ; il ne certifie pas l’état du déploiement AWS ni des workflows distants.
+Dernière mise à jour : **22 octobre 2026** (initialisation de `km` ; vérification générale du socle le 19 octobre 2026). Ce document décrit les fichiers locaux ; il ne certifie pas l’état du déploiement AWS ni des workflows distants.
 
 ## Lire en début de session
 
@@ -13,6 +13,8 @@ Maintenir ce document lorsqu’une modification change l’architecture, les poi
 Site web professionnel hébergé sur AWS, servant de socle à plusieurs projets et démonstrateurs Sofinco. **n8n porte les workflows métier ; `UI_chat/` porte les interfaces web.**
 
 Le principal cas d’usage présent est un assistant destiné aux conseillers clientèle sur les aides à la rénovation : MaPrimeRénov’, MaPrimeAdapt’, ANAH. La chaîne documentaire vise la sélection de sources, le scraping, les embeddings, la recherche RAG et la génération de réponses sourcées. Un autre module, **Taxon**, propose l’envoi de fichiers et la consultation des fichiers à traiter ou traités.
+
+**Knowledge Manager**, identifiant unique **`km`** en minuscules, est un module POC indépendant pour transformer les documents Sofinco en connaissances atomiques, normalisées, liées et validées humainement. Lire `UI_chat/km/CONTEXT.md` avant d'y intervenir. À ce stade, seule la page initiale `Hello world!` est présente ; aucun workflow ni webhook `km` n'est implémenté.
 
 - **Interface** : saisie, appels aux webhooks, chargement/progression, rendu Markdown, liens, erreurs et réinitialisation.
 - **n8n** : orchestration, accès aux données, ingestion, RAG, appels LLM et contenu des réponses.
@@ -28,6 +30,7 @@ Navigateur
   → Nginx :80
       ├─ /                 → fichiers statiques de UI_chat/
       ├─ /n8n/             → service n8n:5678
+      ├─ /km/              → module Knowledge Manager, fichiers statiques de UI_chat/km/
       └─ /taxon/docs/      → documents générés, montage en lecture seule
 
 Interfaces → webhooks n8n → workflows métier / données / LLM
@@ -65,6 +68,7 @@ Volumes n8n : `./n8n_data` → `/home/node/.n8n`, `./n8n_files` → `/home/node/
 | Gestion des classifications | `UI_chat/sources/thematiques.html`, `sousthematiques.html`, `categories.html` |
 | Taxon : envoi de fichier / choix Prod ou Test | `UI_chat/taxon/index.html` |
 | Taxon : listes de fichiers et liens vers les documents | `UI_chat/taxon/liste.html` |
+| Knowledge Manager (`km`) : contexte, page initiale et documentation à venir | `UI_chat/km/CONTEXT.md`, `UI_chat/km/index.html`, `UI_chat/km/docs/` |
 | API PDF et routes UI complémentaires | `app/main.py` |
 | Routage web et exposition des documents | `nginx/default.conf` |
 | Services, images, ports, volumes | `docker-compose.yml`, `Dockerfile`, `Dockerfile.nginx_front` |
@@ -74,6 +78,8 @@ Volumes n8n : `./n8n_data` → `/home/node/.n8n`, `./n8n_files` → `/home/node/
 Le front est écrit en **HTML/CSS/JavaScript natif**, avec beaucoup de code intégré aux pages. Aucun projet npm, framework front ou étape de compilation JavaScript n’est présent. Les variantes partagent du code copié mais divergent : identifier la page demandée avant de modifier les autres.
 
 Les fichiers `.old`, `index.html.prod` et `index.html.maintenance` sont des variantes conservées. Nginx sert `index.html` à la racine ; le suffixe `.prod` ne sélectionne pas automatiquement la version de production. `Dockerfile.ui_chat` existe mais n’est pas utilisé par le Compose actuel.
+
+Le module `km` est accessible directement sous `/km/`, avec redirection depuis `/km`. Ses fichiers inexistants retournent 404 sans repli vers le chatbot. Son contexte Codex et son dossier `docs/` sont bloqués en HTTP. Le stockage de traitement EC2 `/n8n/n8n_files/km/` est distinct de cette documentation ; le montage existant le rend accessible dans n8n sous `/home/node/.n8n-files/km/`. Aucun montage web des données `km` n'est ajouté.
 
 ## Configuration et contrats d’échange
 
