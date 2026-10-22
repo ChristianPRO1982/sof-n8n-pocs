@@ -35,7 +35,7 @@ métier. Aucun framework front ni nouveau service n'est nécessaire.
 
 À cette étape, `index.html` explique les cinq pastilles de suivi du développement dans un gabarit partagé avec
 onze écrans provisoires sous `pages/`. Chaque écran affiche le titre de l'étape
-et `Contenu à venir`. Seuls les fichiers statiques locaux sont chargés, sans
+et `Contenu à venir`. Les fichiers statiques et le logo distant sont chargés, sans
 appel métier ni contrôle d'accès supplémentaire. Aucun workflow, webhook,
 connecteur, template métier ou écran de traitement fonctionnel n'est implémenté.
 
@@ -64,8 +64,10 @@ Pour ajouter une page :
 5. Ajouter les options propres à la page dans `nav[data-km-context]`. Le script
    ajoute les liens communs avant ces options sans supprimer leur contenu.
 
-La racine du module et le logo sont résolus depuis l'URL du script partagé ; les
-liens fonctionnent aussi depuis les pages imbriquées. Les onze pages actuelles
+La racine du module est résolue depuis l'URL du script partagé ; les liens
+fonctionnent aussi depuis les pages imbriquées. Le logo Sofinco est chargé depuis
+`https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png`
+par le script partagé pour toutes les pages. Les onze pages actuelles
 restent statiques ; le gabarit n'implique aucun chargement de données métier.
 
 ### Pastilles de développement
