@@ -1,18 +1,27 @@
 // Registry shared by every page. File names are lowercase; labels match storage.
 const pages = [
-  { id: "home", label: "Accueil", title: "Accueil", path: "./" },
-  { id: "01_upload_raw_files", label: "01_upload_raw_files", title: "Import des fichiers sources" },
-  { id: "01_processed_files", label: "01_processed_files", title: "Fichiers traités" },
-  { id: "02_format_controls", label: "02_format_controls", title: "Contrôles de format" },
-  { id: "03_deltas", label: "03_deltas", title: "Deltas" },
-  { id: "04_reports", label: "04_reports", title: "Rapports" },
-  { id: "05_metadata", label: "05_metadata", title: "Métadonnées" },
-  { id: "06_business_validation", label: "06_business_validation", title: "Validation humaine" },
-  { id: "07_knowledges", label: "07_knowledges", title: "Connaissances" },
-  { id: "08_markdown", label: "08_markdown", title: "Export Markdown" },
-  { id: "09_ai_ready", label: "09_AI_Ready", title: "Base AI Ready" },
-  { id: "10_tracking_journal", label: "10_tracking_journal", title: "Journal de suivi" },
+  { id: "home", label: "Accueil", title: "Accueil", path: "./", status: "development" },
+  { id: "01_upload_raw_files", label: "01_upload_raw_files", title: "Import des fichiers sources", status: "not_started" },
+  { id: "01_processed_files", label: "01_processed_files", title: "Fichiers traités", status: "not_started" },
+  { id: "02_format_controls", label: "02_format_controls", title: "Contrôles de format", status: "not_started" },
+  { id: "03_deltas", label: "03_deltas", title: "Deltas", status: "not_started" },
+  { id: "04_reports", label: "04_reports", title: "Rapports", status: "not_started" },
+  { id: "05_metadata", label: "05_metadata", title: "Métadonnées", status: "not_started" },
+  { id: "06_business_validation", label: "06_business_validation", title: "Validation humaine", status: "not_started" },
+  { id: "07_knowledges", label: "07_knowledges", title: "Connaissances", status: "not_started" },
+  { id: "08_markdown", label: "08_markdown", title: "Export Markdown", status: "not_started" },
+  { id: "09_ai_ready", label: "09_AI_Ready", title: "Base AI Ready", status: "not_started" },
+  { id: "10_tracking_journal", label: "10_tracking_journal", title: "Journal de suivi", status: "not_started" },
 ];
+
+// One status per registry entry drives both menus; no per-page duplication.
+const statuses = {
+  not_started: "Aucun développement encore lancé pour cette partie",
+  bugs: "Bugs détectés et en cours d’investigation",
+  development: "Développement en cours",
+  testing: "Phase de test",
+  validated: "Validé",
+};
 
 const rootURL = new URL("../", import.meta.url);
 const pageId = document.body.dataset.kmPage;
@@ -44,6 +53,16 @@ function element(tag, className, text) {
   return node;
 }
 
+function statusBadge(status) {
+  const key = Object.hasOwn(statuses, status) ? status : "not_started";
+  const badge = element("span", "km-status-dot");
+  badge.dataset.kmStatus = key;
+  badge.setAttribute("role", "img");
+  badge.setAttribute("aria-label", `Statut : ${statuses[key]}`);
+  badge.title = statuses[key];
+  return badge;
+}
+
 function iconButton(label, className, iconPath) {
   const button = element("button", `km-icon-button ${className}`);
   button.type = "button";
@@ -65,7 +84,8 @@ navigation.setAttribute("aria-label", "Chaîne documentaire");
 const list = element("ul");
 for (const entry of pages) {
   const item = element("li");
-  const link = element("a", "", entry.label);
+  const link = element("a");
+  link.append(statusBadge(entry.status), element("span", "km-nav-label", entry.label));
   link.href = new URL(entry.path ?? `pages/${entry.id}.html`, rootURL).href;
   if (entry.id === page.id) link.setAttribute("aria-current", "page");
   item.append(link);
@@ -85,7 +105,7 @@ logo.src = new URL("../logo-sofinco.png", rootURL).href;
 logo.alt = "Sofinco";
 logoLink.append(logo);
 const heading = element("div", "km-page-heading");
-heading.append(element("h1", "km-page-title", page.title));
+heading.append(statusBadge(page.status), element("h1", "km-page-title", page.title));
 header.prepend(hamburger, logoLink, heading);
 context.setAttribute("aria-label", "Menu de la page");
 const homeLink = element("a", "", page.id === "home" ? "Accueil" : "Retour à l’accueil");
@@ -99,6 +119,20 @@ if (page.id !== "home") {
 }
 context.prepend(...defaultActions);
 document.title = `${page.title} — Knowledge Manager`;
+
+// Only the home page provides this legend insertion point.
+const statusLegend = document.querySelector("[data-km-status-legend]");
+if (page.id === "home" && statusLegend) {
+  for (const [key, label] of Object.entries(statuses)) {
+    const item = element("li");
+    const dot = statusBadge(key);
+    dot.removeAttribute("role");
+    dot.removeAttribute("aria-label");
+    dot.setAttribute("aria-hidden", "true");
+    item.append(dot, element("span", "", label));
+    statusLegend.append(item);
+  }
+}
 
 function applyWidth(value) {
   widthPercent = Math.min(maximum, Math.max(minimum, value));

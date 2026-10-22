@@ -81,7 +81,9 @@ a { color: var(--primary); }
 .km-navigation { overflow-y: auto; overscroll-behavior: contain; padding: 8px; }
 .km-navigation ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
 .km-navigation a {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 8px;
   border-radius: var(--radius-md);
   border: 1px solid transparent;
@@ -135,7 +137,7 @@ body.km-resizing { cursor: col-resize; user-select: none; }
 }
 .km-logo-link { display: flex; flex-shrink: 0; border-radius: 4px; }
 .km-logo { width: clamp(100px, 11vw, 150px); height: auto; display: block; }
-.km-page-heading { flex: 1 1 180px; min-width: 0; }
+.km-page-heading { flex: 1 1 180px; min-width: 0; display: flex; align-items: center; gap: 8px; }
 .km-page-title { margin: 0; font-size: 1.15rem; overflow-wrap: anywhere; }
 .km-context { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .km-context a {
@@ -147,6 +149,28 @@ body.km-resizing { cursor: col-resize; user-select: none; }
   font-size: 0.88rem;
 }
 .km-context a:hover, .km-context a[aria-current="page"] { background: var(--primary-soft); }
+.km-nav-label { min-width: 0; }
+.km-status-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  border: 1px solid rgb(0 0 0 / 15%);
+  border-radius: 50%;
+  background: #151515;
+}
+.km-status-dot[data-km-status="bugs"] { background: #c62828; }
+.km-status-dot[data-km-status="development"] { background: #005bbb; }
+.km-status-dot[data-km-status="testing"] { background: #e67500; }
+.km-status-dot[data-km-status="validated"] { background: #238636; }
+.km-status-legend {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: grid;
+  gap: 12px;
+}
+.km-status-legend li { display: flex; align-items: center; gap: 10px; line-height: 1.5; }
 .km-content { padding: 16px; overflow: auto; overscroll-behavior: contain; overflow-wrap: anywhere; }
 .km-content h2 { font-size: 1.25rem; line-height: 1.4; margin: 0 0 12px; }
 .km-content p { line-height: 1.6; margin: 0 0 12px; }

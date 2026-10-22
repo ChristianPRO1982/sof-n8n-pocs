@@ -26,7 +26,7 @@ Le module est indépendant des autres projets, avec n8n mutualisé. Les interfac
 sont en HTML/CSS/JavaScript natifs ; n8n porte l'orchestration et les traitements
 métier. Aucun framework front ni nouveau service n'est nécessaire.
 
-À cette étape, `index.html` affiche `Hello world!` dans un gabarit partagé avec
+À cette étape, `index.html` explique les cinq pastilles de suivi du développement dans un gabarit partagé avec
 onze écrans provisoires sous `pages/`. Chaque écran affiche le titre de l'étape
 et `Contenu à venir`. Seuls les fichiers statiques locaux sont chargés, sans
 appel métier ni contrôle d'accès supplémentaire. Aucun workflow, webhook,
@@ -60,6 +60,31 @@ Pour ajouter une page :
 La racine du module et le logo sont résolus depuis l'URL du script partagé ; les
 liens fonctionnent aussi depuis les pages imbriquées. Les onze pages actuelles
 restent statiques ; le gabarit n'implique aucun chargement de données métier.
+
+### Pastilles de développement
+
+Dans le bandeau contextuel, la pastille se place immédiatement à gauche du titre
+de la page ; dans le menu général, elle précède le libellé du lien.
+
+Le champ `status` de chaque entrée du registre `pages` est l'unique valeur à
+modifier pour mettre à jour sa pastille dans le menu général et dans le menu
+contextuel de la page. Les statuts sont déclaratifs ; ce ne sont pas des résultats
+de contrôles automatiques ou des états d'exécution n8n.
+
+| Valeur `status` | Couleur | Signification |
+| --- | --- | --- |
+| `not_started` | Noir | Aucun développement encore lancé pour cette partie |
+| `bugs` | Rouge | Bugs détectés et en cours d'investigation |
+| `development` | Bleu | Développement en cours |
+| `testing` | Orange | Phase de test |
+| `validated` | Vert | Validé |
+
+L'accueil est initialement en `development` et les onze étapes en `not_started`.
+Un statut absent ou inconnu (notamment le modèle non enregistré) utilise
+`not_started`. Les libellés sont centralisés dans `statuses`, les couleurs dans
+`assets/km.css` et le rendu dans `statusBadge`. Les pastilles ont une infobulle
+et un libellé accessible ; seule la page d'accueil affiche la légende complète,
+générée depuis les mêmes définitions via `[data-km-status-legend]`.
 
 ### Navigation et préférences navigateur
 
@@ -149,7 +174,8 @@ transfert des changements, reconstruire uniquement le service web :
 docker compose up -d --build --no-deps nginx
 ```
 
-Vérifier `/km/` (200 et corps `Hello world!`), les onze liens et leur état actif,
+Vérifier `/km/` (200 et légende des cinq statuts), la concordance des pastilles
+dans les deux menus, les onze liens et leur état actif,
 `/km` (301 vers `/km/`), une URL inexistante (404), `/km/CONTEXT.md` et `/km/docs/`
 (404). Vérifier les tailles 1 920, 1 366, 1 100, 768 et 390 px, les bornes et la
 persistance du menu ainsi que l'ouverture, la fermeture et le focus du tiroir.
