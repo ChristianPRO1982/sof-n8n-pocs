@@ -2,7 +2,9 @@
 
 **Page associée :** [01_upload_raw_files](../pages/01_upload_raw_files.html).
 **Stockage cible EC2 :** `/n8n/n8n_files/km/01_upload_raw_files/`.
-**État :** spécification cible ; écran provisoire sans dépôt fonctionnel.
+**État :** interface développée, statut `development` ; raccordement n8n à réaliser.
+Les chemins des webhooks sont volontairement vides : aucun dépôt ou succès réel
+n’est possible tant que les workflows ne sont pas raccordés.
 
 ## Objectif et provenance
 
@@ -56,12 +58,13 @@ autorise l'envoi et les remplacements annoncés, pas la validation métier.
 si le rapport consolidé révèle un blocage.
 
 Les règles suivantes sont des **décisions utilisateur**, précisées par le plan
-validé. Elles décrivent une interface cible, pas des fonctions déjà disponibles.
+validé. Elles sont mises en œuvre côté navigateur ; les opérations serveur
+nécessitent des workflows conformes aux contrats ci-dessous.
 
 ### Disposition et liste serveur
 
 - Sur PC, deux panneaux côte à côte : fichiers serveur à gauche, upload à droite.
-- Sur smartphone, deux panneaux empilés : fichiers serveur en haut, upload en bas.
+- Sous 768 px, deux panneaux empilés : fichiers serveur en haut, upload en bas.
 - La liste serveur porte uniquement sur `01_upload_raw_files/`, sans inclure
   les archives ni les autres étapes. Elle charge à l'ouverture, peut être
   actualisée manuellement et est actualisée après les envois et suppressions.
@@ -129,9 +132,9 @@ réel, ni un filtre d'acceptation, ni un indicateur de réussite de l'envoi.
   accord si un remplacement doit être autorisé.
 - Un retour absent ou inexploitable ne prouve ni le succès ni l'absence du
   fichier serveur. Afficher l'incertitude avec l'échec et vérifier l'état
-  serveur avant une nouvelle tentative. La méthode de rapprochement reste
-  à définir avec le contrat n8n ; une simple présence du nom ne suffit pas
-  à confirmer le succès de cet envoi.
+  serveur avant une nouvelle tentative. La reprise manuelle et les confirmations
+  attendues sont précisées dans le contrat ci-dessous ; une simple présence
+  du nom ne suffit pas à confirmer le succès de cet envoi.
 
 ### Collisions au moment de l'écriture
 
@@ -151,7 +154,7 @@ En cas de refus ou de retour absent, afficher l'erreur et vérifier l'état serv
 sans annoncer une réussite. Cette action concerne le fichier déposé, pas les
 archives ni les résultats des étapes suivantes.
 
-## Capacités n8n nécessaires — contrats à définir
+## Configuration et contrats n8n attendus
 
 | Capacité cible | Résultat attendu par l'interface |
 | --- | --- |
@@ -160,15 +163,94 @@ archives ni les résultats des étapes suivantes.
 | Autoriser un remplacement annoncé | Respect de l'accord utilisateur et contrôle de collision à l'écriture |
 | Supprimer un fichier identifié | Confirmation de suppression, ou erreur explicite |
 
-Ces capacités n'imposent ni un nombre de webhooks ni un contrat technique.
-Les URL, méthodes HTTP, champs de requête, contrats JSON et codes de réponse
-restent à définir avant implémentation. L'orchestration et les opérations sur
-le stockage relèvent de n8n, l'affichage et les accords de l'interface.
+L'interface charge `UI_chat/config.ini` sans cache. Les clés suivantes sont
+ajoutées ; les trois chemins restent à renseigner avec ceux des futurs workflows :
+
+```ini
+KM_WEBHOOK_BASE_URL=http://15.236.66.128/n8n/webhook/
+KM_FILES_LIST_WEBHOOK_PATH=
+KM_FILES_UPLOAD_WEBHOOK_PATH=
+KM_FILES_DELETE_WEBHOOK_PATH=
+```
+
+La base est commune. Chaque chemin est relatif, composé de segments
+alphanumériques, tirets ou underscores séparés par `/`. Les URL absolues,
+remontées de répertoire, paramètres et chemins encodés sont refusés. Aucun
+identifiant de workflow ni aucune URL de secours n'est inventé.
+
+Le bouton « N8N - webhook-test » dans la barre supérieure utilise
+`toggle_blue_off.png` et `toggle_blue_on.png` de `assets/icons/`. OFF utilise la
+base configurée ; ON remplace uniquement son segment final `/webhook/` par
+`/webhook-test/`. Les trois opérations utilisent le même environnement. Le choix
+n'est pas mémorisé : OFF à chaque arrivée, y compris au retour par l'historique
+(rechargement en cas de restauration depuis le cache de navigation).
+
+Le toggle est désactivé pendant les opérations. Une bascule invalide la liste
+serveur précédente, recharge celle du nouvel environnement et recalcule les
+collisions. Les résultats terminés du précédent environnement sont retirés de
+l'écran pour éviter une reprise dans le mauvais environnement ; une sélection
+encore en attente est conservée. Sans configuration utilisable, la sélection
+locale reste possible, mais les opérations non raccordées sont désactivées.
+
+### Requêtes et confirmations
+
+Ces contrats sont **attendus par le front**, pas implémentés dans n8n.
+Les fichiers concernent exclusivement le dossier de dépôt KM.
+
+| Opération | Requête | Confirmation JSON attendue |
+| --- | --- | --- |
+| Liste | `GET`, sans cache | `{"ok":true,"files":[{"name":"document.pdf","size":1234,"revision":"opaque"}]}` |
+| Upload | `POST multipart/form-data` : champ binaire `file`, `overwrite` chaîne `true` ou `false`, `expected_revision` si remplacement | `{"ok":true,"file":{"name":"document.pdf","size":1234,"revision":"nouvelle"}}` |
+| Suppression | `POST application/json` : `{"name":"document.pdf","expected_revision":"opaque"}` | `{"ok":true,"name":"document.pdf"}` |
+
+Une entrée fichier porte un nom non vide, une taille entière positive ou nulle
+en octets et une révision non vide. Les noms sont comparés exactement, avec
+casse, sans normalisation implicite. Les doublons dans une réponse de liste
+rendent cette réponse invalide.
+
+La révision est un identifiant opaque que le serveur renouvelle après chaque
+modification. n8n doit contrôler la révision et la collision au moment de
+l'opération, de façon atomique avec l'écriture ou la suppression. Un remplacement
+exige `overwrite=true` et la révision annoncée lors de l'accord. Un fichier apparu
+entre-temps, ou une révision devenue différente, doit produire un conflit plutôt
+qu'un écrasement. Cette garantie nécessite l'implémentation serveur ; le front
+ne peut pas l'assurer seul.
+
+Un conflit utilise HTTP 409 et `{"ok":false,"code":"conflict","message":"…"}`.
+Les autres erreurs utilisent un statut HTTP approprié et la même enveloppe.
+Une réussite exige HTTP 2xx, `ok:true` et les champs attendus. L'upload vérifie
+également que le nom et la taille confirmés correspondent au fichier envoyé ;
+la suppression vérifie le nom confirmé. Une réponse générique « workflow lancé »
+ne confirme pas le stockage.
+
+Délais : 30 secondes pour liste/suppression, 120 secondes par fichier envoyé.
+Un dépassement, une connexion interrompue, une réponse inexploitable ou une erreur
+serveur potentiellement postérieure à l'écriture est présenté sans réussite et
+sans relance automatique. Le serveur peut avoir effectué l'opération malgré
+l'absence de réponse. La reprise manuelle commence par une nouvelle lecture de
+la liste, puis exige un nouvel accord avant envoi et tout remplacement annoncé.
+La présence d'un nom ne suffit jamais à certifier la réussite de l'envoi précédent.
+
+Aucun format ni plafond de taille arbitraire n'est ajouté au front. Les limites
+existantes de Nginx/n8n restent applicables ; leurs erreurs sont affichées. Le
+lot est figé pendant l'envoi ; sélection, suppression, actualisation manuelle et
+changement d'environnement sont bloqués jusqu'à la fin.
+
+L'affichage et les accords relèvent du navigateur ; les opérations sur le
+stockage et l'orchestration restent à réaliser dans n8n. Aucun workflow de
+contrôle métier, déplacement vers l'archive ou publication n'est créé ici.
 
 ## Critères de vérification — recette future
 
-Ces scénarios sont à exécuter après implémentation ; ils n'ont pas été exécutés
-sur l'écran provisoire actuel.
+Les scénarios ci-dessous servent à la recette complète, notamment après
+raccordement réel des workflows. Des vérifications locales automatisées avec
+réponses simulées couvrent le front : envoi séquentiel et poursuite après échec,
+révisions et conflits, reprise, retour invalide, suppression, toggle, configuration
+absente, icônes et repli, clavier et absence de débordement aux largeurs 1 920,
+1 366, 1 100, 768 et 390 px. Les tests du module d'accès couvrent aussi les délais,
+les erreurs HTTP et le refus de chemins invalides. Voir
+[les instructions de test](../tests/README.md). Aucun webhook distant n'a été
+appelé ; la recette EC2 et les contrôles métier restent à faire.
 
 - Sélectionner plusieurs fichiers de types différents par le bouton, puis par
   glisser-déposer ; vérifier nom, taille et retrait individuel avant accord.
@@ -210,12 +292,12 @@ sur l'écran provisoire actuel.
 
 ## Points à définir
 
-Limites de taille par fichier/lot et nombre de fichiers ; règles techniques de
-nommage et comparaison des noms (casse, accents, normalisation) ; contrats UI/n8n
-et configuration des URL ; délais d'attente et vérification d'un envoi au résultat
-incertain ; gestion des opérations concurrentes et des fichiers déjà en cours de
-prise en charge ; seuil responsive des panneaux ; articulation des remplacements
-avec le versionnement métier.
+Restent à fournir : chemins des trois webhooks et workflows conformes aux
+contrats ; limites de taille et nombre de fichiers côté serveur ; règles serveur
+de nommage (caractères autorisés) ; mécanisme atomique de révision et de contrôle
+des collisions ; gestion des fichiers déjà en cours de prise en charge et
+articulation des remplacements avec le versionnement métier. La comparaison
+exacte des noms, les délais et le seuil responsive sont désormais fixés ci-dessus.
 
 Restent aussi à définir : compatibilité des formats avec les étapes suivantes,
 déclenchement manuel ou automatique des traitements métier, contenu des premiers

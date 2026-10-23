@@ -19,6 +19,7 @@ function message(text, error = false) {
   ui['upload-notice'].classList.toggle('is-error', error);
 }
 function sizeText(size) {
+  if (size < 1024) return `${size} octet(s)`;
   return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(size >= 1048576 ? size / 1048576 : size / 1024) +
     (size >= 1048576 ? ' Mo' : ' Ko');
 }

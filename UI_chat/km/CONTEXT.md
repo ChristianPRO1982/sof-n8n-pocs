@@ -9,8 +9,8 @@ routes, clés de configuration et futurs webhooks.
 - `../../nginx/default.conf` : routage HTTP, notamment `/km/`.
 - `../../Dockerfile.nginx_front` et `../../docker-compose.yml` : construction,
   services et montages des fichiers.
-- `../config.ini` : configuration navigateur existante, à consulter lors de la
-  future intégration n8n ; aucune clé ni aucun webhook `km` n'est encore défini.
+- `../config.ini` : base commune et trois chemins de webhooks KM. Les chemins
+  restent vides tant que les workflows ne sont pas raccordés.
 - [docs/README.md](docs/README.md) : vue d'ensemble fonctionnelle, circulation,
   correspondance des onze fiches avec les pages HTML et recette cible.
 - [docs/Poc_n8n.pdf](docs/Poc_n8n.pdf) : référence fonctionnelle à lire avec la
@@ -36,11 +36,11 @@ Le module est indépendant des autres projets, avec n8n mutualisé. Les interfac
 sont en HTML/CSS/JavaScript natifs ; n8n porte l'orchestration et les traitements
 métier. Aucun framework front ni nouveau service n'est nécessaire.
 
-À cette étape, `index.html` explique les cinq pastilles de suivi du développement dans un gabarit partagé avec
-onze écrans provisoires sous `pages/`. Chaque écran affiche le titre de l'étape
-et `Contenu à venir`. Les fichiers statiques et le logo distant sont chargés, sans
-appel métier ni contrôle d'accès supplémentaire. Aucun workflow, webhook,
-connecteur, template métier ou écran de traitement fonctionnel n'est implémenté.
+À cette étape, `index.html` explique les cinq pastilles de développement.
+Le dépôt `pages/01_upload_raw_files.html` est développé côté navigateur et en
+statut `development` ; les dix autres écrans restent provisoires (« Contenu à
+venir »). Les workflows n8n ne sont pas implémentés et leurs chemins restent
+vides. Aucun succès n'est simulé sans réponse serveur conforme.
 
 ## Gabarit et ajout d'une page
 
@@ -70,8 +70,10 @@ Pour ajouter une page :
 La racine du module est résolue depuis l'URL du script partagé ; les liens
 fonctionnent aussi depuis les pages imbriquées. Le logo Sofinco est chargé depuis
 `https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png`
-par le script partagé pour toutes les pages. Les onze pages actuelles
-restent statiques ; le gabarit n'implique aucun chargement de données métier.
+par le script partagé pour toutes les pages. Le gabarit ne charge pas de données
+métier ; seul le module de dépôt ajoute les appels n8n lorsqu’ils sont configurés.
+`assets/km-upload.js`, `assets/km-upload-api.js` et `assets/km-upload.css` sont
+propres à cette page ; les icônes PNG sont dans `assets/icons/`.
 
 ### Pastilles de développement
 
@@ -92,8 +94,8 @@ de contrôles automatiques ou des états d'exécution n8n.
 | `validated` | Vert | Validé |
 
 L'accueil affiche l'émoji 🏠 à la place d'une pastille dans le menu général et
-le bandeau ; il ne porte pas de statut de développement. Les onze étapes sont
-initialement en `not_started`.
+le bandeau ; il ne porte pas de statut de développement. Le dépôt est en
+`development`, les dix autres étapes restent en `not_started`.
 Un statut absent ou inconnu (notamment le modèle non enregistré) utilise
 `not_started`. Les libellés sont centralisés dans `statuses`, les couleurs dans
 `assets/km.css` et le rendu dans `statusBadge`. Les pastilles ont une infobulle
@@ -121,7 +123,7 @@ la préférence de réduction des mouvements.
 
 ## Chaîne cible
 
-### Dépôt multiformat — spécification validée, non implémentée
+### Dépôt multiformat — interface développée, raccordement n8n à réaliser
 
 La fiche [01_upload_raw_files](docs/01_upload_raw_files.md) décrit la sélection
 multiple par glisser-déposer ou bouton, la liste préparatoire (nom, taille,
@@ -150,11 +152,20 @@ types, les fichiers sans extension ou une icône spécialisée indisponible.
 La correspondance détaillée et la recette sont dans la fiche de dépôt ; ces
 icônes ne valent ni contrôle du format réel ni confirmation d'envoi.
 
-Les capacités n8n à prévoir sont lister, déposer, autoriser un remplacement et
-supprimer dans `01_upload_raw_files/`. Aucun webhook ni contrat JSON n'est fixé
-ou implémenté ; les limites de taille et règles techniques de nommage restent
-à définir. Le succès du stockage est distinct de la prise en charge métier et
-de l'archivage. La recette décrite dans la fiche reste à exécuter.
+Les contrats attendus sont fixés dans la fiche : liste GET, upload POST multipart
+et suppression POST JSON, avec confirmation `ok:true` et révisions opaques pour
+les conflits. Le module utilise `KM_WEBHOOK_BASE_URL` et les trois
+`KM_FILES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH` de `../config.ini`. Base commune :
+`http://15.236.66.128/n8n/webhook/` ; chemins laissés vides, aucun workflow créé.
+Le toggle « N8N - webhook-test » utilise `toggle_blue_off.png`/`toggle_blue_on.png`,
+remplace `/webhook/` par `/webhook-test/` en ON et revient en OFF à chaque arrivée,
+y compris par l'historique. Une bascule recharge la liste du nouvel environnement.
+Les opérations concurrentes dans cet écran sont bloquées pendant un lot.
+Délais : liste/suppression 30 s, upload 120 s par fichier ; aucune relance automatique.
+Sous 768 px, les panneaux sont empilés. Sans configuration, seule la sélection
+locale est utilisable. Le stockage reste distinct de la prise en charge et de
+l'archivage. Les tests locaux avec réponses simulées couvrent le navigateur ; la
+recette distante reste à faire. Voir [les tests](tests/README.md).
 
 ### Parcours métier de référence — Word relu
 
@@ -185,7 +196,8 @@ publiées. La définition technique de cette prise en charge reste à préciser.
 Chaque fiche de `docs/` porte le même nom que sa page HTML et distingue les
 exigences du PDF, les décisions utilisateur et les propositions INNO/interface.
 Les renvois aux pages du PDF permettent de retrouver la source. Les schémas,
-contrats d'échange et fonctionnalités décrits comme cibles ne sont pas implémentés.
+contrats métier et fonctionnalités décrits comme cibles ne sont pas implémentés
+dans n8n ; le contrat du dépôt est désormais attendu par le front.
 
 Les templates, règles YAML, JSON Schema, vocabulaires, clés JSON finales et
 règle `doc_id` restent à fournir. Les règles de transition `en_validation` et

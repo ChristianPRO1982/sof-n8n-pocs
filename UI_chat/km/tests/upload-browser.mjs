@@ -173,6 +173,7 @@ try {
   assert.equal(await evaluate(`document.querySelector('#selected-files img').hidden`), true);
   for (const width of [1920, 1366, 1100, 768, 390]) {
     await call('Emulation.setDeviceMetricsOverride', { width, height: 950, deviceScaleFactor: 1, mobile: false });
+    await evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
     const layout = await evaluate(`(() => {
       const [a,b] = [...document.querySelectorAll('.km-upload-panel')].map(n => n.getBoundingClientRect());
       return { sameRow: Math.abs(a.top-b.top)<1, overflow: document.documentElement.scrollWidth > innerWidth,
@@ -193,6 +194,18 @@ try {
   assert.equal(await evaluate(`document.getElementById('send-files').disabled`), true);
   assert.match(await text('server-state'), /indisponible/);
   listError = false;
+  files.clear();
+  await click('refresh-files');
+  await wait(`!document.getElementById('webhook-toggle').disabled`);
+  assert.match(await text('server-state'), /Aucun fichier/);
+  const readsBeforeRestore = calls.filter(p => p.endsWith('/list')).length;
+  await evaluate(`setTimeout(() => window.dispatchEvent(new PageTransitionEvent('pageshow', {persisted:true})), 0)`);
+  for (let i=0; i<100 && calls.filter(p => p.endsWith('/list')).length === readsBeforeRestore; i++) {
+    await new Promise(done => setTimeout(done, 30));
+  }
+  await wait(`!document.getElementById('webhook-toggle').disabled`);
+  assert.equal(calls.at(-1), '/webhook/list');
+  assert.equal(await evaluate(`document.getElementById('webhook-toggle').getAttribute('aria-checked')`), 'false');
   configured = false;
   await call('Page.reload');
   await wait(`!document.getElementById('webhook-toggle').disabled`);

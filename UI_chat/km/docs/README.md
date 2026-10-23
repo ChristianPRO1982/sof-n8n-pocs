@@ -1,8 +1,9 @@
 # Chaîne documentaire Knowledge Manager — `km`
 
-Cette documentation décrit le fonctionnement cible du POC. Les onze pages HTML
-associées sont actuellement des écrans provisoires : aucun traitement métier,
-webhook `km` ou connecteur décrit ici n'est encore implémenté dans ce dépôt.
+Cette documentation décrit le fonctionnement cible du POC. L'interface de dépôt
+est développée ; les dix autres pages restent provisoires. Les contrats n8n du
+dépôt sont définis côté front, mais les chemins de webhooks restent vides et les
+workflows ne sont pas créés. Aucun traitement métier ni connecteur n'est implémenté.
 
 ## Référence et périmètre
 
@@ -26,7 +27,10 @@ glisser-déposer, liste préparatoire et bouton « Accord » validant le lot ent
 y compris les écrasements annoncés. Les envois sont séquentiels avec confirmation
 n8n, poursuite après échec et relance manuelle. La liste serveur permet une
 suppression individuelle confirmée. Elle apparaît à gauche sur PC et en haut
-sur smartphone, avant la zone d'upload. Ces fonctions ne sont pas implémentées.
+sous 768 px, avant la zone d'upload. Ces fonctions sont développées côté front ;
+leur fonctionnement réel nécessite le raccordement n8n. La fiche décrit la base
+commune et les trois chemins dans `UI_chat/config.ini`, les contrats attendus et
+le toggle « N8N - webhook-test » (images PNG, OFF à chaque arrivée).
 
 Les fichiers à uploader et déjà uploadés sont précédés d'une icône PNG locale
 issue de `../assets/icons/`, choisie selon leur extension (Word, Excel,
@@ -132,7 +136,8 @@ n8n doit porter l'orchestration, les accès aux fichiers, les contrôles, les
 appels LLM et la publication. Les interfaces HTML/CSS/JS doivent présenter les
 résultats et transmettre les actions humaines. OpenAI est le fournisseur LLM
 initial envisagé. La cible pourra être Microsoft Power Automate ; aucun choix
-de connecteur ni de contrat d'échange n'est arrêté par cette documentation.
+de connecteur métier n'est arrêté. Seuls les contrats d'accès au dépôt sont
+désormais définis côté front dans la fiche correspondante.
 
 ## Statuts documentaires et pastilles
 
@@ -169,8 +174,9 @@ livraison effective n'est pas établie par le PDF.
 - Définir la prise en charge initiale, la reprise après erreur et les contrats
   n8n/UI ; décider des interactions Microsoft simulées et des référentiels locaux.
 - Choisir et éprouver l'outil de conversion Word vers Markdown sans LLM.
-- Définir les contrats n8n du dépôt (liste, envoi, remplacement autorisé,
-  suppression), les limites techniques et les règles de nommage. Les règles
+- Réaliser les workflows conformes aux contrats n8n du dépôt (liste, envoi,
+  remplacement autorisé, suppression), renseigner leurs chemins et fixer les
+  limites techniques et les règles serveur de nommage. Les règles
   fonctionnelles de sélection, de doublons et d'accord sont précisées dans
   la [fiche de dépôt](01_upload_raw_files.md).
 
