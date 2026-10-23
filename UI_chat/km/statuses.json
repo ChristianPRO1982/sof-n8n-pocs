@@ -7,8 +7,8 @@
     "validated": "Vert — Validé"
   },
   "01_upload_raw_files": "development",
-  "01_processed_files": "not_started",
-  "02_format_controls": "not_started",
+  "01_processed_files": "development",
+  "02_format_controls": "development",
   "03_deltas": "not_started",
   "04_reports": "not_started",
   "05_metadata": "not_started",
