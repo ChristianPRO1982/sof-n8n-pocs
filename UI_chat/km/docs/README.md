@@ -20,9 +20,18 @@ la publication du Markdown et de ses métadonnées dans AI Ready. Le titre du PD
 mentionne Sophia ; aucun contrat d'intégration avec Sophia n'y est fourni et
 aucun raccordement n'est supposé dans ces fiches.
 
-L'import multiformat (PDF, etc.) et le découpage de documents volumineux en
-connaissances atomiques restent des extensions du cadrage initial de `km`.
-Ils ne font pas partie de la chaîne spécifiée par ce PDF. La mention « Template
+**Décision utilisateur :** le [dépôt des sources](01_upload_raw_files.md) est
+désormais spécifié pour tous types de fichiers, avec sélection multiple,
+glisser-déposer, liste préparatoire et bouton « Accord » validant le lot entier,
+y compris les écrasements annoncés. Les envois sont séquentiels avec confirmation
+n8n, poursuite après échec et relance manuelle. La liste serveur permet une
+suppression individuelle confirmée. Elle apparaît à gauche sur PC et en haut
+sur smartphone, avant la zone d'upload. Ces fonctions ne sont pas implémentées.
+
+Ce dépôt multiformat ne garantit pas la compatibilité avec les traitements
+suivants : la chaîne de référence du PDF reste fondée sur un Word relu. Le
+découpage de documents volumineux en connaissances atomiques reste une extension
+hors de cette chaîne. La mention « Template
 MVP » dans le jeu de test du PDF désigne un livrable attendu ; le projet reste
 un POC et ne constitue pas un engagement de périmètre MVP.
 
@@ -154,11 +163,19 @@ livraison effective n'est pas établie par le PDF.
 - Définir la prise en charge initiale, la reprise après erreur et les contrats
   n8n/UI ; décider des interactions Microsoft simulées et des référentiels locaux.
 - Choisir et éprouver l'outil de conversion Word vers Markdown sans LLM.
+- Définir les contrats n8n du dépôt (liste, envoi, remplacement autorisé,
+  suppression), les limites techniques et les règles de nommage. Les règles
+  fonctionnelles de sélection, de doublons et d'accord sont précisées dans
+  la [fiche de dépôt](01_upload_raw_files.md).
 
 ## Recette cible
 
 Ces scénarios reprennent la [page 3 du PDF](Poc_n8n.pdf#page=3) ; ils sont à
 exécuter après développement, pas des tests déjà réussis.
+
+La [recette future du dépôt](01_upload_raw_files.md#critères-de-vérification--recette-future)
+complète ces scénarios : multisélection, disposition responsive, accord global,
+doublons, envoi séquentiel, erreurs n8n, actualisation et suppression.
 
 | Scénario | Parcours et résultat à démontrer |
 | --- | --- |

@@ -10,17 +10,22 @@
 bruts ([page 1](Poc_n8n.pdf#page=1)). Le socle SharePoint et ses bibliothèques
 sont décrits [page 2](Poc_n8n.pdf#page=2).
 
-**Décision utilisateur :** retenir ici le périmètre Word du PDF. Le dépôt
-multiformat et le découpage en documents atomiques restent des extensions.
-Adapter le stockage au POC INNO sur EC2.
+**Décisions utilisateur :** adapter le stockage au POC INNO sur EC2 et ouvrir
+le dépôt à tous types de fichiers, avec sélection multiple. Cette ouverture
+concerne le dépôt ; le parcours métier de référence reste celui d'un Word relu.
+Accepter un fichier au dépôt ne garantit pas sa compatibilité avec les contrôles
+et traitements suivants. Le découpage en documents atomiques reste une extension.
 
 ## Entrées
 
-- Word relu par le métier et destiné au parcours de contrôle.
+- Un ou plusieurs fichiers de tout type à déposer sur le serveur.
+- Pour le parcours métier de référence : Word relu par le métier.
 - Template et jeu de test attendus : document conforme, non conforme et avec écart.
 - Références et règles nécessaires aux étapes suivantes, à fournir séparément.
 
-Le PDF ne précise ni les extensions Word acceptées ni les limites de taille.
+Le PDF ne précise ni les extensions Word acceptées par les traitements ni les
+limites de taille. Les limites techniques du dépôt restent à définir ; aucun
+filtre limité aux fichiers Word n'est retenu pour cet écran.
 
 ## Traitements et sorties
 
@@ -36,19 +41,128 @@ prise en charge et les résultats pour suivre le parcours malgré le déplacemen
 La définition technique de cette prise en charge et de ses premiers résultats
 reste à arrêter ; le dépôt seul ne suffit pas à déclarer la source traitée.
 
-Sorties attendues : source prise en charge, premiers résultats enregistrés,
-archive source et éléments de suivi dans le [journal](10_tracking_journal.md).
+La sortie immédiate du dépôt est un fichier stocké, confirmé par n8n. Ce succès
+ne vaut ni conformité ni approbation ni publication. Le déclenchement des
+traitements métier à partir du dépôt reste à définir.
+
+Les sorties ultérieures de la prise en charge sont les premiers résultats
+enregistrés, l'archive source et les éléments de suivi dans le
+[journal](10_tracking_journal.md). Le bouton « Accord » décrit ci-dessous
+autorise l'envoi et les remplacements annoncés, pas la validation métier.
 
 ## Interactions humaines et interface prévues
 
 **PDF :** le document a été relu avant son dépôt ; un retour rédacteur est prévu
 si le rapport consolidé révèle un blocage.
 
-**Proposition INNO/interface :** formulaire de dépôt, liste des sources en
-attente, accès au résultat de leur prise en charge et aux erreurs éventuelles.
-L'interface ne doit pas simuler une réussite d'envoi si aucun webhook n'est branché.
+Les règles suivantes sont des **décisions utilisateur**, précisées par le plan
+validé. Elles décrivent une interface cible, pas des fonctions déjà disponibles.
 
-## Critères de vérification
+### Disposition et liste serveur
+
+- Sur PC, deux panneaux côte à côte : fichiers serveur à gauche, upload à droite.
+- Sur smartphone, deux panneaux empilés : fichiers serveur en haut, upload en bas.
+- La liste serveur porte uniquement sur `01_upload_raw_files/`, sans inclure
+  les archives ni les autres étapes. Elle charge à l'ouverture, peut être
+  actualisée manuellement et est actualisée après les envois et suppressions.
+- Distinguer les états chargement, liste vide et erreur. Une erreur de lecture
+  ne signifie pas qu'aucun fichier n'existe ; ne pas présenter les collisions
+  comme vérifiées tant que la liste n'a pas été obtenue.
+
+### Sélection et accord sur le lot
+
+1. Sélectionner plusieurs fichiers par glisser-déposer ou par le bouton de
+   sélection de fichiers. La sélection seule ne déclenche aucun envoi.
+2. Afficher une liste préparatoire avec le nom et la taille de chaque fichier.
+   Permettre d'en retirer individuellement avant validation.
+3. Comparer les noms avec ceux du serveur. Pour chaque nom déjà présent,
+   afficher un avertissement explicite de danger : le fichier serveur sera
+   écrasé si l'utilisateur conserve cette entrée et valide le lot.
+4. Si plusieurs fichiers sélectionnés ont le même nom, demander de retirer
+   les entrées en trop. Bloquer l'accord tant qu'il en reste plusieurs.
+5. Le bouton « Accord » valide toute la liste et autorise tous les remplacements
+   annoncés. Il n'y a pas d'accord séparé par fichier. Le récapitulatif doit
+   rendre ces remplacements visibles avant validation. Une liste vide ne peut
+   pas être validée.
+
+### Envoi séquentiel et retours n8n
+
+- Après « Accord », figer le lot validé. Envoyer un seul fichier à la fois et
+  attendre son retour n8n, ou le constat d'un échec/retour absent, avant le suivant.
+- Afficher pour chaque fichier les états en attente, en cours, réussi ou échoué.
+  Un succès exige une confirmation n8n du stockage effectif ; le simple départ
+  de la requête ne suffit pas. Sans webhook branché, aucune réussite simulée.
+- En cas d'échec, conserver le fichier et le message d'erreur dans le bilan,
+  puis poursuivre avec le suivant. Ne pas renvoyer automatiquement les échecs.
+- Afficher un bilan final avec les réussites et les échecs. Les échecs peuvent
+  être relancés manuellement, après vérification de l'état serveur et nouvel
+  accord si un remplacement doit être autorisé.
+- Un retour absent ou inexploitable ne prouve ni le succès ni l'absence du
+  fichier serveur. Afficher l'incertitude avec l'échec et vérifier l'état
+  serveur avant une nouvelle tentative. La méthode de rapprochement reste
+  à définir avec le contrat n8n ; une simple présence du nom ne suffit pas
+  à confirmer le succès de cet envoi.
+
+### Collisions au moment de l'écriture
+
+La comparaison faite par l'interface prépare l'avertissement. n8n doit aussi
+contrôler les collisions au moment de l'écriture et respecter les remplacements
+autorisés pour le lot. Si un doublon apparaît après l'accord et n'avait pas été
+annoncé, ne pas l'écraser : signaler le conflit sur le fichier, poursuivre les
+autres envois et demander un nouvel accord avant son remplacement. Aucun
+remplacement non annoncé n'est autorisé.
+
+### Suppression depuis la liste serveur
+
+Proposer une suppression individuelle, avec confirmation affichant le nom du
+fichier concerné. Une annulation ne déclenche aucune suppression. Retirer l'entrée
+seulement après confirmation de réussite par n8n, puis actualiser la liste.
+En cas de refus ou de retour absent, afficher l'erreur et vérifier l'état serveur
+sans annoncer une réussite. Cette action concerne le fichier déposé, pas les
+archives ni les résultats des étapes suivantes.
+
+## Capacités n8n nécessaires — contrats à définir
+
+| Capacité cible | Résultat attendu par l'interface |
+| --- | --- |
+| Lister les fichiers du dossier de dépôt | Noms des fichiers présents, ou erreur explicite |
+| Déposer un fichier par requête | Confirmation du stockage effectif, ou erreur/conflit |
+| Autoriser un remplacement annoncé | Respect de l'accord utilisateur et contrôle de collision à l'écriture |
+| Supprimer un fichier identifié | Confirmation de suppression, ou erreur explicite |
+
+Ces capacités n'imposent ni un nombre de webhooks ni un contrat technique.
+Les URL, méthodes HTTP, champs de requête, contrats JSON et codes de réponse
+restent à définir avant implémentation. L'orchestration et les opérations sur
+le stockage relèvent de n8n, l'affichage et les accords de l'interface.
+
+## Critères de vérification — recette future
+
+Ces scénarios sont à exécuter après implémentation ; ils n'ont pas été exécutés
+sur l'écran provisoire actuel.
+
+- Sélectionner plusieurs fichiers de types différents par le bouton, puis par
+  glisser-déposer ; vérifier nom, taille et retrait individuel avant accord.
+- Vérifier l'ordre des panneaux sur PC et smartphone.
+- Vérifier qu'aucun fichier ne part avant « Accord » et que le lot est figé
+  après validation.
+- Présenter un lot avec fichiers nouveaux et doublons serveur : avertissements
+  visibles, retrait possible, accord global et écrasement des seuls doublons
+  annoncés et conservés.
+- Présenter deux fichiers sélectionnés de même nom : accord bloqué jusqu'au
+  retrait des entrées en trop.
+- Vérifier un seul envoi à la fois et l'attente du résultat avant le suivant.
+  Provoquer un échec intermédiaire : les suivants partent, le bilan le conserve
+  et sa relance est manuelle.
+- Tester un retour n8n absent ou inexploitable : aucune réussite annoncée,
+  incertitude visible et vérification serveur avant nouvelle tentative.
+- Tester chargement, liste vide, actualisation et erreur de liste serveur :
+  une liste indisponible ne vaut pas absence de doublons.
+- Faire apparaître un doublon après l'accord : absence d'écrasement silencieux,
+  conflit visible et nouvel accord nécessaire.
+- Tester suppression confirmée, annulée et refusée, ainsi qu'un retour absent :
+  aucune entrée retirée sur la seule initiative de l'interface.
+- Vérifier qu'aucune réussite d'envoi ou de suppression n'est simulée sans
+  confirmation n8n.
 
 - Un Word conforme et un Word non conforme peuvent chacun entrer dans la chaîne.
 - Le dépôt reste distinct de la conformité, de l'approbation et de la publication.
@@ -59,8 +173,17 @@ L'interface ne doit pas simuler une réussite d'envoi si aucun webhook n'est bra
 
 ## Points à définir
 
-Extensions, taille et nommage des fichiers ; gestion des doublons et versions ;
-déclenchement manuel ou automatique ; contrat d'envoi UI/n8n ; contenu des premiers
-résultats ; condition exacte de déplacement et comportement en cas d'échec.
+Limites de taille par fichier/lot et nombre de fichiers ; règles techniques de
+nommage et comparaison des noms (casse, accents, normalisation) ; contrats UI/n8n
+et configuration des URL ; délais d'attente et vérification d'un envoi au résultat
+incertain ; gestion des opérations concurrentes et des fichiers déjà en cours de
+prise en charge ; seuil responsive des panneaux ; articulation des remplacements
+avec le versionnement métier.
+
+Restent aussi à définir : compatibilité des formats avec les étapes suivantes,
+déclenchement manuel ou automatique des traitements métier, contenu des premiers
+résultats, condition exacte de déplacement vers l'archive et comportement en cas
+d'échec de cette prise en charge. Ces inconnues ne remettent pas en question les
+règles d'accord global, de remplacement annoncé et d'envoi séquentiel ci-dessus.
 
 [Vue d'ensemble](README.md) · [Archive des sources](01_processed_files.md) · [Contrôles](02_format_controls.md)

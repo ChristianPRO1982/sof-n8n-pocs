@@ -26,8 +26,11 @@ parfois redondants en connaissances atomiques, normalisées, structurées et li�
 entre elles. Préserver la traçabilité vers les documents et passages sources.
 
 Le périmètre actuellement documenté suit `Poc_n8n.pdf` : un Word relu jusqu'à sa
-publication en Markdown et JSON. L'import multiformat et le découpage atomique
-restent des extensions du cadrage initial, hors de ce parcours de référence.
+publication en Markdown et JSON. Par décision utilisateur, le dépôt est désormais
+spécifié pour tous types de fichiers ; cette ouverture ne garantit pas leur
+compatibilité avec les traitements suivants. Le parcours de référence reste
+fondé sur un Word relu et le découpage atomique reste une extension hors de ce
+parcours.
 
 Le module est indépendant des autres projets, avec n8n mutualisé. Les interfaces
 sont en HTML/CSS/JavaScript natifs ; n8n porte l'orchestration et les traitements
@@ -117,6 +120,35 @@ Le menu et le corps défilent indépendamment, le bandeau reste visible. Les
 la préférence de réduction des mouvements.
 
 ## Chaîne cible
+
+### Dépôt multiformat — spécification validée, non implémentée
+
+La fiche [01_upload_raw_files](docs/01_upload_raw_files.md) décrit la sélection
+multiple par glisser-déposer ou bouton, la liste préparatoire (nom, taille,
+retrait individuel) et le bouton « Accord » validant le lot entier. Les doublons
+serveur portent un avertissement d'écrasement ; les conserver dans le lot et
+valider autorise leur remplacement. Les doublons au sein de la sélection doivent
+être retirés jusqu'à conserver un seul fichier par nom avant accord.
+
+Le lot validé est figé et envoyé un fichier à la fois, avec attente du retour
+n8n avant le suivant, poursuite après échec, bilan par fichier et relance manuelle.
+Un retour absent ne vaut pas réussite ; vérifier l'état serveur avant de retenter.
+n8n contrôle aussi les collisions à l'écriture : un nouveau doublon non annoncé
+nécessite un nouvel accord, sans écrasement silencieux.
+
+La liste serveur est placée à gauche sur PC et en haut sur smartphone ; la zone
+d'upload à droite ou en bas. Elle charge à l'ouverture, peut être actualisée et
+est actualisée après les opérations. La suppression est individuelle, confirmée
+avec le nom du fichier, et l'entrée n'est retirée qu'après confirmation n8n.
+Prévoir les états chargement, vide et erreur sans simuler de succès.
+
+Les capacités n8n à prévoir sont lister, déposer, autoriser un remplacement et
+supprimer dans `01_upload_raw_files/`. Aucun webhook ni contrat JSON n'est fixé
+ou implémenté ; les limites de taille et règles techniques de nommage restent
+à définir. Le succès du stockage est distinct de la prise en charge métier et
+de l'archivage. La recette décrite dans la fiche reste à exécuter.
+
+### Parcours métier de référence — Word relu
 
 1. Déposer et prendre en charge un Word relu (`01_upload_raw_files`).
 2. Contrôler format/template sans LLM (`02_format_controls`).
