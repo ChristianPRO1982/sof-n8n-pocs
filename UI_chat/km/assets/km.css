@@ -128,7 +128,8 @@ a { color: var(--primary); }
 body.km-resizing { cursor: col-resize; user-select: none; }
 .km-workspace { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 8px; min-width: 0; min-height: 0; }
 .km-header {
-  padding: 12px 16px;
+  min-height: 88px;
+  padding: 16px;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -139,8 +140,11 @@ body.km-resizing { cursor: col-resize; user-select: none; }
 .km-logo { width: clamp(100px, 11vw, 150px); height: auto; display: block; }
 .km-page-heading { flex: 1 1 180px; min-width: 0; display: flex; align-items: center; gap: 8px; }
 .km-page-title { margin: 0; font-size: 1.15rem; overflow-wrap: anywhere; }
-.km-context { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.km-context { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 44px; }
 .km-context a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
