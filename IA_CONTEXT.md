@@ -1,6 +1,6 @@
 # Contexte du projet pour les agents de développement
 
-Dernière mise à jour : **22 octobre 2026** (socle et documentation fonctionnelle de `km` ; vérification générale du socle le 19 octobre 2026). Ce document décrit les fichiers locaux ; il ne certifie pas l’état du déploiement AWS ni des workflows distants.
+Dernière mise à jour : **23 octobre 2026** (front `km` isolé dans Docker ; vérification générale du socle le 19 octobre 2026). Ce document décrit les fichiers locaux ; il ne certifie pas l’état du déploiement AWS ni des workflows distants.
 
 ## Lire en début de session
 
@@ -14,7 +14,7 @@ Site web professionnel hébergé sur AWS, servant de socle à plusieurs projets 
 
 Le principal cas d’usage présent est un assistant destiné aux conseillers clientèle sur les aides à la rénovation : MaPrimeRénov’, MaPrimeAdapt’, ANAH. La chaîne documentaire vise la sélection de sources, le scraping, les embeddings, la recherche RAG et la génération de réponses sourcées. Un autre module, **Taxon**, propose l’envoi de fichiers et la consultation des fichiers à traiter ou traités.
 
-**Knowledge Manager**, identifiant unique **`km`** en minuscules, est un module POC indépendant pour transformer les documents Sofinco en connaissances atomiques, normalisées, liées et validées humainement. Lire `UI_chat/km/CONTEXT.md` avant d'y intervenir. L'accueil présente la légende des cinq statuts de développement et les onze écrans partagent un gabarit responsive, un menu redimensionnable mémorisé dans le navigateur et un tiroir sur petits écrans. Le champ `status` du registre de pages pilote les pastilles dans les deux menus ; le dépôt multiformat dispose de sa propre interface, les dix autres écrans restent provisoires. Aucun workflow `km` n'est implémenté. Les clés `KM_WEBHOOK_BASE_URL` et `KM_FILES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH` de `UI_chat/config.ini` préparent le raccordement (chemins vides). Les contrats attendus, révisions et toggle test/production sont décrits dans la fiche de dépôt.
+**Knowledge Manager**, identifiant unique **`km`** en minuscules, est un module POC indépendant pour transformer les documents Sofinco en connaissances atomiques, normalisées, liées et validées humainement. Lire `UI_chat/km/CONTEXT.md` avant d'y intervenir. L'accueil présente la légende des cinq statuts de développement et les onze écrans partagent un gabarit responsive, un menu redimensionnable mémorisé dans le navigateur et un tiroir sur petits écrans. Le champ `status` du registre de pages pilote les pastilles dans les deux menus ; le dépôt multiformat dispose de sa propre interface, les dix autres écrans restent provisoires. Aucun workflow `km` n'est implémenté. Les clés `KM_WEBHOOK_BASE_URL` et `KM_FILES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH` de `UI_chat/km/config.ini`, monté en lecture seule dans `km-front`, préparent le raccordement (chemins vides). Les contrats attendus, révisions et toggle test/production sont décrits dans la fiche de dépôt.
 
 Le parcours fonctionnel documenté de `km` prend pour référence `UI_chat/km/docs/Poc_n8n.pdf` : Word relu → contrôles de format sans LLM → écarts et rapport → métadonnées par règles/LLM → validation métier → Word publié → conversion Markdown sans LLM → couple Markdown/JSON AI Ready, avec journal transversal. Lire [la vue d'ensemble et les onze fiches](UI_chat/km/docs/README.md) avant le développement métier. `01_processed_files` est un ajout utilisateur : archivage des sources après prise en charge initiale, avant validation. Le dépôt accepte une sélection multiformat ; les traitements de référence restent fondés sur Word et le découpage atomique reste une extension. Les interactions Microsoft 365 du PDF sont à adapter au POC INNO ; les schémas et règles encore absents sont explicitement signalés.
 
@@ -32,7 +32,7 @@ Navigateur
   → Nginx :80
       ├─ /                 → fichiers statiques de UI_chat/
       ├─ /n8n/             → service n8n:5678
-      ├─ /km/              → module Knowledge Manager, fichiers statiques de UI_chat/km/
+      ├─ /km/              → km-front:80, front Knowledge Manager autonome
       └─ /taxon/docs/      → documents générés, montage en lecture seule
 
 Interfaces → webhooks n8n → workflows métier / données / LLM
@@ -48,12 +48,13 @@ L’hébergement EC2 Ubuntu est décrit dans `INSTALL_N8N_AWS.md`. Le déploieme
 
 | Service Compose | Construction / image | Particularités |
 | --- | --- | --- |
-| `nginx` | `Dockerfile.nginx_front`, base `nginx:alpine` | Copie `UI_chat/` dans l’image ; charge `nginx/default.conf` ; expose le port 80. |
+| `nginx` | `Dockerfile.nginx_front`, base `nginx:alpine` | Copie `UI_chat/` hors KM ; charge `nginx/default.conf` ; expose le port 80 et relaie `/km/` vers `km-front`. |
+| `km-front` | `christianpro1982/km:${KM_IMAGE_TAG:-latest}`, Docker Hub | Pages et images locales KM ; `nginx/km.conf` ; configuration dédiée montée en lecture seule ; aucun port hôte ni données métier. |
 | `n8n` | `n8nio/n8n:2.18.5` | URL publique et préfixe `/n8n/` définis dans Compose ; fuseau `Europe/Paris`. |
 | `postgres` | `pgvector/pgvector:pg16` | Volume nommé `pgdata`, base et utilisateur configurés dans Compose. |
 | `fastapi` | `Dockerfile` | Dépendances gérées avec `uv` ; montage de `n8n_files/` ; aucun port hôte publié dans le Compose actuel. |
 
-Volumes n8n : `./n8n_data` → `/home/node/.n8n`, `./n8n_files` → `/home/node/.n8n-files`. Le même répertoire `n8n_files/` est accessible à FastAPI sous `/app/n8n_files`. Nginx lit `./n8n_files/taxon/docs` sous `/var/www/taxon-docs`.
+Volumes n8n : `./n8n_data` → `/home/node/.n8n`, `./n8n_files` → `/home/node/.n8n-files`. Le même répertoire `n8n_files/` est accessible à FastAPI sous `/app/n8n_files`. Nginx lit `./n8n_files/taxon/docs` sous `/var/www/taxon-docs`. KM monte `./UI_chat/km/config.ini` en lecture seule sous `/usr/share/nginx/html/km/config.ini`.
 
 ## Carte des fichiers : où intervenir
 
@@ -64,7 +65,8 @@ Volumes n8n : `./n8n_data` → `/home/node/.n8n`, `./n8n_files` → `/home/node/
 | Variantes de chat | `UI_chat/chats/chat1.html`, `chat2.html`, `chat3.html`, `chat4.html` |
 | Variante de pré-test avec webhook dédié | `UI_chat/chats/chat3_v11.html` |
 | Moteur RAG n8n V12, copie de la v11 avec webhook de test dédié | `UI_chat/chats/chat3_v12.html` |
-| URLs des webhooks, animation, debug | `UI_chat/config.ini` |
+| URLs des webhooks, animation, debug (hors KM) | `UI_chat/config.ini` |
+| Configuration publique et déploiement KM | `UI_chat/km/config.ini`, `UI_chat/km/docs/deployment.md` |
 | Contrôle d’accès de l’interface | `UI_chat/auth.js`, `UI_chat/access.html`, `UI_chat/md5.html` |
 | Gestion des sources documentaires | `UI_chat/sources/sources.html` |
 | Gestion des classifications | `UI_chat/sources/thematiques.html`, `sousthematiques.html`, `categories.html` |
@@ -82,7 +84,7 @@ Le front est écrit en **HTML/CSS/JavaScript natif**, avec beaucoup de code int�
 
 Les fichiers `.old`, `index.html.prod` et `index.html.maintenance` sont des variantes conservées. Nginx sert `index.html` à la racine ; le suffixe `.prod` ne sélectionne pas automatiquement la version de production. `Dockerfile.ui_chat` existe mais n’est pas utilisé par le Compose actuel.
 
-Le module `km` est accessible directement sous `/km/`, avec redirection depuis `/km`. Ses fichiers inexistants retournent 404 sans repli vers le chatbot. Son contexte Codex et son dossier `docs/` sont bloqués en HTTP. Le stockage de traitement EC2 `/n8n/n8n_files/km/` est distinct de cette documentation ; le montage existant le rend accessible dans n8n sous `/home/node/.n8n-files/km/`. Aucun montage web des données `km` n'est ajouté.
+Le module `km` est accessible via le proxy commun vers `km-front` sous `/km/`, avec redirection depuis `/km`. Ses fichiers inexistants retournent 404 sans repli vers le chatbot. Son contexte Codex et ses dossiers `docs/` et `tests/` sont bloqués en HTTP et exclus de l'image KM. Le stockage de traitement EC2 `/n8n/n8n_files/km/` est distinct de cette documentation ; le montage existant le rend accessible dans n8n sous `/home/node/.n8n-files/km/`. Aucun montage web des données `km` n'est ajouté.
 
 ## Configuration et contrats d’échange
 
@@ -102,6 +104,9 @@ Le module `km` est accessible directement sous `/km/`, avec redirection depuis `
 - `ADMIN_ACCESS_KEY` : valeur attendue par le contrôle d’accès côté navigateur ; `auth.js` attend une empreinte MD5 de 32 caractères hexadécimaux. La valeur versionnée est un placeholder.
 
 Des URLs de repli sont aussi codées dans certaines pages. Pour modifier une destination, rechercher la clé ou l’URL dans la page concernée et dans Compose ; ne pas supposer que tout est centralisé.
+
+KM charge séparément `/km/config.ini`, monté en lecture seule et servi sans cache.
+Les images et le logo sont embarqués dans son image Docker, sans accès GitHub.
 
 ### Chatbot
 
@@ -167,11 +172,11 @@ Pour construire et lancer la stack Docker locale, lorsque la tâche nécessite s
 docker compose up -d --build
 ```
 
-Les fichiers UI et la configuration Nginx sont copiés dans l’image : un simple redémarrage ne prend pas en compte leurs modifications. Reconstruire le service `nginx` pour les appliquer dans Docker.
+Les fichiers UI et la configuration Nginx sont copiés dans l’image : un simple redémarrage ne prend pas en compte leurs modifications. Reconstruire le service `nginx` pour les interfaces communes. KM est exclu de cette image et utilise Docker Hub : publier depuis le poste de développement avec `scripts/publish-km.sh VERSION`, puis sur EC2 `docker compose pull km-front` et `docker compose up -d --no-deps km-front`. Aucun `build` KM sur EC2. La migration initiale requiert aussi la reconstruction du Nginx commun pour activer le proxy. `KM_IMAGE_TAG` sélectionne une version précise (défaut `latest`). Voir le guide de déploiement KM pour les changements de configuration montée.
 
 Contrôle de cohérence Compose sans démarrer les services : `docker compose config --quiet`.
 
-Aucune suite de tests ni CI n’est présente dans les fichiers suivis lors de cette vérification. Adapter la validation au changement : syntaxe, affichage et navigation pour l’UI ; réponses HTTP et cas limites pour l’API. Un appel aux webhooks configurés peut déclencher de vrais workflows distants, y compris depuis un front lancé localement ; utiliser des réponses simulées pour une vérification purement locale.
+Les tests KM (module, navigateur et conteneurs isolés) sont décrits dans `UI_chat/km/tests/README.md`. Aucune CI générale n’est définie. Adapter la validation au changement : syntaxe, affichage et navigation pour l’UI ; réponses HTTP et cas limites pour l’API. Un appel aux webhooks configurés peut déclencher de vrais workflows distants, y compris depuis un front lancé localement ; utiliser des réponses simulées pour une vérification purement locale.
 
 ## Limites connues et points à vérifier selon la tâche
 

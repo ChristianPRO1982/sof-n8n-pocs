@@ -1,4 +1,4 @@
-import { parseConfig, endpoint, request, validFile, iconName } from './km-upload-api.js';
+import { parseConfig, endpoint, request, validFile, iconName, imageBaseURL } from './km-upload-api.js';
 
 const $ = (id) => document.getElementById(id);
 const ui = Object.fromEntries(['webhook-toggle', 'webhook-toggle-image', 'upload-notice',
@@ -27,9 +27,9 @@ function fileRow(file) {
   const row = node('li', 'km-upload-row');
   const image = node('img', 'km-upload-file-icon');
   image.alt = '';
-  image.src = new URL(`icons/${iconName(file.name)}.png`, import.meta.url).href;
+  image.src = new URL(`icons/${iconName(file.name)}.png`, new URL(imageBaseURL, import.meta.url)).href;
   image.addEventListener('error', () => {
-    const generic = new URL('icons/file.png', import.meta.url).href;
+    const generic = new URL('icons/file.png', new URL(imageBaseURL, import.meta.url)).href;
     if (image.src !== generic) image.src = generic;
     else image.hidden = true;
   });
@@ -62,7 +62,7 @@ function render() {
   const existing = new Map(state.files.map((file) => [file.name, file]));
   ui['webhook-toggle'].disabled = state.busy;
   ui['webhook-toggle'].setAttribute('aria-checked', String(state.test));
-  ui['webhook-toggle-image'].src = new URL(`icons/toggle_blue_${state.test ? 'on' : 'off'}.png`, import.meta.url).href;
+  ui['webhook-toggle-image'].src = new URL(`icons/toggle_blue_${state.test ? 'on' : 'off'}.png`, new URL(imageBaseURL, import.meta.url)).href;
   ui['refresh-files'].disabled = state.busy || !configured('list');
   ui['choose-files'].disabled = state.busy || state.completed;
   // Selection is available even when configuration is absent (after initialization).
@@ -272,7 +272,7 @@ window.addEventListener('pageshow', (event) => { if (event.persisted) window.loc
 
 async function initialize() {
   try {
-    const response = await fetch(new URL('../../config.ini', import.meta.url), { cache: 'no-store', signal: AbortSignal.timeout(30000) });
+    const response = await fetch(new URL('../config.ini', import.meta.url), { cache: 'no-store', signal: AbortSignal.timeout(30000) });
     if (!response.ok) throw new Error('Configuration indisponible.');
     state.config = parseConfig(await response.text());
     const ok = await refresh();

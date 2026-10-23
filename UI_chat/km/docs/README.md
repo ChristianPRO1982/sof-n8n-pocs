@@ -29,7 +29,7 @@ n8n, poursuite après échec et relance manuelle. La liste serveur permet une
 suppression individuelle confirmée. Elle apparaît à gauche sur PC et en haut
 sous 768 px, avant la zone d'upload. Ces fonctions sont développées côté front ;
 leur fonctionnement réel nécessite le raccordement n8n. La fiche décrit la base
-commune et les trois chemins dans `UI_chat/config.ini`, les contrats attendus et
+commune et les trois chemins dans `UI_chat/km/config.ini`, les contrats attendus et
 le toggle « N8N - webhook-test » (images PNG, OFF à chaque arrivée).
 
 Les fichiers à uploader et déjà uploadés sont précédés d'une icône PNG locale
@@ -211,3 +211,14 @@ les pages HTML servent à établir la correspondance fonctionnelle. Nginx bloque
 n'est ajoutée. Le PDF source doit être conservé.
 
 Voir le [contexte Codex](../CONTEXT.md) pour les détails techniques du gabarit.
+
+## Conteneur front autonome
+
+KM est livré par le service `km-front` via Docker Hub (`christianpro1982/km`,
+tag `latest` par défaut), avec pages, scripts et images embarqués. La publication
+est manuelle depuis le poste de développement ; EC2 télécharge l’image et ne
+construit pas KM.
+Le Nginx commun conserve l'entrée publique `/km/` et relaie vers ce service.
+La configuration KM dédiée est montée en lecture seule, sans données métier.
+Voir [le guide de déploiement](deployment.md) pour la migration initiale, les
+mises à jour indépendantes et les vérifications locales.

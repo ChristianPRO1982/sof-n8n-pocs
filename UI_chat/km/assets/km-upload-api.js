@@ -1,3 +1,6 @@
+// Relative asset base resolved by the caller against this module location.
+export const imageBaseURL = "./";
+
 // Contract for the KM deposit screen. No endpoint or success is fabricated.
 export function parseConfig(text) {
   return Object.fromEntries(text.split(/\r?\n/).map((line) => line.trim())

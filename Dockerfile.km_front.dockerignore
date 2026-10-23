@@ -1,0 +1,15 @@
+# Minimal context for the standalone KM image; no business data or settings.
+**
+!nginx/
+!nginx/km.conf
+!UI_chat/
+!UI_chat/km/
+!UI_chat/km/*.html
+!UI_chat/km/pages/
+!UI_chat/km/pages/*.html
+!UI_chat/km/assets/
+!UI_chat/km/assets/*.js
+!UI_chat/km/assets/*.css
+!UI_chat/km/assets/*.png
+!UI_chat/km/assets/icons/
+!UI_chat/km/assets/icons/*.png

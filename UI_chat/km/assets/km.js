@@ -108,7 +108,7 @@ const logoLink = element("a", "km-logo-link");
 logoLink.href = rootURL.href;
 logoLink.setAttribute("aria-label", "Knowledge Manager — accueil");
 const logo = element("img", "km-logo");
-logo.src = "https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png";
+logo.src = new URL("assets/logo-sofinco.png", rootURL).href;
 logo.alt = "Sofinco";
 logoLink.append(logo);
 const heading = element("div", "km-page-heading");

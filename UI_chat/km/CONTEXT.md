@@ -7,9 +7,10 @@ routes, clés de configuration et futurs webhooks.
 
 - `../../IA_CONTEXT.md` : architecture générale et limites du socle partagé.
 - `../../nginx/default.conf` : routage HTTP, notamment `/km/`.
-- `../../Dockerfile.nginx_front` et `../../docker-compose.yml` : construction,
-  services et montages des fichiers.
-- `../config.ini` : base commune et trois chemins de webhooks KM. Les chemins
+- `../../Dockerfile.km_front`, `../../nginx/km.conf`,
+  `../../Dockerfile.nginx_front` et `../../docker-compose.yml` : images, routage
+  et montage en lecture seule de la configuration KM.
+- `config.ini` : base commune et trois chemins de webhooks KM. Les chemins
   restent vides tant que les workflows ne sont pas raccordés.
 - [docs/README.md](docs/README.md) : vue d'ensemble fonctionnelle, circulation,
   correspondance des onze fiches avec les pages HTML et recette cible.
@@ -68,9 +69,8 @@ Pour ajouter une page :
    ajoute les liens communs avant ces options sans supprimer leur contenu.
 
 La racine du module est résolue depuis l'URL du script partagé ; les liens
-fonctionnent aussi depuis les pages imbriquées. Le logo Sofinco est chargé depuis
-`https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs/heads/main/UI_chat/logo-sofinco.png`
-par le script partagé pour toutes les pages. Le gabarit ne charge pas de données
+fonctionnent aussi depuis les pages imbriquées. Le logo Sofinco est embarqué
+dans `assets/logo-sofinco.png` et chargé localement par le script partagé. Le gabarit ne charge pas de données
 métier ; seul le module de dépôt ajoute les appels n8n lorsqu’ils sont configurés.
 `assets/km-upload.js`, `assets/km-upload-api.js` et `assets/km-upload.css` sont
 propres à cette page ; les icônes PNG sont dans `assets/icons/`.
@@ -149,13 +149,15 @@ fichier est précédé d'une icône PNG locale de `assets/icons/` : `word.png`,
 `excel.png`, `powerpoint.png`, `pdf.png` ou `image.png` selon l'extension,
 sans distinction de casse. `file.png` est le repli générique pour les autres
 types, les fichiers sans extension ou une icône spécialisée indisponible.
+Le logo, les icônes et les images du toggle sont embarqués dans le conteneur
+`km-front` et servis localement sous `/km/assets/`, sans dépendance à GitHub.
 La correspondance détaillée et la recette sont dans la fiche de dépôt ; ces
 icônes ne valent ni contrôle du format réel ni confirmation d'envoi.
 
 Les contrats attendus sont fixés dans la fiche : liste GET, upload POST multipart
 et suppression POST JSON, avec confirmation `ok:true` et révisions opaques pour
 les conflits. Le module utilise `KM_WEBHOOK_BASE_URL` et les trois
-`KM_FILES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH` de `../config.ini`. Base commune :
+`KM_FILES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH` de `config.ini`. Base commune :
 `http://15.236.66.128/n8n/webhook/` ; chemins laissés vides, aucun workflow créé.
 Le toggle « N8N - webhook-test » utilise `toggle_blue_off.png`/`toggle_blue_on.png`,
 remplace `/webhook/` par `/webhook-test/` en ON et revient en OFF à chaque arrivée,
@@ -255,21 +257,52 @@ par Nginx.
 
 ## Publication et vérification
 
-Nginx sert `UI_chat/km/` sous `/km/` et redirige `/km` vers `/km/`. Les fichiers
-inexistants du module retournent 404, sans repli vers le chatbot. `CONTEXT.md`
-et `docs/` sont bloqués en HTTP et ne font pas partie de l'interface publique.
+Le front KM est servi par le conteneur `km-front`, utilisant
+`christianpro1982/km:${KM_IMAGE_TAG:-latest}` depuis Docker Hub, sans `build` dans
+Compose. `Dockerfile.km_front` et `nginx/km.conf` restent sur le poste de
+développement pour construire l’image. La publication manuelle est préparée
+par `scripts/publish-km.sh VERSION` (amd64/arm64, version et latest) ; aucune
+publication réelle n’a été effectuée. Le Nginx commun transmet `/km/` au service interne,
+sans nouveau port hôte. Son image exclut désormais KM grâce à
+`Dockerfile.nginx_front.dockerignore`. Le proxy résout `km-front` à l'exécution
+via le DNS Docker (validité 5 s) pour supporter sa recréation avec une nouvelle IP.
 
-L'image Nginx copie déjà `UI_chat/`. Depuis le répertoire du déploiement, après
-transfert des changements, reconstruire uniquement le service web :
+Seuls les fichiers du front et ses images sont copiés dans l'image KM ; ni docs,
+ni PDF, ni tests, ni données métier. Les chemins de contexte, docs et tests sont
+bloqués en HTTP dans les deux serveurs. Les URL inexistantes retournent 404,
+sans repli vers le chatbot ; `/km` redirige vers `/km/`.
 
-```bash
+`UI_chat/km/config.ini` est monté en lecture seule et servi sous `/km/config.ini`
+avec `Cache-Control: no-store`. Il ne contient que des paramètres publics.
+Une modification en place ne nécessite pas de reconstruction ; un remplacement
+du fichier peut nécessiter une recréation du conteneur pour renouveler le montage.
+Le contrôle de santé vérifie l'accueil statique, sans appel n8n.
+
+Première migration après publication de l’image et transfert des configurations :
+
+```sh
+docker compose pull km-front
+docker compose up -d --no-deps km-front
 docker compose up -d --build --no-deps nginx
 ```
 
-Vérifier `/km/` (200 et légende des cinq statuts), la concordance des pastilles
-dans les deux menus, les onze liens et leur état actif,
-`/km` (301 vers `/km/`), une URL inexistante (404), `/km/CONTEXT.md` et `/km/docs/`
-(404). Vérifier les tailles 1 920, 1 366, 1 100, 768 et 390 px, les bornes et la
-persistance du menu ainsi que l'ouverture, la fermeture et le focus du tiroir.
-Aucun appel aux webhooks distants n'est nécessaire pour ces contrôles. Maintenir
-ce contexte lors de l'ajout de points d'entrée ou de contrats d'échange.
+Évolutions ultérieures après publication depuis le poste de développement :
+
+```sh
+docker compose pull km-front
+docker compose up -d --no-deps km-front
+```
+
+Pour KM, seul `UI_chat/km/config.ini` est nécessaire comme fichier source sur
+EC2 ; pages, scripts et images viennent de Docker Hub. Les sources restent dans
+le dépôt de développement. Ne rien supprimer automatiquement. Le tag peut être
+fixé avec `KM_IMAGE_TAG` pour déploiement précis ou retour arrière.
+
+Voir [le guide de déploiement](docs/deployment.md) pour la configuration, la
+recréation du montage et la recette HTTP. Les tests locaux ont vérifié les deux
+images, 28 routes directes et via proxy, les 404, le montage en lecture seule,
+la mise à jour de configuration sans reconstruction, le healthcheck et la
+récupération DNS avec changement d'IP sans redémarrage du proxy. Les tests
+navigateur simulés couvrent les cinq largeurs et l'absence de requêtes externes.
+Aucun workflow distant ni déploiement EC2 n'a été exécuté. Maintenir ce contexte
+lors de l'ajout de points d'entrée ou de contrats d'échange.

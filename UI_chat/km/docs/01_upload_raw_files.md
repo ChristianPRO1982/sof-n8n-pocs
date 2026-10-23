@@ -94,7 +94,7 @@ nécessitent des workflows conformes aux contrats ci-dessous.
 fichier dans la liste préparatoire et dans la liste des fichiers présents sur le
 serveur. Conserver cette icône dans le suivi d'envoi et le bilan, quel que soit
 l'état du fichier. Utiliser les ressources existantes de
-[`../assets/icons/`](../assets/icons/), sans les remplacer par des émojis.
+[`assets/icons/`](../assets/icons/), sans les remplacer par des émojis.
 
 La même correspondance s'applique aux deux listes, à partir de la dernière
 extension du nom, sans distinction entre majuscules et minuscules :
@@ -117,6 +117,10 @@ précèdent le nom sur PC comme sur smartphone. Le nom reste affiché en texte ;
 les images sont décoratives (`alt=""`) pour éviter une lecture redondante.
 Cette indication visuelle par extension ne constitue ni une validation du format
 réel, ni un filtre d'acceptation, ni un indicateur de réussite de l'envoi.
+
+Les images et les deux états du toggle sont embarqués dans le conteneur KM
+et servis sous `/km/assets/`. Le logo est local : `assets/logo-sofinco.png`.
+Aucun téléchargement GitHub n’est nécessaire pour afficher le front.
 
 ### Envoi séquentiel et retours n8n
 
@@ -163,8 +167,9 @@ archives ni les résultats des étapes suivantes.
 | Autoriser un remplacement annoncé | Respect de l'accord utilisateur et contrôle de collision à l'écriture |
 | Supprimer un fichier identifié | Confirmation de suppression, ou erreur explicite |
 
-L'interface charge `UI_chat/config.ini` sans cache. Les clés suivantes sont
-ajoutées ; les trois chemins restent à renseigner avec ceux des futurs workflows :
+L'interface charge `UI_chat/km/config.ini` sans cache. Les clés suivantes sont
+montées en lecture seule, servies sous `/km/config.ini` ; les trois chemins
+restent à renseigner avec ceux des futurs workflows :
 
 ```ini
 KM_WEBHOOK_BASE_URL=http://15.236.66.128/n8n/webhook/
@@ -289,6 +294,9 @@ appelé ; la recette EC2 et les contrôles métier restent à faire.
   accès aux résultats associés ; un traitement ultérieur peut encore être refusé.
 - Une correction du rédacteur peut être présentée à nouveau, selon une règle de
   reprise et de versionnement à définir.
+
+Le [guide de déploiement](deployment.md) décrit le conteneur autonome, le
+montage de configuration et les commandes de mise à jour.
 
 ## Points à définir
 

@@ -68,6 +68,17 @@ services:
       - ./n8n_files:/app/n8n_files
 #      - "443:8000"
 
+  km-front:
+    image: christianpro1982/km:${KM_IMAGE_TAG:-latest}
+    volumes:
+      - type: bind
+        source: ./UI_chat/km/config.ini
+        target: /usr/share/nginx/html/km/config.ini
+        read_only: true
+        bind:
+          create_host_path: false
+    restart: unless-stopped
+
   nginx:
     build:
       context: .
@@ -77,6 +88,7 @@ services:
       - "80:80"
     depends_on:
       - n8n
+      - km-front
     volumes:
       - ./n8n_files/taxon/docs:/var/www/taxon-docs:ro
     restart: unless-stopped

@@ -12,7 +12,7 @@ const uploads = [], calls = [], browserErrors = [];
 const server = createServer(async (req, res) => {
   try {
     const path = new URL(req.url, 'http://local').pathname;
-    if (path === '/config.ini') {
+    if (path === '/km/config.ini') {
       res.end(`KM_WEBHOOK_BASE_URL=http://127.0.0.1:${server.address().port}/webhook/\n` +
         ['LIST', 'UPLOAD', 'DELETE'].map((op) => `KM_FILES_${op}_WEBHOOK_PATH=${configured ? op.toLowerCase() : ''}`).join('\n'));
       return;
@@ -62,7 +62,7 @@ const socket = new WebSocket(process.argv[2]);
 await new Promise((done, reject) => { socket.onopen = done; socket.onerror = reject; });
 let id = 0;
 const pending = new Map();
-socket.onmessage = ({ data }) => {
+socket.onmessage = async ({ data }) => {
   const event = JSON.parse(data);
   if (event.id) {
     const entry = pending.get(event.id);
@@ -70,7 +70,10 @@ socket.onmessage = ({ data }) => {
     if (event.error) entry.reject(new Error(JSON.stringify(event.error)));
     else entry.resolve(event.result);
   }
+  if (event.method === 'Network.requestWillBeSent' && /^https?:/.test(event.params.request.url) &&
+      !event.params.request.url.startsWith(origin + '/')) browserErrors.push(event.params.request.url);
   if (event.method === 'Runtime.exceptionThrown') browserErrors.push(event.params.exceptionDetails);
+
 };
 function cdp(method, params = {}, sessionId) {
   return new Promise((resolve, reject) => {
@@ -106,11 +109,13 @@ try {
   await call('Runtime.enable');
   await call('Page.enable');
   await call('Network.enable');
-  await call('Network.setBlockedURLs', { urls: ['https://*', 'http://15.236.66.128/*'] });
+  await call('Network.setBlockedURLs', { urls: ['http://15.236.66.128/*'] });
+  await call('Network.setBlockedURLs', { urls: ['http://15.236.66.128/*', 'https://*'] });
   await call('Page.navigate', { url: `${origin}/km/pages/01_upload_raw_files.html` });
   await wait(`document.getElementById('webhook-toggle') && !document.getElementById('webhook-toggle').disabled`);
   assert.equal(await evaluate(`document.getElementById('webhook-toggle').getAttribute('aria-checked')`), 'false');
   assert.match(await text('server-files'), /existing.pdf/);
+  await wait(`document.querySelector('.km-logo').complete && document.querySelector('.km-logo').naturalWidth > 0`);
   await add(['existing.pdf', 'fail.pdf', 'conflict.pdf', 'next.DOCX', 'README']);
   assert.match(await text('selected-files'), /sera écrasé/);
   await add(['existing.pdf'], true);
