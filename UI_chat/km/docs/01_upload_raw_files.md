@@ -85,6 +85,36 @@ validé. Elles décrivent une interface cible, pas des fonctions déjà disponib
    rendre ces remplacements visibles avant validation. Une liste vide ne peut
    pas être validée.
 
+### Icônes des fichiers à uploader et uploadés
+
+**Décision utilisateur :** afficher une icône PNG locale devant le nom de chaque
+fichier dans la liste préparatoire et dans la liste des fichiers présents sur le
+serveur. Conserver cette icône dans le suivi d'envoi et le bilan, quel que soit
+l'état du fichier. Utiliser les ressources existantes de
+[`../assets/icons/`](../assets/icons/), sans les remplacer par des émojis.
+
+La même correspondance s'applique aux deux listes, à partir de la dernière
+extension du nom, sans distinction entre majuscules et minuscules :
+
+| Extensions du fichier | Icône PNG à utiliser |
+| --- | --- |
+| `.doc`, `.docx`, `.docm` | [word.png](../assets/icons/word.png) |
+| `.xls`, `.xlsx`, `.xlsm`, `.csv` | [excel.png](../assets/icons/excel.png) |
+| `.ppt`, `.pptx`, `.pptm` | [powerpoint.png](../assets/icons/powerpoint.png) |
+| `.pdf` | [pdf.png](../assets/icons/pdf.png) |
+| `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`, `.bmp`, `.tif`, `.tiff`, `.avif`, `.ico` | [image.png](../assets/icons/image.png) |
+| Toute autre extension, extension inconnue ou nom sans extension | [file.png](../assets/icons/file.png) (générique) |
+
+Si une icône spécialisée ne peut pas être chargée, utiliser `file.png` en repli.
+Si l'icône générique est elle-même indisponible, conserver le nom et les actions
+du fichier accessibles sans boucler sur les tentatives de chargement.
+
+Les icônes ont une taille d'affichage homogène, conservent leurs proportions et
+précèdent le nom sur PC comme sur smartphone. Le nom reste affiché en texte ;
+les images sont décoratives (`alt=""`) pour éviter une lecture redondante.
+Cette indication visuelle par extension ne constitue ni une validation du format
+réel, ni un filtre d'acceptation, ni un indicateur de réussite de l'envoi.
+
 ### Envoi séquentiel et retours n8n
 
 - Après « Accord », figer le lot validé. Envoyer un seul fichier à la fois et
@@ -143,6 +173,13 @@ sur l'écran provisoire actuel.
 - Sélectionner plusieurs fichiers de types différents par le bouton, puis par
   glisser-déposer ; vérifier nom, taille et retrait individuel avant accord.
 - Vérifier l'ordre des panneaux sur PC et smartphone.
+- Vérifier l'icône devant chaque nom dans la sélection, le suivi d'envoi et la
+  liste serveur : Word, Excel/CSV, PowerPoint, PDF et images. Vérifier la même
+  correspondance pour les extensions en majuscules et les noms à plusieurs points.
+- Vérifier le repli vers `file.png` pour une extension inconnue, un nom sans
+  extension et une icône spécialisée indisponible ; si le générique manque,
+  le nom et les actions restent utilisables. Contrôler les proportions et
+  l'absence de lecture redondante par un lecteur d'écran.
 - Vérifier qu'aucun fichier ne part avant « Accord » et que le lot est figé
   après validation.
 - Présenter un lot avec fichiers nouveaux et doublons serveur : avertissements

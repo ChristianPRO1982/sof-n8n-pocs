@@ -142,6 +142,14 @@ est actualisée après les opérations. La suppression est individuelle, confirm
 avec le nom du fichier, et l'entrée n'est retirée qu'après confirmation n8n.
 Prévoir les états chargement, vide et erreur sans simuler de succès.
 
+Dans la liste préparatoire, le suivi d'envoi et la liste serveur, chaque nom de
+fichier est précédé d'une icône PNG locale de `assets/icons/` : `word.png`,
+`excel.png`, `powerpoint.png`, `pdf.png` ou `image.png` selon l'extension,
+sans distinction de casse. `file.png` est le repli générique pour les autres
+types, les fichiers sans extension ou une icône spécialisée indisponible.
+La correspondance détaillée et la recette sont dans la fiche de dépôt ; ces
+icônes ne valent ni contrôle du format réel ni confirmation d'envoi.
+
 Les capacités n8n à prévoir sont lister, déposer, autoriser un remplacement et
 supprimer dans `01_upload_raw_files/`. Aucun webhook ni contrat JSON n'est fixé
 ou implémenté ; les limites de taille et règles techniques de nommage restent

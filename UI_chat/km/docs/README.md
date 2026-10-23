@@ -28,6 +28,12 @@ n8n, poursuite après échec et relance manuelle. La liste serveur permet une
 suppression individuelle confirmée. Elle apparaît à gauche sur PC et en haut
 sur smartphone, avant la zone d'upload. Ces fonctions ne sont pas implémentées.
 
+Les fichiers à uploader et déjà uploadés sont précédés d'une icône PNG locale
+issue de `../assets/icons/`, choisie selon leur extension (Word, Excel,
+PowerPoint, PDF ou image), avec `file.png` comme icône générique de repli.
+La [fiche de dépôt](01_upload_raw_files.md) précise la correspondance commune
+aux listes et les critères de vérification.
+
 Ce dépôt multiformat ne garantit pas la compatibilité avec les traitements
 suivants : la chaîne de référence du PDF reste fondée sur un Word relu. Le
 découpage de documents volumineux en connaissances atomiques reste une extension
