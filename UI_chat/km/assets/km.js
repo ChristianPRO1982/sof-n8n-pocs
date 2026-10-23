@@ -1,6 +1,6 @@
 // Registry shared by every page. File names are lowercase; labels match storage.
 const pages = [
-  { id: "home", label: "Accueil", title: "Accueil", path: "./", status: "development" },
+  { id: "home", label: "Accueil", title: "Accueil", path: "./" },
   { id: "01_upload_raw_files", label: "01_upload_raw_files", title: "Import des fichiers sources", status: "not_started" },
   { id: "01_processed_files", label: "01_processed_files", title: "Fichiers traités", status: "not_started" },
   { id: "02_format_controls", label: "02_format_controls", title: "Contrôles de format", status: "not_started" },
@@ -14,7 +14,7 @@ const pages = [
   { id: "10_tracking_journal", label: "10_tracking_journal", title: "Journal de suivi", status: "not_started" },
 ];
 
-// One status per registry entry drives both menus; no per-page duplication.
+// One status per step drives both menus; home uses a house icon.
 const statuses = {
   not_started: "Aucun développement encore lancé pour cette partie",
   bugs: "Bugs détectés et en cours d’investigation",
@@ -63,6 +63,13 @@ function statusBadge(status) {
   return badge;
 }
 
+function pageBadge(entry) {
+  if (entry.id !== "home") return statusBadge(entry.status);
+  const icon = element("span", "km-home-icon", "🏠");
+  icon.setAttribute("aria-hidden", "true");
+  return icon;
+}
+
 function iconButton(label, className, iconPath) {
   const button = element("button", `km-icon-button ${className}`);
   button.type = "button";
@@ -85,7 +92,7 @@ const list = element("ul");
 for (const entry of pages) {
   const item = element("li");
   const link = element("a");
-  link.append(statusBadge(entry.status), element("span", "km-nav-label", entry.label));
+  link.append(pageBadge(entry), element("span", "km-nav-label", entry.label));
   link.href = new URL(entry.path ?? `pages/${entry.id}.html`, rootURL).href;
   if (entry.id === page.id) link.setAttribute("aria-current", "page");
   item.append(link);
@@ -105,7 +112,7 @@ logo.src = "https://raw.githubusercontent.com/ChristianPRO1982/sof-n8n-pocs/refs
 logo.alt = "Sofinco";
 logoLink.append(logo);
 const heading = element("div", "km-page-heading");
-heading.append(statusBadge(page.status), element("h1", "km-page-title", page.title));
+heading.append(pageBadge(page), element("h1", "km-page-title", page.title));
 header.prepend(hamburger, logoLink, heading);
 context.setAttribute("aria-label", "Menu de la page");
 const homeLink = element("a", "", page.id === "home" ? "Accueil" : "Retour à l’accueil");

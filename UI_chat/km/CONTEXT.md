@@ -88,7 +88,9 @@ de contrôles automatiques ou des états d'exécution n8n.
 | `testing` | Orange | Phase de test |
 | `validated` | Vert | Validé |
 
-L'accueil est initialement en `development` et les onze étapes en `not_started`.
+L'accueil affiche l'émoji 🏠 à la place d'une pastille dans le menu général et
+le bandeau ; il ne porte pas de statut de développement. Les onze étapes sont
+initialement en `not_started`.
 Un statut absent ou inconnu (notamment le modèle non enregistré) utilise
 `not_started`. Les libellés sont centralisés dans `statuses`, les couleurs dans
 `assets/km.css` et le rendu dans `statusBadge`. Les pastilles ont une infobulle
