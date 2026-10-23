@@ -1,7 +1,7 @@
 // Registry shared by every page. File names are lowercase; labels match storage.
 const pages = [
   { id: "home", label: "Accueil", title: "Accueil", path: "./" },
-  { id: "01_upload_raw_files", label: "01_upload_raw_files", title: "Import des fichiers sources", status: "not_started" },
+  { id: "01_upload_raw_files", label: "01_upload_raw_files", title: "Import des fichiers sources", status: "development" },
   { id: "01_processed_files", label: "01_processed_files", title: "Fichiers traités", status: "not_started" },
   { id: "02_format_controls", label: "02_format_controls", title: "Contrôles de format", status: "not_started" },
   { id: "03_deltas", label: "03_deltas", title: "Deltas", status: "not_started" },

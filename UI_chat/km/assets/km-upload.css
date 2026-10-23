@@ -1,0 +1,35 @@
+.km-upload-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.km-upload-panel { min-width: 0; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--panel-soft); }
+.km-upload-panel h3 { margin: 0; font-size: 1.1rem; }
+.km-upload-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.km-upload-button { border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; min-height: 44px; background: white; color: var(--primary-dark); cursor: pointer; }
+.km-upload-button:hover:not(:disabled) { background: var(--primary-soft); }
+.km-upload-button:disabled { opacity: .55; cursor: not-allowed; }
+.km-upload-primary { background: var(--primary); border-color: var(--primary); color: white; font-weight: 600; }
+.km-upload-primary:hover:not(:disabled) { background: var(--primary-dark); }
+.km-upload-danger { color: #a32621; }
+.km-upload-muted { color: var(--muted); font-size: .9rem; }
+.km-upload-drop { padding: 28px 16px; border: 2px dashed #90afd5; border-radius: var(--radius-md); text-align: center; background: white; margin-bottom: 18px; }
+.km-upload-drop.is-dragging { background: var(--primary-soft); border-color: var(--primary); }
+.km-upload-list { list-style: none; padding: 0; margin: 12px 0 18px; display: grid; gap: 10px; }
+.km-upload-row { display: flex; align-items: flex-start; gap: 12px; background: white; border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+.km-upload-file-icon { width: 32px; height: 36px; object-fit: contain; flex: 0 0 32px; }
+.km-upload-file-info { min-width: 0; flex: 1; }
+.km-upload-name { display: block; overflow-wrap: anywhere; }
+.km-upload-meta { display: block; color: var(--muted); font-size: .85rem; margin-top: 4px; }
+.km-upload-warning { color: #964300; background: #fff4e4; border-radius: 8px; padding: 8px; font-size: .9rem; margin-top: 8px; }
+.km-upload-state { display: block; font-size: .9rem; margin-top: 6px; }
+.km-upload-state[data-state="success"] { color: #17662e; }
+.km-upload-state[data-state="failed"] { color: #a32621; }
+.km-upload-message { margin: 12px 0; padding: 12px; border-radius: 10px; background: var(--primary-soft); }
+.km-upload-message.is-error { color: #8a241b; background: #fff0ed; }
+.km-webhook-toggle { display: inline-flex; align-items: center; gap: 8px; padding: 4px 8px; }
+.km-webhook-toggle img { width: 48px; height: 28px; object-fit: contain; }
+.km-upload-panel .km-upload-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.km-upload-progress { width: 100%; margin: 8px 0; }
+@media (max-width: 767px) {
+  .km-upload-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .km-upload-panel { padding: 14px; }
+  .km-upload-row { flex-wrap: wrap; }
+  .km-upload-row > button { margin-left: 44px; }
+}
