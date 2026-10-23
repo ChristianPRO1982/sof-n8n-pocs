@@ -1,11 +1,11 @@
 import { parseConfig, endpoint, request, validFile, iconName, imageBaseURL } from './km-upload-api.js';
 
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['webhook-toggle', 'webhook-toggle-image', 'upload-notice',
+const ui = Object.fromEntries(['webhook-list-toggle', 'webhook-list-toggle-image', 'webhook-upload-toggle', 'webhook-upload-toggle-image', 'upload-notice',
   'refresh-files', 'server-state', 'server-files', 'file-picker', 'choose-files', 'upload-drop',
   'selection-count', 'selected-files', 'agreement-summary', 'send-files', 'retry-files',
   'new-batch', 'upload-progress', 'upload-result'].map((id) => [id, $(id)]));
-const state = { config: {}, test: false, busy: true, ready: false, files: [], items: [], completed: false };
+const state = { config: {}, test: { list: false, upload: false }, busy: true, ready: false, files: [], items: [], completed: false };
 const statusLabels = { pending: 'En attente', sending: 'En cours…', success: 'Réussi', failed: 'Échoué' };
 
 function node(tag, className = '', text = '') {
@@ -46,7 +46,7 @@ function button(text, action, name, danger = false) {
   return result;
 }
 function configured(operation) {
-  try { endpoint(state.config, operation, state.test); return true; } catch { return false; }
+  try { endpoint(state.config, operation, state.test[operation === 'upload' ? 'upload' : 'list']); return true; } catch { return false; }
 }
 function duplicates() {
   const names = new Set();
@@ -60,9 +60,11 @@ function duplicates() {
 function render() {
   const repeated = duplicates();
   const existing = new Map(state.files.map((file) => [file.name, file]));
-  ui['webhook-toggle'].disabled = state.busy;
-  ui['webhook-toggle'].setAttribute('aria-checked', String(state.test));
-  ui['webhook-toggle-image'].src = new URL(`icons/toggle_blue_${state.test ? 'on' : 'off'}.png`, new URL(imageBaseURL, import.meta.url)).href;
+  for (const operation of ['list', 'upload']) {
+    ui[`webhook-${operation}-toggle`].disabled = state.busy;
+    ui[`webhook-${operation}-toggle`].setAttribute('aria-checked', String(state.test[operation]));
+    ui[`webhook-${operation}-toggle-image`].src = new URL(`icons/toggle_blue_${state.test[operation] ? 'on' : 'off'}.png`, new URL(imageBaseURL, import.meta.url)).href;
+  }
   ui['refresh-files'].disabled = state.busy || !configured('list');
   ui['choose-files'].disabled = state.busy || state.completed;
   // Selection is available even when configuration is absent (after initialization).
@@ -120,7 +122,7 @@ async function refresh() {
   ui['server-state'].textContent = 'Chargement des fichiers…';
   render();
   try {
-    const payload = await request(endpoint(state.config, 'list', state.test), {}, (data) =>
+    const payload = await request(endpoint(state.config, 'list', state.test.list), {}, (data) =>
       Array.isArray(data.files) && data.files.every(validFile) && new Set(data.files.map((file) => file.name)).size === data.files.length);
     state.files = payload.files;
     state.ready = true;
@@ -167,7 +169,7 @@ async function sendBatch() {
       body.append('overwrite', String(approved.has(item.file.name)));
       if (approved.has(item.file.name)) body.append('expected_revision', approved.get(item.file.name));
       try {
-        await request(endpoint(state.config, 'upload', state.test), { method: 'POST', body },
+        await request(endpoint(state.config, 'upload', state.test.upload), { method: 'POST', body },
           (data) => validFile(data.file) && data.file.name === item.file.name && data.file.size === item.file.size, 120000);
         item.status = 'success';
       } catch (error) {
@@ -194,7 +196,7 @@ async function deleteFile(file) {
   let confirmed = false;
   let errorMessage = '';
   try {
-    await request(endpoint(state.config, 'delete', state.test), {
+    await request(endpoint(state.config, 'delete', state.test.list), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: file.name, expected_revision: file.revision }),
     }, (data) => data.name === file.name);
@@ -252,20 +254,24 @@ ui['retry-files'].addEventListener('click', async () => {
     message('Échecs préparés. Vérifiez les remplacements signalés puis donnez un nouvel accord.');
   } finally { state.busy = false; render(); }
 });
-ui['webhook-toggle'].addEventListener('click', async () => {
+for (const operation of ['list', 'upload']) ui[`webhook-${operation}-toggle`].addEventListener('click', async () => {
   if (state.busy) return;
   state.busy = true;
-  state.test = !state.test;
-  state.files = [];
-  state.ready = false;
-  // Results belong to the previous environment; do not silently retry them here.
+  state.test[operation] = !state.test[operation];
+  // Keep pending selections, but clear results before preparing another batch.
   state.items = state.items.filter((item) => item.status === 'pending');
   state.completed = false;
   ui['upload-result'].textContent = '';
   ui['upload-progress'].hidden = true;
+  render();
   try {
-    const ok = await refresh();
-    message(`${state.test ? 'Mode test' : 'Mode production'}.${ok ? '' : ' Liste serveur indisponible.'}`, !ok);
+    let ok = true;
+    if (operation === 'list') {
+      state.files = [];
+      state.ready = false;
+      ok = await refresh();
+    }
+    message(`WH - ${operation} : ${state.test[operation] ? 'test' : 'production'}.${ok ? '' : ' Liste serveur indisponible.'}`, !ok);
   } finally { state.busy = false; render(); }
 });
 window.addEventListener('pageshow', (event) => { if (event.persisted) window.location.reload(); });

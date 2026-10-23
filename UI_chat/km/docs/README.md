@@ -155,7 +155,7 @@ de la transition reste à confirmer. `published` ne prouve pas à lui seul la
 réussite de la conversion ou de la publication AI Ready.
 
 Ces statuts sont distincts des pastilles noir/rouge/bleu/orange/vert du gabarit :
-le champ `status` du registre JavaScript décrit le développement des pages, pas
+le fichier `statuses.json`, relu sans cache, décrit le développement des pages, pas
 l'état des documents. La rédaction des fiches ne change aucune pastille.
 
 ## Prérequis et décisions encore attendues

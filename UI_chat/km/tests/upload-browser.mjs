@@ -7,11 +7,20 @@ import { resolve, extname } from 'node:path';
 
 const root = resolve(new URL('../../', import.meta.url).pathname);
 const files = new Map([['existing.pdf', { name: 'existing.pdf', size: 3, revision: 'v1' }]]);
+let pageStatus = 'development', statusError = false, statusReads = 0;
 let listError = false, malformed = false, configured = true, active = 0, maxActive = 0;
 const uploads = [], calls = [], browserErrors = [];
 const server = createServer(async (req, res) => {
   try {
     const path = new URL(req.url, 'http://local').pathname;
+    if (path === '/km/statuses.json') {
+      statusReads++;
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Cache-Control', 'no-store');
+      res.statusCode = statusError ? 503 : 200;
+      res.end(JSON.stringify({'01_upload_raw_files': pageStatus}));
+      return;
+    }
     if (path === '/km/config.ini') {
       res.end(`KM_WEBHOOK_BASE_URL=http://127.0.0.1:${server.address().port}/webhook/\n` +
         ['LIST', 'UPLOAD', 'DELETE'].map((op) => `KM_FILES_${op}_WEBHOOK_PATH=${configured ? op.toLowerCase() : ''}`).join('\n'));
@@ -111,11 +120,38 @@ try {
   await call('Network.enable');
   await call('Network.setBlockedURLs', { urls: ['http://15.236.66.128/*'] });
   await call('Network.setBlockedURLs', { urls: ['http://15.236.66.128/*', 'https://*'] });
+  await call('Page.addScriptToEvaluateOnNewDocument', {source: `
+    const originalInterval = window.setInterval;
+    window.setInterval = (fn, delay, ...args) => {
+      if (delay === 30000) window.kmStatusRefreshInterval = delay;
+      return originalInterval(fn, delay === 30000 ? 100 : delay, ...args);
+    };
+  `});
   await call('Page.navigate', { url: `${origin}/km/pages/01_upload_raw_files.html` });
-  await wait(`document.getElementById('webhook-toggle') && !document.getElementById('webhook-toggle').disabled`);
-  assert.equal(await evaluate(`document.getElementById('webhook-toggle').getAttribute('aria-checked')`), 'false');
+  await wait(`document.getElementById('webhook-list-toggle') && !document.getElementById('webhook-list-toggle').disabled`);
+  assert.equal(await evaluate(`document.getElementById('webhook-list-toggle').getAttribute('aria-checked')`), 'false');
   assert.match(await text('server-files'), /existing.pdf/);
   await wait(`document.querySelector('.km-logo').complete && document.querySelector('.km-logo').naturalWidth > 0`);
+  const badgeSelector = '[data-km-status-page="01_upload_raw_files"]';
+  await wait(`document.querySelector(${JSON.stringify(badgeSelector)}).dataset.kmStatus === 'development'`);
+  assert.equal(await evaluate('window.kmStatusRefreshInterval'), 30000);
+  pageStatus = 'validated';
+  await wait(`[...document.querySelectorAll(${JSON.stringify(badgeSelector)})].every(n => n.dataset.kmStatus === 'validated')`);
+  assert.equal(await evaluate(`document.querySelectorAll(${JSON.stringify(badgeSelector)}).length`), 2);
+  assert.match(await evaluate(`document.querySelector(${JSON.stringify(badgeSelector)}).getAttribute('aria-label')`), /Validé/);
+  statusError = true;
+  const oldReads = statusReads;
+  await wait(`true`);
+  for(let i=0;i<50 && statusReads<=oldReads;i++) await new Promise(done=>setTimeout(done,20));
+  assert.ok(statusReads > oldReads);
+  assert.equal(await evaluate(`document.querySelector(${JSON.stringify(badgeSelector)}).dataset.kmStatus`), 'validated');
+  statusError = false;
+  pageStatus = 'unknown';
+  await wait(`document.querySelector(${JSON.stringify(badgeSelector)}).dataset.kmStatus === 'not_started'`);
+  pageStatus = 'testing';
+  await evaluate(`document.dispatchEvent(new Event('visibilitychange'))`);
+  await wait(`document.querySelector(${JSON.stringify(badgeSelector)}).dataset.kmStatus === 'testing'`);
+  assert.equal(await evaluate(`document.querySelector('[data-km-status-page="home"]')`), null);
   await add(['existing.pdf', 'fail.pdf', 'conflict.pdf', 'next.DOCX', 'README']);
   assert.match(await text('selected-files'), /sera écrasé/);
   await add(['existing.pdf'], true);
@@ -123,7 +159,7 @@ try {
   await evaluate(`document.querySelector('#selected-files li:last-child button').click()`);
   assert.equal(await evaluate(`document.getElementById('send-files').disabled`), false);
   await click('send-files');
-  await wait(`document.getElementById('upload-result').textContent.startsWith('Lot terminé') && !document.getElementById('webhook-toggle').disabled`);
+  await wait(`document.getElementById('upload-result').textContent.startsWith('Lot terminé') && !document.getElementById('webhook-list-toggle').disabled`);
   assert.equal(maxActive, 1);
   assert.deepEqual(uploads.map((u) => u.name), ['existing.pdf', 'fail.pdf', 'conflict.pdf', 'next.DOCX', 'README']);
   assert.match(uploads[0].body, /name="overwrite"\r\n\r\ntrue/);
@@ -135,12 +171,12 @@ try {
   assert.equal(uploads.length, 5, 'retry must wait for agreement');
   assert.equal(await evaluate(`document.querySelectorAll('#selected-files li').length`), 2);
   await click('send-files');
-  await wait(`!document.getElementById('webhook-toggle').disabled`);
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   await click('new-batch');
   malformed = true;
   await add(['unknown.pdf']);
   await click('send-files');
-  await wait(`!document.getElementById('webhook-toggle').disabled`);
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.match(await text('selected-files'), /incertain/);
   malformed = false;
   await evaluate('window.confirm = () => false');
@@ -151,22 +187,34 @@ try {
   // A changed revision must be refused without removal.
   files.get('existing.pdf').revision = 'v3';
   await evaluate(`document.querySelector('#server-files button').click()`);
-  await wait(`!document.getElementById('webhook-toggle').disabled`);
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.match(await text('upload-notice'), /non confirmée/);
   assert.match(await text('server-files'), /existing.pdf/);
   await evaluate(`document.querySelector('#server-files button').click()`);
-  await wait(`!document.getElementById('webhook-toggle').disabled`);
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.match(await text('upload-notice'), /Suppression confirmée/);
   assert.doesNotMatch(await text('server-files'), /existing.pdf/);
-  await click('webhook-toggle');
-  await wait(`!document.getElementById('webhook-toggle').disabled`);
+  await click('webhook-list-toggle');
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.equal(calls.at(-1), '/webhook-test/list');
+  assert.equal(await evaluate(`document.getElementById('webhook-upload-toggle').getAttribute('aria-checked')`), 'false');
+  const beforeUploadToggle = calls.length;
+  await click('webhook-upload-toggle');
+  assert.equal(calls.length, beforeUploadToggle, 'Upload toggle must not refresh the list');
+  assert.equal(await evaluate(`document.getElementById('webhook-list-toggle').getAttribute('aria-checked')`), 'true');
+  // Upload test must also work while list uses production.
+  await click('webhook-list-toggle');
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+  assert.equal(calls.at(-1), '/webhook/list');
   await add(['test.pdf']);
   await click('send-files');
-  await wait(`!document.getElementById('webhook-toggle').disabled`);
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.equal(uploads.at(-1).path, '/webhook-test/upload');
+  assert.equal(calls.at(-1), '/webhook/list');
+  await click('webhook-list-toggle');
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   await evaluate(`document.querySelector('#server-files button').click()`);
-  await wait(`!document.getElementById('webhook-toggle').disabled`);
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.equal(calls.filter((p) => p.endsWith('/delete')).at(-1), '/webhook-test/delete');
 
   await click('new-batch');
@@ -195,26 +243,26 @@ try {
   assert.match(await evaluate(`document.activeElement.getAttribute('aria-label') || document.activeElement.textContent`), /Retirer/);
   listError = true;
   await click('refresh-files');
-  await wait(`!document.getElementById('webhook-toggle').disabled`);
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.equal(await evaluate(`document.getElementById('send-files').disabled`), true);
   assert.match(await text('server-state'), /indisponible/);
   listError = false;
   files.clear();
   await click('refresh-files');
-  await wait(`!document.getElementById('webhook-toggle').disabled`);
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.match(await text('server-state'), /Aucun fichier/);
   const readsBeforeRestore = calls.filter(p => p.endsWith('/list')).length;
   await evaluate(`setTimeout(() => window.dispatchEvent(new PageTransitionEvent('pageshow', {persisted:true})), 0)`);
   for (let i=0; i<100 && calls.filter(p => p.endsWith('/list')).length === readsBeforeRestore; i++) {
     await new Promise(done => setTimeout(done, 30));
   }
-  await wait(`!document.getElementById('webhook-toggle').disabled`);
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.equal(calls.at(-1), '/webhook/list');
-  assert.equal(await evaluate(`document.getElementById('webhook-toggle').getAttribute('aria-checked')`), 'false');
+  assert.equal(await evaluate(`document.getElementById('webhook-list-toggle').getAttribute('aria-checked')`), 'false');
   configured = false;
   await call('Page.reload');
-  await wait(`!document.getElementById('webhook-toggle').disabled`);
-  assert.equal(await evaluate(`document.getElementById('webhook-toggle').getAttribute('aria-checked')`), 'false');
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+  assert.equal(await evaluate(`document.getElementById('webhook-list-toggle').getAttribute('aria-checked')`), 'false');
   await add(['local.txt']);
   assert.match(await text('selected-files'), /local.txt/);
   assert.equal(await evaluate(`document.getElementById('send-files').disabled`), true);

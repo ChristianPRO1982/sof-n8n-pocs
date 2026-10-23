@@ -4,6 +4,7 @@
 !nginx/km.conf
 !UI_chat/
 !UI_chat/km/
+!UI_chat/km/statuses.json
 !UI_chat/km/*.html
 !UI_chat/km/pages/
 !UI_chat/km/pages/*.html

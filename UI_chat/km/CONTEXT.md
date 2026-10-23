@@ -80,9 +80,9 @@ propres à cette page ; les icônes PNG sont dans `assets/icons/`.
 Dans le bandeau contextuel, la pastille se place immédiatement à gauche du titre
 de la page ; dans le menu général, elle précède le libellé du lien.
 
-Le champ `status` de chaque entrée du registre `pages` est l'unique valeur à
-modifier pour mettre à jour sa pastille dans le menu général et dans le menu
-contextuel de la page. Les statuts sont déclaratifs ; ce ne sont pas des résultats
+Le fichier `statuses.json` associe les identifiants des pages à leurs statuts.
+C'est l'unique source à modifier pour les pastilles du menu général et du
+bandeau ; le registre `pages` dans `km.js` ne porte plus de statuts. Les statuts sont déclaratifs ; ce ne sont pas des résultats
 de contrôles automatiques ou des états d'exécution n8n.
 
 | Valeur `status` | Couleur | Signification |
@@ -101,6 +101,16 @@ Un statut absent ou inconnu (notamment le modèle non enregistré) utilise
 `assets/km.css` et le rendu dans `statusBadge`. Les pastilles ont une infobulle
 et un libellé accessible ; seule la page d'accueil affiche la légende complète,
 générée depuis les mêmes définitions via `[data-km-status-legend]`.
+
+Le navigateur lit `/km/statuses.json` avec `cache: no-store` à l'ouverture,
+toutes les 30 secondes lorsque l'onglet est visible et au retour sur la page ou
+l'onglet. Le serveur KM répond avec `Cache-Control: no-store`, sans ETag ni
+réponse conditionnelle 304. Une lecture en erreur conserve le dernier affichage
+valide (noir avant la première réussite). Un statut absent ou inconnu vaut noir.
+Le fichier est monté en lecture seule dans `km-front` ; les modifications en
+place sur EC2 sont visibles sans republier l'image. Si l'éditeur remplace le
+fichier, recréer seulement KM pour renouveler le montage. La première activation
+nécessite une nouvelle image KM et le nouveau montage, décrits dans le guide.
 
 ### Navigation et préférences navigateur
 
@@ -159,9 +169,12 @@ et suppression POST JSON, avec confirmation `ok:true` et révisions opaques pour
 les conflits. Le module utilise `KM_WEBHOOK_BASE_URL` et les trois
 `KM_FILES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH` de `config.ini`. Base commune :
 `http://15.236.66.128/n8n/webhook/` ; chemins laissés vides, aucun workflow créé.
-Le toggle « N8N - webhook-test » utilise `toggle_blue_off.png`/`toggle_blue_on.png`,
-remplace `/webhook/` par `/webhook-test/` en ON et revient en OFF à chaque arrivée,
-y compris par l'historique. Une bascule recharge la liste du nouvel environnement.
+La barre « N8N - test : » propose deux bascules indépendantes « WH - list » et
+« WH - upload », utilisant `toggle_blue_off.png`/`toggle_blue_on.png`. Chaque
+bascule remplace `/webhook/` par `/webhook-test/` pour son opération et revient
+sur OFF à chaque arrivée, y compris par l'historique. La suppression suit le
+mode de la liste. Seule une bascule de liste la recharge ; basculer l'upload
+n'appelle pas la liste. Les deux modes doivent cibler le même stockage de dépôt.
 Les opérations concurrentes dans cet écran sont bloquées pendant un lot.
 Délais : liste/suppression 30 s, upload 120 s par fichier ; aucune relance automatique.
 Sous 768 px, les panneaux sont empilés. Sans configuration, seule la sélection
@@ -259,7 +272,7 @@ par Nginx.
 
 **Contrainte d'intégration :** le `docker-compose.yml` restauré par l'utilisateur
 est la référence. Ajouter uniquement `km-front` sur le réseau HTTP existant
-`frontend`, avec son fichier `config.ini` en lecture seule. Ne modifier aucun
+`frontend`, avec `config.ini` et `statuses.json` en lecture seule. Ne modifier aucun
 service existant (n8n, postgres_n8n, pgv, FastAPI, Nginx), ni leurs volumes,
 variables, dépendances ou réseaux. Ne pas reconstituer la stack à partir d'une
 ancienne description d'architecture. Les commandes d'exploitation KM ciblent
@@ -304,14 +317,14 @@ docker compose pull km-front
 docker compose up -d --no-deps km-front
 ```
 
-Pour KM, seul `UI_chat/km/config.ini` est nécessaire comme fichier source sur
-EC2 ; pages, scripts et images viennent de Docker Hub. Les sources restent dans
+Pour KM, seuls `UI_chat/km/config.ini` et `UI_chat/km/statuses.json` sont
+nécessaires comme fichiers source sur EC2 ; pages, scripts et images viennent de Docker Hub. Les sources restent dans
 le dépôt de développement. Ne rien supprimer automatiquement. Le tag peut être
 fixé avec `KM_IMAGE_TAG` pour déploiement précis ou retour arrière.
 
 Voir [le guide de déploiement](docs/deployment.md) pour la configuration, la
 recréation du montage et la recette HTTP. Les tests locaux ont vérifié les deux
-images, 28 routes directes et via proxy, les 404, le montage en lecture seule,
+images, 29 routes directes et via proxy, les 404, le montage en lecture seule,
 la mise à jour de configuration sans reconstruction, le healthcheck et la
 récupération DNS avec changement d'IP sans redémarrage du proxy. Les tests
 navigateur simulés couvrent les cinq largeurs et l'absence de requêtes externes.

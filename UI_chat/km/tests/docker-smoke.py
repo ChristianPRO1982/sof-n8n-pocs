@@ -65,6 +65,8 @@ with tempfile.TemporaryDirectory(prefix='km-docker-check-') as temp:
     temp = Path(temp)
     settings = temp / 'config.ini'
     settings.write_text((ROOT / 'UI_chat/km/config.ini').read_text())
+    statuses = temp / 'statuses.json'
+    statuses.write_text((ROOT / 'UI_chat/km/statuses.json').read_text())
     mock_config = temp / 'mock.conf'
     mock_config.write_text('server { listen 5678; location / { return 200 "mock-n8n"; } }')
     docker('network', 'create', '--internal', network)
@@ -72,7 +74,8 @@ with tempfile.TemporaryDirectory(prefix='km-docker-check-') as temp:
         run(stub, FRONT_IMAGE, '--network-alias', 'n8n',
             '--mount', f'type=bind,src={mock_config},dst=/etc/nginx/conf.d/default.conf,readonly')
         km_mount = ['--network-alias', 'km-front', '--mount',
-                    f'type=bind,src={settings},dst=/usr/share/nginx/html/km/config.ini,readonly']
+                    f'type=bind,src={settings},dst=/usr/share/nginx/html/km/config.ini,readonly',
+                    '--mount', f'type=bind,src={statuses},dst=/usr/share/nginx/html/km/statuses.json,readonly']
         run(km, FRONT_IMAGE, *km_mount)
         run(gateway, 'km-gateway-local-check')
         direct, public = origin(km), origin(gateway)
@@ -80,7 +83,7 @@ with tempfile.TemporaryDirectory(prefix='km-docker-check-') as temp:
         wait_http(public)
         docker('exec', km, 'nginx', '-t')
         docker('exec', gateway, 'nginx', '-t')
-        paths = ['/km/', '/km/template.html', '/km/config.ini?check=1']
+        paths = ['/km/', '/km/template.html', '/km/config.ini?check=1', '/km/statuses.json']
         paths += ['/km/pages/' + p.name for p in (ROOT / 'UI_chat/km/pages').glob('*.html')]
         paths += ['/km/assets/' + p.relative_to(ROOT / 'UI_chat/km/assets').as_posix()
                   for p in (ROOT / 'UI_chat/km/assets').rglob('*') if p.suffix in ('.png', '.js', '.css')]
@@ -88,9 +91,9 @@ with tempfile.TemporaryDirectory(prefix='km-docker-check-') as temp:
             for path in paths:
                 status, headers, body = get(base, path)
                 assert status == 200 and body, (base, path, status)
-                if '.js' in path:
+                if path.endswith('.js'):
                     assert 'javascript' in headers.get('Content-Type', ''), path
-                if 'config.ini' in path:
+                if 'config.ini' in path or 'statuses.json' in path:
                     assert 'no-store' in headers.get('Cache-Control', ''), path
             status, headers, _ = get(base, '/km')
             assert status == 301 and headers['Location'].endswith('/km/'), headers
@@ -109,6 +112,16 @@ with tempfile.TemporaryDirectory(prefix='km-docker-check-') as temp:
         with settings.open('a') as stream:
             stream.write('\n# updated-without-rebuild\n')
         assert b'updated-without-rebuild' in get(public, '/km/config.ini')[2]
+        assert docker('inspect', '-f', '{{.Id}}', km) == before_id
+        _, previous_headers, _ = get(public, '/km/statuses.json')
+        statuses.write_text('{"01_upload_raw_files":"validated"}')
+        status, headers, body = get(public, '/km/statuses.json')
+        assert status == 200 and json.loads(body)['01_upload_raw_files'] == 'validated'
+        assert 'ETag' not in headers
+        request = urllib.request.Request(public + '/km/statuses.json', headers={
+            'If-Modified-Since': previous_headers.get('Last-Modified', 'Thu, 01 Jan 1970 00:00:00 GMT')})
+        with opener.open(request, timeout=3) as response:
+            assert response.status == 200, 'Runtime status settings must never return a stale 304'
         assert docker('inspect', '-f', '{{.Id}}', km) == before_id
         old_ip = address(km)
         gateway_id = docker('inspect', '-f', '{{.Id}}', gateway)

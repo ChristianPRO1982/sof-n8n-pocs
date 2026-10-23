@@ -1,7 +1,7 @@
 FROM nginx:alpine
 
 COPY nginx/km.conf /etc/nginx/conf.d/default.conf
-COPY UI_chat/km/*.html /usr/share/nginx/html/km/
+COPY UI_chat/km/*.html UI_chat/km/statuses.json /usr/share/nginx/html/km/
 COPY UI_chat/km/pages/*.html /usr/share/nginx/html/km/pages/
 COPY UI_chat/km/assets/*.css UI_chat/km/assets/*.js UI_chat/km/assets/*.png /usr/share/nginx/html/km/assets/
 COPY UI_chat/km/assets/icons/*.png /usr/share/nginx/html/km/assets/icons/

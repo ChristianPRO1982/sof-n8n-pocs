@@ -1,20 +1,20 @@
 // Registry shared by every page. File names are lowercase; labels match storage.
 const pages = [
   { id: "home", label: "Accueil", title: "Accueil", path: "./" },
-  { id: "01_upload_raw_files", label: "01_upload_raw_files", title: "Import des fichiers sources", status: "development" },
-  { id: "01_processed_files", label: "01_processed_files", title: "Fichiers traités", status: "not_started" },
-  { id: "02_format_controls", label: "02_format_controls", title: "Contrôles de format", status: "not_started" },
-  { id: "03_deltas", label: "03_deltas", title: "Deltas", status: "not_started" },
-  { id: "04_reports", label: "04_reports", title: "Rapports", status: "not_started" },
-  { id: "05_metadata", label: "05_metadata", title: "Métadonnées", status: "not_started" },
-  { id: "06_business_validation", label: "06_business_validation", title: "Validation humaine", status: "not_started" },
-  { id: "07_knowledges", label: "07_knowledges", title: "Connaissances", status: "not_started" },
-  { id: "08_markdown", label: "08_markdown", title: "Export Markdown", status: "not_started" },
-  { id: "09_ai_ready", label: "09_AI_Ready", title: "Base AI Ready", status: "not_started" },
-  { id: "10_tracking_journal", label: "10_tracking_journal", title: "Journal de suivi", status: "not_started" },
+  { id: "01_upload_raw_files", label: "01_upload_raw_files", title: "Import des fichiers sources" },
+  { id: "01_processed_files", label: "01_processed_files", title: "Fichiers traités" },
+  { id: "02_format_controls", label: "02_format_controls", title: "Contrôles de format" },
+  { id: "03_deltas", label: "03_deltas", title: "Deltas" },
+  { id: "04_reports", label: "04_reports", title: "Rapports" },
+  { id: "05_metadata", label: "05_metadata", title: "Métadonnées" },
+  { id: "06_business_validation", label: "06_business_validation", title: "Validation humaine" },
+  { id: "07_knowledges", label: "07_knowledges", title: "Connaissances" },
+  { id: "08_markdown", label: "08_markdown", title: "Export Markdown" },
+  { id: "09_ai_ready", label: "09_AI_Ready", title: "Base AI Ready" },
+  { id: "10_tracking_journal", label: "10_tracking_journal", title: "Journal de suivi" },
 ];
 
-// One status per step drives both menus; home uses a house icon.
+// Status values come from statuses.json; labels and the legend remain shared.
 const statuses = {
   not_started: "Aucun développement encore lancé pour cette partie",
   bugs: "Bugs détectés et en cours d’investigation",
@@ -53,18 +53,26 @@ function element(tag, className, text) {
   return node;
 }
 
-function statusBadge(status) {
-  const key = Object.hasOwn(statuses, status) ? status : "not_started";
-  const badge = element("span", "km-status-dot");
+function updateStatusBadge(badge, status) {
+  const key = typeof status === "string" && Object.hasOwn(statuses, status) ? status : "not_started";
   badge.dataset.kmStatus = key;
   badge.setAttribute("role", "img");
   badge.setAttribute("aria-label", `Statut : ${statuses[key]}`);
   badge.title = statuses[key];
+}
+
+function statusBadge(status) {
+  const badge = element("span", "km-status-dot");
+  updateStatusBadge(badge, status);
   return badge;
 }
 
 function pageBadge(entry) {
-  if (entry.id !== "home") return statusBadge(entry.status);
+  if (entry.id !== "home") {
+    const badge = statusBadge("not_started");
+    badge.dataset.kmStatusPage = entry.id;
+    return badge;
+  }
   const icon = element("span", "km-home-icon", "🏠");
   icon.setAttribute("aria-hidden", "true");
   return icon;
@@ -263,3 +271,35 @@ function syncViewport() {
 }
 mobile.addEventListener("change", syncViewport);
 syncViewport();
+
+// Fetch runtime status settings independently from the cached JavaScript bundle.
+let statusRefreshPending = false;
+let statusReadFailed = false;
+async function refreshStatuses() {
+  if (statusRefreshPending) return;
+  statusRefreshPending = true;
+  try {
+    const response = await fetch(new URL("statuses.json", rootURL), {
+      cache: "no-store",
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const values = await response.json();
+    if (!values || typeof values !== "object" || Array.isArray(values)) {
+      throw new Error("Le fichier des statuts doit être un objet JSON.");
+    }
+    for (const badge of document.querySelectorAll("[data-km-status-page]")) {
+      const id = badge.dataset.kmStatusPage;
+      updateStatusBadge(badge, Object.hasOwn(values, id) ? values[id] : "not_started");
+    }
+    statusReadFailed = false;
+  } catch (error) {
+    // Keep the last successful display; an outage must not reset known statuses.
+    if (!statusReadFailed) console.warn("KM : actualisation des pastilles indisponible.", error);
+    statusReadFailed = true;
+  } finally { statusRefreshPending = false; }
+}
+refreshStatuses();
+setInterval(() => { if (!document.hidden) refreshStatuses(); }, 30000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshStatuses(); });
+window.addEventListener("pageshow", refreshStatuses);

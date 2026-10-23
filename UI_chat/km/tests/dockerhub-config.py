@@ -27,13 +27,19 @@ class DockerHubConfiguration(unittest.TestCase):
             self.assertNotIn('ports', service)
             self.assertEqual(set(service['networks']), {'frontend'})
             self.assertNotIn('depends_on', service)
-            self.assertEqual(len(service['volumes']), 1)
+            self.assertEqual(len(service['volumes']), 2)
             mount = service['volumes'][0]
             self.assertEqual(mount['type'], 'bind')
             self.assertEqual(mount['source'], str(ROOT / 'UI_chat/km/config.ini'))
             self.assertEqual(mount['target'], '/usr/share/nginx/html/km/config.ini')
             self.assertTrue(mount['read_only'])
             self.assertFalse(mount['bind'].get('create_host_path', False))
+            status_mount = service['volumes'][1]
+            self.assertEqual(status_mount['source'], str(ROOT / 'UI_chat/km/statuses.json'))
+            self.assertEqual(status_mount['target'], '/usr/share/nginx/html/km/statuses.json')
+            self.assertEqual(status_mount['type'], 'bind')
+            self.assertTrue(status_mount['read_only'])
+            self.assertFalse(status_mount['bind'].get('create_host_path', False))
 
     def publish(self, version, mode='missing'):
         with tempfile.TemporaryDirectory(prefix='km-publish-test-') as temp:

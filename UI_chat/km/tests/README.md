@@ -27,7 +27,7 @@ l'instance Chrome lancée pour le test.
 
 Couverture : sélection par bouton et drop, doublons, ordre séquentiel, accord de
 remplacement et révision, échec intermédiaire, conflit, reprise manuelle, réponse
-inexploitable, suppression annulée/refusée/confirmée, toggle et ses trois URL,
+inexploitable, suppression annulée/refusée/confirmée, bascules indépendantes liste/upload et mode de suppression,
 configuration absente, icônes de repli, clavier et largeurs 1 920, 1 366, 1 100,
 768 et 390 px. Les captures sont écrites sous `/tmp/km-upload-<largeur>.png`.
 La recette réelle EC2 reste à effectuer après raccordement des workflows ; les
@@ -51,7 +51,7 @@ HTTP locales utilisent les IP du réseau de test (accès depuis l'hôte requis).
 Les conteneurs et le réseau sont supprimés à la fin ; les deux images de test
 restent disponibles pour une nouvelle exécution.
 
-Il vérifie les configurations Nginx, 28 routes (accueil, modèle, onze pages et
+Il vérifie les configurations Nginx, 29 routes (accueil, modèle, onze pages et
 assets) directement et via le proxy, les 404, le montage en lecture seule,
 `Cache-Control: no-store`, l'exclusion des docs/tests/PDF et l'absence de KM dans
 l'image commune. Il vérifie aussi la modification de configuration sans
@@ -68,8 +68,8 @@ python3 UI_chat/km/tests/dockerhub-config.py
 
 Ces tests vérifient que Compose choisit `christianpro1982/km:latest` par défaut,
 un tag explicite via `KM_IMAGE_TAG`, aucun `build` pour KM, son rattachement
-exclusif au réseau HTTP `frontend`, aucune dépendance et un unique montage
-`config.ini` en lecture seule. Un faux exécutable Docker vérifie les commandes du script de
+exclusif au réseau HTTP `frontend`, aucune dépendance et les deux montages
+`config.ini`/`statuses.json` en lecture seule. Un faux exécutable Docker vérifie les commandes du script de
 publication : deux architectures et deux tags, refus d'un tag existant, d'une
 erreur d'authentification, d'un builder incompatible ou d'une version invalide.
 Aucune authentification, construction ou publication réelle n'est déclenchée.
@@ -90,3 +90,15 @@ locale, sans toucher aux services habituels. La présence des deux architectures
 se vérifie séparément avec `docker buildx imagetools inspect`. Cette recette
 nécessite une publication préalable ; elle n'a pas été exécutée lors de la
 préparation des scripts.
+
+## Statuts dynamiques
+
+Le test navigateur simule `/km/statuses.json`, vérifie la lecture initiale, le
+changement des deux pastilles sur une page ouverte, le repli noir pour une valeur
+inconnue, la conservation du dernier statut lors d'une erreur et le retour à
+l'onglet. Le délai de production de 30 secondes est vérifié puis accéléré à
+100 ms uniquement dans le navigateur de test. Aucun délai réel n'est modifié.
+
+Le test Docker monte une copie temporaire du fichier, vérifie `no-store` en
+accès direct et via proxy, l'absence d'ETag et de 304, puis modifie le JSON sans
+recréer le conteneur. Les services existants ne sont pas utilisés par ces tests.

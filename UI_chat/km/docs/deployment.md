@@ -9,7 +9,8 @@ Le service Compose `km-front` utilise
 `km-front:80`. Aucun port hôte supplémentaire ni volume métier n'est ajouté.
 L'ajout KM est strictement limité à son bloc de service. Il rejoint le réseau
 HTTP `frontend` déjà utilisé par Nginx. Il ne rejoint ni `n8n_database` ni
-`business_data`, ne dépend d'aucun autre service et ne crée aucun volume nommé.
+`business_data`, ne dépend d'aucun autre service et ne crée aucun volume nommé. Les deux fichiers publics `config.ini` et
+`statuses.json` sont montés en lecture seule.
 Les définitions existantes de n8n, des deux bases, FastAPI et Nginx, leurs
 montages, variables, dépendances et réseaux sont conservées telles quelles.
 
@@ -69,13 +70,14 @@ que la commande de publication n'est pas exécutée explicitement.
 
 ## Fichiers à conserver sur EC2
 
-Pour le front KM, seul ce fichier source est nécessaire :
+Pour le front KM, seuls ces deux fichiers source sont nécessaires :
 
 ```text
 /home/ubuntu/n8n/UI_chat/km/config.ini
+/home/ubuntu/n8n/UI_chat/km/statuses.json
 ```
 
-Il est monté en lecture seule dans `/usr/share/nginx/html/km/config.ini`, servi
+`config.ini` est monté en lecture seule dans `/usr/share/nginx/html/km/config.ini`, servi
 sous `/km/config.ini` avec `Cache-Control: no-store`. Il ne contient que des
 paramètres publics : `KM_WEBHOOK_BASE_URL` et les trois
 `KM_FILES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH`. La base reste
@@ -85,9 +87,38 @@ lors du transfert d'un fichier modèle. Le montage exige un fichier existant.
 
 Les HTML, CSS, JS et images KM sur EC2 deviennent inutiles **après migration
 vérifiée**. Aucune suppression automatique n'est prévue. Garder `config.ini`,
+`statuses.json`,
 le fichier Compose et tous les fichiers nécessaires aux autres services.
 Conserver aussi `n8n_data/`, `n8n_files/` et les volumes PostgreSQL : ils ne sont
 pas remplacés par l'image du front.
+
+## Pastilles actualisées sans cache
+
+Modifier **`/home/ubuntu/n8n/UI_chat/km/statuses.json`**, sans toucher à `km.js`.
+Ce JSON associe chaque identifiant de page à l'une des valeurs `not_started`,
+`bugs`, `development`, `testing`, `validated`. Par exemple, modifier la valeur
+existante de `01_upload_raw_files` en `testing` pour obtenir une pastille orange ;
+conserver les autres entrées du fichier. L'accueil reste une maison sans statut.
+
+Le navigateur lit ce fichier sans cache à chaque ouverture, toutes les
+30 secondes tant que l'onglet est visible et lorsqu'il redevient visible.
+Le serveur impose aussi `Cache-Control: no-store`, sans ETag ni réponse 304.
+Les deux pastilles d'une page sont mises à jour sans recharger l'interface.
+Un statut absent/inconnu vaut noir. Un fichier invalide ou indisponible conserve
+le dernier affichage valide ; le navigateur réessaie au prochain passage.
+
+Le fichier est monté sous `/usr/share/nginx/html/km/statuses.json`. Une valeur
+initiale est également embarquée pour les tests sans montage, mais le fichier
+EC2 prend priorité. Ne pas l'écraser lors d'une mise à jour d'image. Comme pour
+`config.ini`, une édition en place est visible sans reconstruction ; si l'éditeur
+remplace le fichier, recréer uniquement `km-front` pour renouveler le montage.
+
+**Première activation de ce fonctionnement :** publier une nouvelle version de
+l'image KM, transférer `statuses.json` sur EC2 et ajouter son montage au seul
+bloc `km-front` avant de faire `pull` puis `up -d --no-deps km-front`. Les images
+KM antérieures ne lisent pas ce fichier. Actualiser la page après cette migration
+pour charger le nouveau JavaScript ; les modifications de statuts suivantes ne
+nécessitent ni publication ni reconstruction. Aucun autre service n'est modifié.
 
 ## Sur EC2 : première migration
 
@@ -107,13 +138,19 @@ par celles d'une ancienne version du dépôt.
         read_only: true
         bind:
           create_host_path: false
+      - type: bind
+        source: ./UI_chat/km/statuses.json
+        target: /usr/share/nginx/html/km/statuses.json
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - frontend
 ```
 
 Le réseau `frontend` existe déjà dans la configuration restaurée. Ne pas modifier
 les réseaux ou volumes globaux, ni les blocs des services existants, y compris
-le `depends_on` de Nginx. Préparer le fichier de configuration KM avant démarrage.
+le `depends_on` de Nginx. Préparer les fichiers `config.ini` et `statuses.json` avant démarrage.
 Conserver le même répertoire, fichier `.env` et nom de projet Compose que la
 stack existante pour toutes les commandes.
 
@@ -188,7 +225,7 @@ statique ; il ne teste pas n8n ni les webhooks.
 ## Recette après déploiement
 
 Vérifier `/km/`, le modèle, les onze liens et les images locales (200), `/km`
-(301), `/km/config.ini` (200 et `no-store`), une URL inexistante et les chemins
+(301), `/km/config.ini` et `/km/statuses.json` (200 et `no-store`), une URL inexistante et les chemins
 `/km/CONTEXT.md`, `/km/docs/`, `/km/tests/` (404). Vérifier l'absence de requêtes
 GitHub et le responsive. Aucun appel métier n'est requis avec les chemins vides.
 

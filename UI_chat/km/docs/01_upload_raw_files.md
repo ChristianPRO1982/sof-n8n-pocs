@@ -183,19 +183,25 @@ alphanumériques, tirets ou underscores séparés par `/`. Les URL absolues,
 remontées de répertoire, paramètres et chemins encodés sont refusés. Aucun
 identifiant de workflow ni aucune URL de secours n'est inventé.
 
-Le bouton « N8N - webhook-test » dans la barre supérieure utilise
-`toggle_blue_off.png` et `toggle_blue_on.png` de `assets/icons/`. OFF utilise la
-base configurée ; ON remplace uniquement son segment final `/webhook/` par
-`/webhook-test/`. Les trois opérations utilisent le même environnement. Le choix
-n'est pas mémorisé : OFF à chaque arrivée, y compris au retour par l'historique
-(rechargement en cas de restauration depuis le cache de navigation).
+La barre affiche « N8N - test : », puis deux bascules indépendantes :
+« WH - list » et « WH - upload », avec `toggle_blue_off.png` et
+`toggle_blue_on.png` de `assets/icons/`. Chaque bascule OFF utilise la base
+configurée ; ON remplace uniquement son segment final `/webhook/` par
+`/webhook-test/` pour l'opération concernée. La suppression suit le mode de
+« WH - list », puisqu'elle agit sur les fichiers affichés.
+Les deux choix ne sont pas mémorisés : OFF à chaque arrivée, y compris au retour
+par l'historique (rechargement en cas de restauration depuis le cache de navigation).
 
-Le toggle est désactivé pendant les opérations. Une bascule invalide la liste
-serveur précédente, recharge celle du nouvel environnement et recalcule les
-collisions. Les résultats terminés du précédent environnement sont retirés de
-l'écran pour éviter une reprise dans le mauvais environnement ; une sélection
-encore en attente est conservée. Sans configuration utilisable, la sélection
-locale reste possible, mais les opérations non raccordées sont désactivées.
+Les deux bascules sont désactivées pendant les opérations. Basculer « WH - list »
+invalide la liste précédente, la recharge et recalcule les collisions. Basculer
+« WH - upload » ne déclenche aucun appel de liste. Les actualisations après envoi
+utilisent le mode de « WH - list », indépendamment du mode d'upload ; on peut ainsi
+écouter un seul webhook de test n8n à la fois. Les deux modes doivent cibler le
+même stockage de dépôt pour que les avertissements de remplacement soient utiles ;
+le contrôle atomique des collisions reste obligatoire côté serveur.
+Une bascule retire les résultats terminés ; une sélection encore en attente est
+conservée. Sans configuration utilisable, la sélection locale reste possible,
+mais les opérations non raccordées sont désactivées.
 
 ### Requêtes et confirmations
 
