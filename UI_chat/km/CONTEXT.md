@@ -257,6 +257,14 @@ par Nginx.
 
 ## Publication et vérification
 
+**Contrainte d'intégration :** le `docker-compose.yml` restauré par l'utilisateur
+est la référence. Ajouter uniquement `km-front` sur le réseau HTTP existant
+`frontend`, avec son fichier `config.ini` en lecture seule. Ne modifier aucun
+service existant (n8n, postgres_n8n, pgv, FastAPI, Nginx), ni leurs volumes,
+variables, dépendances ou réseaux. Ne pas reconstituer la stack à partir d'une
+ancienne description d'architecture. Les commandes d'exploitation KM ciblent
+`km-front` avec `--no-deps` et conservent le nom de projet Compose existant.
+
 Le front KM est servi par le conteneur `km-front`, utilisant
 `christianpro1982/km:${KM_IMAGE_TAG:-latest}` depuis Docker Hub, sans `build` dans
 Compose. `Dockerfile.km_front` et `nginx/km.conf` restent sur le poste de
@@ -283,8 +291,11 @@ Première migration après publication de l’image et transfert des configurati
 ```sh
 docker compose pull km-front
 docker compose up -d --no-deps km-front
-docker compose up -d --build --no-deps nginx
 ```
+
+Si le routage KM n’est pas encore installé sur EC2, intégrer uniquement ce
+routage au Nginx existant et le reconstruire avec `--no-deps nginx` ; sinon
+ne pas le recréer. Son bloc Compose reste inchangé.
 
 Évolutions ultérieures après publication depuis le poste de développement :
 

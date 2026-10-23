@@ -118,13 +118,7 @@ context.setAttribute("aria-label", "Menu de la page");
 const homeLink = element("a", "", page.id === "home" ? "Accueil" : "Retour à l’accueil");
 homeLink.href = rootURL.href;
 if (page.id === "home") homeLink.setAttribute("aria-current", "page");
-const defaultActions = [homeLink];
-if (page.id !== "home") {
-  const overview = element("a", "", "Présentation");
-  overview.href = "#km-content";
-  defaultActions.push(overview);
-}
-context.prepend(...defaultActions);
+context.prepend(homeLink);
 document.title = `${page.title} — Knowledge Manager`;
 
 // Only the home page provides this legend insertion point.

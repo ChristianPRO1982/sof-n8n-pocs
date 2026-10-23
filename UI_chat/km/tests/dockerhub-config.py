@@ -14,6 +14,8 @@ class DockerHubConfiguration(unittest.TestCase):
         for tag in (None, '0.1.0'):
             env = dict(os.environ)
             env.pop('KM_IMAGE_TAG', None)
+            for key in ('N8N_DB_NAME', 'N8N_DB_USER', 'N8N_DB_PASSWORD', 'N8N_ENCRYPTION_KEY', 'PUBLIC_HOST'):
+                env.setdefault(key, 'km-test-placeholder')
             if tag:
                 env['KM_IMAGE_TAG'] = tag
             payload = json.loads(subprocess.check_output(
@@ -23,7 +25,15 @@ class DockerHubConfiguration(unittest.TestCase):
             self.assertEqual(service['image'], 'christianpro1982/km:' + (tag or 'latest'))
             self.assertNotIn('build', service)
             self.assertNotIn('ports', service)
-            self.assertTrue(service['volumes'][0]['read_only'])
+            self.assertEqual(set(service['networks']), {'frontend'})
+            self.assertNotIn('depends_on', service)
+            self.assertEqual(len(service['volumes']), 1)
+            mount = service['volumes'][0]
+            self.assertEqual(mount['type'], 'bind')
+            self.assertEqual(mount['source'], str(ROOT / 'UI_chat/km/config.ini'))
+            self.assertEqual(mount['target'], '/usr/share/nginx/html/km/config.ini')
+            self.assertTrue(mount['read_only'])
+            self.assertFalse(mount['bind'].get('create_host_path', False))
 
     def publish(self, version, mode='missing'):
         with tempfile.TemporaryDirectory(prefix='km-publish-test-') as temp:

@@ -4,6 +4,13 @@ Dernière mise à jour : **23 octobre 2026** (front `km` isolé dans Docker ; v�
 
 ## Lire en début de session
 
+Pour l'intégration KM, le Compose restauré par l'utilisateur fait référence.
+L'ajout se limite au service `km-front`, connecté au réseau HTTP `frontend`,
+avec son unique configuration montée en lecture seule. Préserver intégralement
+les services existants et leurs volumes, variables, dépendances et réseaux.
+Les descriptions historiques ci-dessous ne doivent jamais servir à reconstruire
+ou remplacer les définitions n8n/BDD actuellement présentes dans Compose.
+
 Ce fichier est le point d’entrée destiné à Codex et aux autres agents. Le lire avant d’explorer le dépôt, puis ouvrir uniquement les fichiers concernés par la demande. Appliquer aussi les éventuelles instructions `AGENTS.md` applicables et les consignes de l’utilisateur.
 
 Maintenir ce document lorsqu’une modification change l’architecture, les points d’entrée, les contrats d’échange ou les commandes de développement. Les fichiers exécutés font référence si cette synthèse devient obsolète.

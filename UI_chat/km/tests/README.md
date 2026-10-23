@@ -67,8 +67,9 @@ python3 UI_chat/km/tests/dockerhub-config.py
 ```
 
 Ces tests vérifient que Compose choisit `christianpro1982/km:latest` par défaut,
-un tag explicite via `KM_IMAGE_TAG`, aucun `build` pour KM, et le montage en
-lecture seule. Un faux exécutable Docker vérifie les commandes du script de
+un tag explicite via `KM_IMAGE_TAG`, aucun `build` pour KM, son rattachement
+exclusif au réseau HTTP `frontend`, aucune dépendance et un unique montage
+`config.ini` en lecture seule. Un faux exécutable Docker vérifie les commandes du script de
 publication : deux architectures et deux tags, refus d'un tag existant, d'une
 erreur d'authentification, d'un builder incompatible ou d'une version invalide.
 Aucune authentification, construction ou publication réelle n'est déclenchée.
