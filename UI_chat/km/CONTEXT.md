@@ -153,6 +153,9 @@ d'upload à droite ou en bas. Elle charge à l'ouverture, peut être actualisée
 est actualisée après les opérations. La suppression est individuelle, confirmée
 avec le nom du fichier, et l'entrée n'est retirée qu'après confirmation n8n.
 Prévoir les états chargement, vide et erreur sans simuler de succès.
+La suppression affiche le nom pendant l'opération et dans les retours d'erreur ;
+une confirmation inexploitable indique un résultat incertain sans relance automatique.
+La configuration du webhook n8n d'entrée et de réponse est détaillée dans la fiche de dépôt.
 
 Dans la liste préparatoire, le suivi d'envoi et la liste serveur, chaque nom de
 fichier est précédé d'une icône PNG locale de `assets/icons/` : `word.png`,
@@ -166,15 +169,19 @@ icônes ne valent ni contrôle du format réel ni confirmation d'envoi.
 
 Les contrats attendus sont fixés dans la fiche : liste GET, upload POST multipart
 et suppression POST JSON, avec confirmation `ok:true` et révisions opaques pour
-les conflits. Le module utilise `KM_WEBHOOK_BASE_URL` et les trois
+les conflits. La confirmation d'upload vérifie uniquement le nom,
+sans contrôler la taille ni la révision ; la liste conserve une taille entière
+en octets et une révision non vide.
+Le module utilise `KM_WEBHOOK_BASE_URL` et les trois
 `KM_FILES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH` de `config.ini`. Base commune :
 `http://15.236.66.128/n8n/webhook/` ; chemins laissés vides, aucun workflow créé.
-La barre « N8N - test : » propose deux bascules indépendantes « WH - list » et
-« WH - upload », utilisant `toggle_blue_off.png`/`toggle_blue_on.png`. Chaque
+La barre « N8N - test : » propose trois bascules indépendantes « WH - list »,
+« WH - upload » et « WH - delete », utilisant `toggle_blue_off.png`/`toggle_blue_on.png`. Chaque
 bascule remplace `/webhook/` par `/webhook-test/` pour son opération et revient
-sur OFF à chaque arrivée, y compris par l'historique. La suppression suit le
-mode de la liste. Seule une bascule de liste la recharge ; basculer l'upload
-n'appelle pas la liste. Les deux modes doivent cibler le même stockage de dépôt.
+sur OFF à chaque arrivée, y compris par l'historique. La suppression suit sa
+propre bascule. Seule une bascule de liste la recharge ; basculer l'upload
+ou la suppression n'appelle pas la liste. Après ces opérations, l'actualisation
+suit le mode de la liste. Les deux modes doivent cibler le même stockage de dépôt.
 Les opérations concurrentes dans cet écran sont bloquées pendant un lot.
 Délais : liste/suppression 30 s, upload 120 s par fichier ; aucune relance automatique.
 Sous 768 px, les panneaux sont empilés. Sans configuration, seule la sélection

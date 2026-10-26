@@ -1,0 +1,465 @@
+{
+  "name": "01 FILES",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "932587ed-13b4-411e-a921-0fa350960275",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -64,
+        80
+      ],
+      "id": "0dfd0641-34d5-4052-825d-3f720b8b3376",
+      "name": "WH-upload",
+      "webhookId": "932587ed-13b4-411e-a921-0fa350960275"
+    },
+    {
+      "parameters": {
+        "path": "cdd96ce6-6bdf-44e9-9594-a60a67227141",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -64,
+        -240
+      ],
+      "id": "1402eb5d-0541-45f7-9e2e-b440f3ba6bf1",
+      "name": "WH-list",
+      "webhookId": "cdd96ce6-6bdf-44e9-9594-a60a67227141"
+    },
+    {
+      "parameters": {
+        "command": "=node <<'JS'\nconst fs = require('node:fs');\nconst path = require('node:path');\n\nconst directory = '/files/km/01_upload_raw_files';\n\nconst files = fs.readdirSync(directory, { withFileTypes: true })\n  .filter(entry => entry.isFile())\n  .map(entry => {\n    const stat = fs.statSync(path.join(directory, entry.name), {\n      bigint: true\n    });\n\n    const size = Number(stat.size);\n\n    if (!Number.isSafeInteger(size)) {\n      throw new Error(`Taille non représentable : ${entry.name}`);\n    }\n\n    return {\n      name: entry.name,\n      size,\n      revision: [\n        stat.dev,\n        stat.ino,\n        stat.size,\n        stat.mtimeNs,\n        stat.ctimeNs\n      ].join(':')\n    };\n  })\n  .sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);\n\nprocess.stdout.write(JSON.stringify(files));\nJS"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        160,
+        -240
+      ],
+      "id": "fa7b7791-c244-4b9f-9b87-e1b3f207a2ac",
+      "name": "CMD $ls"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { exitCode, stderr, stdout } = $input.first().json;\n\ntry {\n  if (exitCode !== 0) {\n    throw new Error(stderr?.trim() || 'Impossible de lire le dossier.');\n  }\n\n  const files = JSON.parse(stdout);\n  const names = new Set();\n\n  if (!Array.isArray(files)) {\n    throw new Error('La réponse doit contenir une liste de fichiers.');\n  }\n\n  for (const file of files) {\n    if (\n      !file ||\n      typeof file.name !== 'string' ||\n      file.name.length === 0 ||\n      !Number.isSafeInteger(file.size) ||\n      file.size < 0 ||\n      typeof file.revision !== 'string' ||\n      file.revision.length === 0 ||\n      names.has(file.name)\n    ) {\n      throw new Error('Liste de fichiers invalide.');\n    }\n\n    names.add(file.name);\n  }\n\n  return [{ json: { ok: true, files } }];\n} catch (error) {\n  return [{\n    json: {\n      ok: false,\n      message: error.message\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        -240
+      ],
+      "id": "eb4d1d43-283f-476e-abc4-3139a01d3d68",
+      "name": "CODE list"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        608,
+        -240
+      ],
+      "id": "37aed559-55f5-44c2-aaee-7a6a81279f27",
+      "name": "Respond-list"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/files/km/01_upload_raw_files/{{ $binary.file.fileName }}",
+        "dataPropertyName": "file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        80
+      ],
+      "id": "2ccfc275-542d-4d60-b408-319856956f5d",
+      "name": "upload file",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        608,
+        -16
+      ],
+      "id": "7af203aa-b12f-483b-928f-39b6b2958b18",
+      "name": "Respond upload OK"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        608,
+        176
+      ],
+      "id": "e6a89b77-5297-4a34-bf66-0c2d6a2a422d",
+      "name": "Respond upload KO"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
+              "name": "file.name",
+              "value": "={{ $binary.file.fileName }}",
+              "type": "string"
+            },
+            {
+              "id": "c8ebf587-0503-4ea1-abda-08d51b25ad87",
+              "name": "file.size",
+              "value": "={{ $binary.file.fileSize }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        384,
+        -16
+      ],
+      "id": "b7025bf0-fbfb-41e8-9fed-ec9625c0da5d",
+      "name": "upload OK"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "3b2cbc1f-ac9a-44a7-ac9a-7e4a2982e2c8",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        384,
+        176
+      ],
+      "id": "389fdd95-c1b1-4fd9-97d1-e573188a4030",
+      "name": "upload KO"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "250bab52-e39b-4803-bbc1-e46cddda0d47",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -64,
+        496
+      ],
+      "id": "35349ec0-036a-4a1e-a4c1-ac07fd4289e9",
+      "name": "WH-delete",
+      "webhookId": "250bab52-e39b-4803-bbc1-e46cddda0d47"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        608,
+        400
+      ],
+      "id": "68004511-3278-405b-aaa1-c3398e4c6013",
+      "name": "Respond delete"
+    },
+    {
+      "parameters": {
+        "command": "=rm /files/km/01_upload_raw_files/{{ $json.body.name }}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        160,
+        496
+      ],
+      "id": "b63568df-ee09-49ff-af46-dcfef791f21d",
+      "name": "Execute Command",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        608,
+        592
+      ],
+      "id": "9f4ef1cc-f3b9-45e3-8d67-2811a038b8b7",
+      "name": "Respond delete KO"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
+              "name": "name",
+              "value": "={{ $('WH-delete').item.json.body.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        384,
+        400
+      ],
+      "id": "4c4dc75b-0c3f-45b6-8a9f-b4c5ef05f558",
+      "name": "delete OK"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        384,
+        592
+      ],
+      "id": "8c8deae7-851b-4eb5-a206-c09301e3655d",
+      "name": "delete KO"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "WH-upload": {
+      "main": [
+        [
+          {
+            "node": "upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-list": {
+      "main": [
+        [
+          {
+            "node": "CMD $ls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CMD $ls": {
+      "main": [
+        [
+          {
+            "node": "CODE list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CODE list": {
+      "main": [
+        [
+          {
+            "node": "Respond-list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload file": {
+      "main": [
+        [
+          {
+            "node": "upload OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "upload KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload OK": {
+      "main": [
+        [
+          {
+            "node": "Respond upload OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload KO": {
+      "main": [
+        [
+          {
+            "node": "Respond upload KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-delete": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Command": {
+      "main": [
+        [
+          {
+            "node": "delete OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "delete KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete OK": {
+      "main": [
+        [
+          {
+            "node": "Respond delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete KO": {
+      "main": [
+        [
+          {
+            "node": "Respond delete KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "1ab78c21-6161-4c2c-bdd9-7e1a4a7354e8",
+  "meta": {
+    "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
+  },
+  "nodeGroups": [],
+  "id": "bhOvXEKiTYdSxiXT",
+  "tags": [
+    {
+      "updatedAt": "2026-10-23T07:45:52.085Z",
+      "createdAt": "2026-10-23T07:45:52.085Z",
+      "id": "aTY4iOvJFOjQpknu",
+      "name": "KM"
+    }
+  ]
+}

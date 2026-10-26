@@ -27,7 +27,9 @@ l'instance Chrome lancée pour le test.
 
 Couverture : sélection par bouton et drop, doublons, ordre séquentiel, accord de
 remplacement et révision, échec intermédiaire, conflit, reprise manuelle, réponse
-inexploitable, suppression annulée/refusée/confirmée, bascules indépendantes liste/upload et mode de suppression,
+inexploitable, suppression annulée/refusée/confirmée, corps POST JSON et confirmation
+de suppression avec nom incorrect (résultat incertain), trois bascules indépendantes
+liste/upload/delete, suppression test avec liste production et inversement,
 configuration absente, icônes de repli, clavier et largeurs 1 920, 1 366, 1 100,
 768 et 390 px. Les captures sont écrites sous `/tmp/km-upload-<largeur>.png`.
 La recette réelle EC2 reste à effectuer après raccordement des workflows ; les

@@ -9,7 +9,8 @@ const root = resolve(new URL('../../', import.meta.url).pathname);
 const files = new Map([['existing.pdf', { name: 'existing.pdf', size: 3, revision: 'v1' }]]);
 let pageStatus = 'development', statusError = false, statusReads = 0;
 let listError = false, malformed = false, configured = true, active = 0, maxActive = 0;
-const uploads = [], calls = [], browserErrors = [];
+let invalidDelete = false;
+const uploads = [], deletions = [], calls = [], browserErrors = [];
 const server = createServer(async (req, res) => {
   try {
     const path = new URL(req.url, 'http://local').pathname;
@@ -40,6 +41,8 @@ const server = createServer(async (req, res) => {
       const body = Buffer.concat(parts).toString();
       if (path.endsWith('/delete')) {
         const data = JSON.parse(body);
+        deletions.push({ method: req.method, contentType: req.headers['content-type'], data });
+        if (invalidDelete) { send({ ok: true, name: 'wrong-name.pdf' }); return; }
         if (files.get(data.name)?.revision !== data.expected_revision) send({ ok: false, message: 'changed' }, 409);
         else { files.delete(data.name); send({ ok: true, name: data.name }); }
         return;
@@ -55,7 +58,11 @@ const server = createServer(async (req, res) => {
       if (malformed) { res.end('Workflow started'); return; }
       const file = { name, size: 3, revision: 'v2' };
       files.set(name, file);
-      send({ ok: true, file });
+      // Upload confirmations only require the name; list entries retain size and revision.
+      const confirmation = { name };
+      if (name === 'existing.pdf') confirmation.size = 999;
+      else if (name !== 'README') confirmation.size = '4.95 kB';
+      send({ ok: true, file: confirmation });
       return;
     }
     let filename = resolve(root, `.${path}`);
@@ -190,9 +197,20 @@ try {
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.match(await text('upload-notice'), /non confirmée/);
   assert.match(await text('server-files'), /existing.pdf/);
+  assert.deepEqual(deletions.at(-1), {
+    method: 'POST', contentType: 'application/json',
+    data: { name: 'existing.pdf', expected_revision: 'v2' },
+  });
+  invalidDelete = true;
+  await evaluate(`document.querySelector('#server-files button').click()`);
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+  assert.match(await text('upload-notice'), /non confirmée pour existing\.pdf.*Résultat incertain/);
+  assert.match(await text('server-files'), /existing.pdf/);
+  invalidDelete = false;
   await evaluate(`document.querySelector('#server-files button').click()`);
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.match(await text('upload-notice'), /Suppression confirmée/);
+  assert.deepEqual(deletions.at(-1).data, { name: 'existing.pdf', expected_revision: 'v3' });
   assert.doesNotMatch(await text('server-files'), /existing.pdf/);
   await click('webhook-list-toggle');
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
@@ -215,7 +233,20 @@ try {
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   await evaluate(`document.querySelector('#server-files button').click()`);
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+  assert.equal(calls.filter((p) => p.endsWith('/delete')).at(-1), '/webhook/delete');
+  assert.equal(calls.at(-1), '/webhook-test/list');
+  await click('webhook-list-toggle');
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+  const beforeDeleteToggle = calls.length;
+  await click('webhook-delete-toggle');
+  assert.equal(calls.length, beforeDeleteToggle, 'Delete toggle must not refresh the list');
+  assert.equal(await evaluate(`document.getElementById('webhook-list-toggle').getAttribute('aria-checked')`), 'false');
+  assert.equal(await evaluate(`document.getElementById('webhook-upload-toggle').getAttribute('aria-checked')`), 'true');
+  assert.equal(await evaluate(`document.getElementById('webhook-delete-toggle').getAttribute('aria-checked')`), 'true');
+  await evaluate(`document.querySelector('#server-files button').click()`);
+  await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.equal(calls.filter((p) => p.endsWith('/delete')).at(-1), '/webhook-test/delete');
+  assert.equal(calls.at(-1), '/webhook/list');
 
   await click('new-batch');
   await add(['photo.PNG', 'other.zip']);
@@ -258,7 +289,9 @@ try {
   }
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.equal(calls.at(-1), '/webhook/list');
-  assert.equal(await evaluate(`document.getElementById('webhook-list-toggle').getAttribute('aria-checked')`), 'false');
+  for (const operation of ['list', 'upload', 'delete']) {
+    assert.equal(await evaluate(`document.getElementById('webhook-${operation}-toggle').getAttribute('aria-checked')`), 'false');
+  }
   configured = false;
   await call('Page.reload');
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);

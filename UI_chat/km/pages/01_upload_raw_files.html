@@ -31,6 +31,11 @@
             <span>WH - upload</span>
             <img src="../assets/icons/toggle_blue_off.png" alt="" id="webhook-upload-toggle-image">
           </button>
+          <button type="button" class="km-upload-button km-webhook-toggle" id="webhook-delete-toggle"
+            role="switch" aria-checked="false" disabled>
+            <span>WH - delete</span>
+            <img src="../assets/icons/toggle_blue_off.png" alt="" id="webhook-delete-toggle-image">
+          </button>
         </nav>
       </header>
       <main class="km-content" id="km-content" tabindex="-1">
@@ -43,7 +48,7 @@
               <h3 id="server-heading">Fichiers sur le serveur</h3>
               <button type="button" class="km-upload-button" id="refresh-files" disabled>Actualiser</button>
             </div>
-            <p class="km-upload-muted">Sources en attente de prise en charge.</p>
+            <p class="km-upload-muted">Sources en attente de prise en charge. La suppression suit le mode « WH - delete ».</p>
             <p id="server-state" role="status" aria-live="polite">Chargement…</p>
             <ul id="server-files" class="km-upload-list" aria-label="Fichiers sur le serveur"></ul>
           </section>

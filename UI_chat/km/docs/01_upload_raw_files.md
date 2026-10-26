@@ -2,9 +2,11 @@
 
 **Page associée :** [01_upload_raw_files](../pages/01_upload_raw_files.html).
 **Stockage cible EC2 :** `/n8n/n8n_files/km/01_upload_raw_files/`.
-**État :** interface développée, statut `development` ; raccordement n8n à réaliser.
-Les chemins des webhooks sont volontairement vides : aucun dépôt ou succès réel
-n’est possible tant que les workflows ne sont pas raccordés.
+**État :** interface développée, statut `development` ; raccordement n8n de la suppression à finaliser.
+La lecture et l'upload ont été déclarés opérationnels par l'utilisateur.
+Les trois chemins sont renseignés dans la configuration locale ; le workflow
+de suppression reste à configurer et à vérifier dans n8n. Les workflows distants
+ne sont pas versionnés ni vérifiés par cette documentation.
 
 ## Objectif et provenance
 
@@ -157,6 +159,79 @@ seulement après confirmation de réussite par n8n, puis actualiser la liste.
 En cas de refus ou de retour absent, afficher l'erreur et vérifier l'état serveur
 sans annoncer une réussite. Cette action concerne le fichier déposé, pas les
 archives ni les résultats des étapes suivantes.
+Le message de suivi indique le fichier en cours de suppression. Une confirmation
+invalide ou un retour absent affiche un résultat incertain, sans relance automatique.
+
+### Raccordement du webhook de suppression n8n
+
+Le front dispose déjà du bouton « Supprimer » sur chaque fichier serveur.
+Il utilise `KM_FILES_DELETE_WEBHOOK_PATH` de `config.ini`, actuellement
+`250bab52-e39b-4803-bbc1-e46cddda0d47`, et suit sa bascule indépendante « WH - delete ».
+
+Configurer le node d'entrée **Webhook** ainsi :
+
+- **HTTP Method :** `POST`.
+- **Path :** même valeur que `KM_FILES_DELETE_WEBHOOK_PATH`.
+- **Respond :** `Using 'Respond to Webhook' Node`.
+- **Raw Body :** désactivé pour accéder au JSON dans `$json.body`.
+- En test depuis `http://127.0.0.1:5500`, autoriser cette origine via
+  **Allowed Origins (CORS)** si le navigateur bloque la requête.
+
+Le corps envoyé par le front est :
+
+```json
+{
+  "name": "sources_rag_augmente.csv",
+  "expected_revision": "revision-recue-dans-la-liste"
+}
+```
+
+Dans le node suivant le Webhook, récupérer le nom avec `$json.body.name`
+et la révision avec `$json.body.expected_revision`. La suppression de l'exigence
+de révision dans la confirmation d'upload ne retire pas cette protection des
+requêtes de suppression.
+
+Le traitement serveur doit valider un nom de fichier simple (aucun `/`, `\\`,
+octet nul, `.` ou `..`), cibler uniquement `/files/km/01_upload_raw_files/`
+dans l'environnement n8n montré par l'utilisateur, puis comparer la révision
+actuelle avec `expected_revision`. Utiliser la même méthode de calcul que la
+liste. Ne pas interpoler directement le nom reçu dans une commande shell.
+Le contrôle et la suppression doivent être protégés contre les écritures
+concurrentes par le mécanisme serveur prévu ; les nodes de réponse ne réalisent
+pas cette protection.
+
+Après suppression effective, utiliser un node **Respond to Webhook** :
+**Respond With : JSON**, **Response Code : 200**, corps :
+
+```json
+{"ok":true,"name":"sources_rag_augmente.csv"}
+```
+
+Le nom doit être celui du fichier supprimé, sans tableau autour de l'objet.
+Le front exige ce nom exact et `ok:true`, puis recharge la liste.
+Pour un nom dynamique, si le node d'entrée s'appelle `Webhook`, le champ
+**Response Body** peut être une expression :
+
+```javascript
+{{ { ok: true, name: $('Webhook').first().json.body.name } }}
+```
+
+En cas d'échec, utiliser la branche KO, **Respond With : JSON**, avec un statut
+adapté et le corps `{"ok":false,"code":"delete_failed","message":"Impossible de supprimer le fichier."}`.
+Utiliser `400` pour une requête invalide, `404` pour un fichier absent, `409`
+avec `code:"conflict"` pour une révision différente (aucune suppression),
+et `500` pour une erreur de stockage. Seule la branche correspondant au résultat
+doit atteindre son node de réponse.
+
+Publier le workflow pour la production et laisser « WH - delete » sur OFF.
+Pour un essai, mettre « WH - delete » sur ON et le webhook de suppression en
+écoute de test. Garder « WH - list » sur OFF permet de lire la liste en production,
+y compris après la tentative, sans devoir écouter son webhook de test.
+Basculer « WH - delete » ne recharge pas la liste. Les deux webhooks ciblent
+le même dossier.
+
+Références : [Webhook](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/)
+et [Respond to Webhook](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.respondtowebhook/).
 
 ## Configuration et contrats n8n attendus
 
@@ -168,8 +243,8 @@ archives ni les résultats des étapes suivantes.
 | Supprimer un fichier identifié | Confirmation de suppression, ou erreur explicite |
 
 L'interface charge `UI_chat/km/config.ini` sans cache. Les clés suivantes sont
-montées en lecture seule, servies sous `/km/config.ini` ; les trois chemins
-restent à renseigner avec ceux des futurs workflows :
+montées en lecture seule, servies sous `/km/config.ini`. Exemple de structure
+avant raccordement (le fichier local contient désormais les chemins configurés) :
 
 ```ini
 KM_WEBHOOK_BASE_URL=http://15.236.66.128/n8n/webhook/
@@ -183,19 +258,19 @@ alphanumériques, tirets ou underscores séparés par `/`. Les URL absolues,
 remontées de répertoire, paramètres et chemins encodés sont refusés. Aucun
 identifiant de workflow ni aucune URL de secours n'est inventé.
 
-La barre affiche « N8N - test : », puis deux bascules indépendantes :
-« WH - list » et « WH - upload », avec `toggle_blue_off.png` et
+La barre affiche « N8N - test : », puis trois bascules indépendantes :
+« WH - list », « WH - upload » et « WH - delete », avec `toggle_blue_off.png` et
 `toggle_blue_on.png` de `assets/icons/`. Chaque bascule OFF utilise la base
 configurée ; ON remplace uniquement son segment final `/webhook/` par
-`/webhook-test/` pour l'opération concernée. La suppression suit le mode de
-« WH - list », puisqu'elle agit sur les fichiers affichés.
-Les deux choix ne sont pas mémorisés : OFF à chaque arrivée, y compris au retour
+`/webhook-test/` pour l'opération concernée.
+Les trois choix ne sont pas mémorisés : OFF à chaque arrivée, y compris au retour
 par l'historique (rechargement en cas de restauration depuis le cache de navigation).
 
-Les deux bascules sont désactivées pendant les opérations. Basculer « WH - list »
+Les trois bascules sont désactivées pendant les opérations. Basculer « WH - list »
 invalide la liste précédente, la recharge et recalcule les collisions. Basculer
-« WH - upload » ne déclenche aucun appel de liste. Les actualisations après envoi
-utilisent le mode de « WH - list », indépendamment du mode d'upload ; on peut ainsi
+« WH - upload » ou « WH - delete » ne déclenche aucun appel de liste.
+Les actualisations après envoi ou suppression utilisent le mode de « WH - list »,
+indépendamment des modes d'upload et de suppression ; on peut ainsi
 écouter un seul webhook de test n8n à la fois. Les deux modes doivent cibler le
 même stockage de dépôt pour que les avertissements de remplacement soient utiles ;
 le contrôle atomique des collisions reste obligatoire côté serveur.
@@ -211,10 +286,10 @@ Les fichiers concernent exclusivement le dossier de dépôt KM.
 | Opération | Requête | Confirmation JSON attendue |
 | --- | --- | --- |
 | Liste | `GET`, sans cache | `{"ok":true,"files":[{"name":"document.pdf","size":1234,"revision":"opaque"}]}` |
-| Upload | `POST multipart/form-data` : champ binaire `file`, `overwrite` chaîne `true` ou `false`, `expected_revision` si remplacement | `{"ok":true,"file":{"name":"document.pdf","size":1234,"revision":"nouvelle"}}` |
+| Upload | `POST multipart/form-data` : champ binaire `file`, `overwrite` chaîne `true` ou `false`, `expected_revision` si remplacement | `{"ok":true,"file":{"name":"document.pdf"}}` |
 | Suppression | `POST application/json` : `{"name":"document.pdf","expected_revision":"opaque"}` | `{"ok":true,"name":"document.pdf"}` |
 
-Une entrée fichier porte un nom non vide, une taille entière positive ou nulle
+Une entrée de la liste porte un nom non vide, une taille entière positive ou nulle
 en octets et une révision non vide. Les noms sont comparés exactement, avec
 casse, sans normalisation implicite. Les doublons dans une réponse de liste
 rendent cette réponse invalide.
@@ -230,8 +305,12 @@ ne peut pas l'assurer seul.
 Un conflit utilise HTTP 409 et `{"ok":false,"code":"conflict","message":"…"}`.
 Les autres erreurs utilisent un statut HTTP approprié et la même enveloppe.
 Une réussite exige HTTP 2xx, `ok:true` et les champs attendus. L'upload vérifie
-également que le nom et la taille confirmés correspondent au fichier envoyé ;
-la suppression vérifie le nom confirmé. Une réponse générique « workflow lancé »
+uniquement que le nom confirmé correspond au fichier envoyé.
+Par décision utilisateur, la taille et la révision de la confirmation d'upload
+ne sont pas contrôlées et peuvent être absentes. La liste conserve ses exigences
+de taille et de révision, et les requêtes de remplacement et de suppression
+conservent `expected_revision`. La suppression vérifie le nom confirmé.
+Une réponse générique « workflow lancé »
 ne confirme pas le stockage.
 
 Délais : 30 secondes pour liste/suppression, 120 secondes par fichier envoyé.

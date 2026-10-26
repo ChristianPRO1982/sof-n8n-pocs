@@ -1,11 +1,12 @@
 import { parseConfig, endpoint, request, validFile, iconName, imageBaseURL } from './km-upload-api.js';
 
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['webhook-list-toggle', 'webhook-list-toggle-image', 'webhook-upload-toggle', 'webhook-upload-toggle-image', 'upload-notice',
+const ui = Object.fromEntries(['webhook-list-toggle', 'webhook-list-toggle-image', 'webhook-upload-toggle', 'webhook-upload-toggle-image',
+  'webhook-delete-toggle', 'webhook-delete-toggle-image', 'upload-notice',
   'refresh-files', 'server-state', 'server-files', 'file-picker', 'choose-files', 'upload-drop',
   'selection-count', 'selected-files', 'agreement-summary', 'send-files', 'retry-files',
   'new-batch', 'upload-progress', 'upload-result'].map((id) => [id, $(id)]));
-const state = { config: {}, test: { list: false, upload: false }, busy: true, ready: false, files: [], items: [], completed: false };
+const state = { config: {}, test: { list: false, upload: false, delete: false }, busy: true, ready: false, files: [], items: [], completed: false };
 const statusLabels = { pending: 'En attente', sending: 'En cours…', success: 'Réussi', failed: 'Échoué' };
 
 function node(tag, className = '', text = '') {
@@ -46,7 +47,7 @@ function button(text, action, name, danger = false) {
   return result;
 }
 function configured(operation) {
-  try { endpoint(state.config, operation, state.test[operation === 'upload' ? 'upload' : 'list']); return true; } catch { return false; }
+  try { endpoint(state.config, operation, state.test[operation]); return true; } catch { return false; }
 }
 function duplicates() {
   const names = new Set();
@@ -60,7 +61,7 @@ function duplicates() {
 function render() {
   const repeated = duplicates();
   const existing = new Map(state.files.map((file) => [file.name, file]));
-  for (const operation of ['list', 'upload']) {
+  for (const operation of ['list', 'upload', 'delete']) {
     ui[`webhook-${operation}-toggle`].disabled = state.busy;
     ui[`webhook-${operation}-toggle`].setAttribute('aria-checked', String(state.test[operation]));
     ui[`webhook-${operation}-toggle-image`].src = new URL(`icons/toggle_blue_${state.test[operation] ? 'on' : 'off'}.png`, new URL(imageBaseURL, import.meta.url)).href;
@@ -170,7 +171,7 @@ async function sendBatch() {
       if (approved.has(item.file.name)) body.append('expected_revision', approved.get(item.file.name));
       try {
         await request(endpoint(state.config, 'upload', state.test.upload), { method: 'POST', body },
-          (data) => validFile(data.file) && data.file.name === item.file.name && data.file.size === item.file.size, 120000);
+          (data) => data.file?.name === item.file.name, 120000);
         item.status = 'success';
       } catch (error) {
         item.status = 'failed';
@@ -192,21 +193,24 @@ async function deleteFile(file) {
   if (state.busy || !state.ready || !configured('delete')) return;
   if (!window.confirm(`Supprimer le fichier « ${file.name} » du serveur ?`)) return;
   state.busy = true;
+  message(`Suppression en cours : ${file.name}…`);
   render();
   let confirmed = false;
   let errorMessage = '';
   try {
-    await request(endpoint(state.config, 'delete', state.test.list), {
+    await request(endpoint(state.config, 'delete', state.test.delete), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: file.name, expected_revision: file.revision }),
     }, (data) => data.name === file.name);
     confirmed = true;
     state.files = state.files.filter((entry) => entry.name !== file.name);
-  } catch (error) { errorMessage = error.message; }
+  } catch (error) {
+    errorMessage = error.message + (error.uncertain ? ' Résultat incertain, aucune relance automatique.' : '');
+  }
   try {
     const refreshed = await refresh();
     message(confirmed ? `Suppression confirmée : ${file.name}.${refreshed ? '' : ' Actualisation de la liste indisponible.'}` :
-      `Suppression non confirmée : ${errorMessage}`, !confirmed || !refreshed);
+      `Suppression non confirmée pour ${file.name} : ${errorMessage}${refreshed ? '' : ' Actualisation de la liste indisponible.'}`, !confirmed || !refreshed);
   } finally {
     state.busy = false;
     render();
@@ -254,7 +258,7 @@ ui['retry-files'].addEventListener('click', async () => {
     message('Échecs préparés. Vérifiez les remplacements signalés puis donnez un nouvel accord.');
   } finally { state.busy = false; render(); }
 });
-for (const operation of ['list', 'upload']) ui[`webhook-${operation}-toggle`].addEventListener('click', async () => {
+for (const operation of ['list', 'upload', 'delete']) ui[`webhook-${operation}-toggle`].addEventListener('click', async () => {
   if (state.busy) return;
   state.busy = true;
   state.test[operation] = !state.test[operation];

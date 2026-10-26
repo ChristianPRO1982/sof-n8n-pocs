@@ -6,7 +6,7 @@
     "testing": "Orange — Phase de test",
     "validated": "Vert — Validé"
   },
-  "01_upload_raw_files": "development",
+  "01_upload_raw_files": "testing",
   "01_processed_files": "development",
   "02_format_controls": "development",
   "03_deltas": "not_started",
