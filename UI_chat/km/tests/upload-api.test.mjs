@@ -35,3 +35,23 @@ test('strict confirmations, conflicts, HTTP failures and timeouts', async () => 
     await assert.rejects(request('http://local', {}, () => true, 10), (error) => error.uncertain && /Délai/.test(error.message));
   } finally { globalThis.fetch = original; }
 });
+
+test('templates use dedicated keys for every operation, without source fallback', () => {
+  for (const operation of ['list', 'upload', 'delete']) {
+    const key = operation.toUpperCase();
+    const settings = {
+      KM_WEBHOOK_BASE_URL: 'http://localhost/n8n/webhook/',
+      [`KM_FILES_${key}_WEBHOOK_PATH`]: `sources/${operation}`,
+      [`KM_TEMPLATES_${key}_WEBHOOK_PATH`]: `templates/${operation}`,
+    };
+    for (const mode of [false, true]) {
+      const base = mode ? 'webhook-test' : 'webhook';
+      assert.equal(endpoint(settings, operation, mode), `http://localhost/n8n/${base}/sources/${operation}`);
+      assert.equal(endpoint(settings, operation, mode, 'KM_TEMPLATES'), `http://localhost/n8n/${base}/templates/${operation}`);
+      for (const path of [undefined, '', '../sources', '/sources', '%2e%2e/sources']) {
+        assert.throws(() => endpoint({ ...settings, [`KM_TEMPLATES_${key}_WEBHOOK_PATH`]: path }, operation, mode, 'KM_TEMPLATES'));
+      }
+    }
+  }
+  assert.throws(() => endpoint(config, 'list', false, 'UNKNOWN'));
+});

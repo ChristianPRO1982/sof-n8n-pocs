@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Templates — Knowledge Manager</title>
+  <link rel="stylesheet" href="../assets/km.css">
+  <link rel="stylesheet" href="../assets/km-upload.css">
+  <script type="module" src="../assets/km.js"></script>
+  <script type="module" src="../assets/km-upload.js"></script>
+</head>
+<body data-km-page="02_templates">
+  <a class="km-skip-link" href="#km-content">Aller au contenu</a>
+  <div class="km-layout">
+    <aside class="km-sidebar" id="km-sidebar" aria-labelledby="km-navigation-title" hidden></aside>
+    <div class="km-resizer" id="km-resizer" role="separator" tabindex="0"
+      aria-label="Largeur du menu général" aria-orientation="vertical"
+      aria-controls="km-sidebar" aria-valuemin="15" aria-valuemax="33" aria-valuenow="22"></div>
+    <div class="km-workspace">
+      <header class="km-header" data-km-header>
+        <!-- Ajouter ici les actions propres à la page, après les liens communs. -->
+        <nav class="km-context" data-km-context>
+          <span>N8N - test :</span>
+          <button type="button" class="km-upload-button km-webhook-toggle" id="webhook-list-toggle"
+            role="switch" aria-checked="false" disabled>
+            <span>WH - list</span>
+            <img src="../assets/icons/toggle_blue_off.png" alt="" id="webhook-list-toggle-image">
+          </button>
+          <button type="button" class="km-upload-button km-webhook-toggle" id="webhook-upload-toggle"
+            role="switch" aria-checked="false" disabled>
+            <span>WH - upload</span>
+            <img src="../assets/icons/toggle_blue_off.png" alt="" id="webhook-upload-toggle-image">
+          </button>
+          <button type="button" class="km-upload-button km-webhook-toggle" id="webhook-delete-toggle"
+            role="switch" aria-checked="false" disabled>
+            <span>WH - delete</span>
+            <img src="../assets/icons/toggle_blue_off.png" alt="" id="webhook-delete-toggle-image">
+          </button>
+        </nav>
+      </header>
+      <main class="km-content" id="km-content" tabindex="-1">
+        <h2>Templates</h2>
+        <p class="km-upload-muted">Déposez vos templates. Un dépôt réussi confirme leur stockage ; leur utilisation dans les traitements suivants est distincte.</p>
+        <div id="upload-notice" role="status" aria-live="polite" class="km-upload-message">Chargement de la configuration…</div>
+        <div class="km-upload-grid">
+          <section class="km-upload-panel" aria-labelledby="server-heading">
+            <div class="km-upload-toolbar">
+              <h3 id="server-heading">Templates sur le serveur</h3>
+              <button type="button" class="km-upload-button" id="refresh-files" disabled>Actualiser</button>
+            </div>
+            <p class="km-upload-muted">Templates disponibles pour les traitements à venir. La suppression suit le mode « WH - delete ».</p>
+            <p id="server-state" role="status" aria-live="polite">Chargement…</p>
+            <ul id="server-files" class="km-upload-list" aria-label="Templates sur le serveur"></ul>
+          </section>
+          <section class="km-upload-panel" aria-labelledby="selection-heading">
+            <div class="km-upload-toolbar"><h3 id="selection-heading">Ajouter des templates</h3></div>
+            <div id="upload-drop" class="km-upload-drop">
+              <p>Glissez-déposez vos templates ici</p>
+              <p class="km-upload-muted">Tous types de fichiers · sélection multiple</p>
+              <input type="file" id="file-picker" multiple hidden>
+              <button type="button" class="km-upload-button" id="choose-files">Choisir des templates</button>
+            </div>
+            <p id="selection-count" class="km-upload-muted">Aucun fichier sélectionné.</p>
+            <ul id="selected-files" class="km-upload-list" aria-label="Templates à envoyer"></ul>
+            <p id="agreement-summary" class="km-upload-muted"></p>
+            <div class="km-upload-actions">
+              <button type="button" class="km-upload-button km-upload-primary" id="send-files" disabled>Accord</button>
+              <button type="button" class="km-upload-button" id="retry-files" hidden>Préparer la reprise des échecs</button>
+              <button type="button" class="km-upload-button" id="new-batch" hidden>Nouveau lot</button>
+            </div>
+            <progress id="upload-progress" class="km-upload-progress" value="0" max="1" aria-label="Fichiers traités" hidden></progress>
+            <p id="upload-result" role="status" aria-live="polite"></p>
+          </section>
+        </div>
+        <noscript>Activez JavaScript pour gérer les templates.</noscript>
+      </main>
+    </div>
+  </div>
+  <div class="km-backdrop" aria-hidden="true" hidden></div>
+</body>
+</html>

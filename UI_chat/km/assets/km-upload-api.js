@@ -1,21 +1,22 @@
 // Relative asset base resolved by the caller against this module location.
 export const imageBaseURL = "./";
 
-// Contract for the KM deposit screen. No endpoint or success is fabricated.
+// Contract shared by the KM sources and templates deposit screens. No endpoint or success is fabricated.
 export function parseConfig(text) {
   return Object.fromEntries(text.split(/\r?\n/).map((line) => line.trim())
     .filter((line) => line && !line.startsWith('#') && line.includes('='))
     .map((line) => [line.slice(0, line.indexOf('=')).trim(), line.slice(line.indexOf('=') + 1).trim()]));
 }
 
-export function endpoint(config, operation, test = false) {
+export function endpoint(config, operation, test = false, prefix = 'KM_FILES') {
+  if (!['KM_FILES', 'KM_TEMPLATES'].includes(prefix)) throw new Error('Configuration de dépôt inconnue.');
   const base = new URL(config.KM_WEBHOOK_BASE_URL);
   if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password ||
       base.search || base.hash || !base.pathname.endsWith('/webhook/')) {
     throw new Error('Base de connexion n8n invalide.');
   }
   if (test) base.pathname = base.pathname.replace(/\/webhook\/$/, '/webhook-test/');
-  const path = config[`KM_FILES_${operation.toUpperCase()}_WEBHOOK_PATH`]?.trim();
+  const path = config[`${prefix}_${operation.toUpperCase()}_WEBHOOK_PATH`]?.trim();
   if (!path) throw new Error('Service non raccordé : configuration n8n à compléter.');
   // Only relative path segments, including UUIDs. Reject encoded traversal too.
   if (!/^[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*$/.test(path)) {

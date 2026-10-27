@@ -3,6 +3,7 @@ const pages = [
   { id: "home", label: "Accueil", title: "Accueil", path: "./" },
   { id: "01_upload_raw_files", label: "01_upload_raw_files", title: "Import des fichiers sources" },
   { id: "01_processed_files", label: "01_processed_files", title: "Fichiers traités" },
+  { id: "02_templates", label: "02_templates", title: "Templates" },
   { id: "02_format_controls", label: "02_format_controls", title: "Contrôles de format" },
   { id: "03_deltas", label: "03_deltas", title: "Deltas" },
   { id: "04_reports", label: "04_reports", title: "Rapports" },

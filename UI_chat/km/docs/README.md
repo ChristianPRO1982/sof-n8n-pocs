@@ -1,7 +1,8 @@
 # Chaîne documentaire Knowledge Manager — `km`
 
-Cette documentation décrit le fonctionnement cible du POC. L'interface de dépôt
-est développée ; les dix autres pages restent provisoires. Les contrats n8n du
+Cette documentation décrit le fonctionnement cible du POC. Les interfaces de dépôt
+des sources et de gestion des templates sont développées ; les dix autres pages
+restent provisoires. Les contrats n8n du
 dépôt sont définis côté front, mais les chemins de webhooks restent vides et les
 workflows ne sont pas créés. Aucun traitement métier ni connecteur n'est implémenté.
 
@@ -106,6 +107,7 @@ minuscules.
 | --- | --- | --- |
 | `01_upload_raw_files` | [Dépôt des sources](01_upload_raw_files.md) | [01_upload_raw_files](../pages/01_upload_raw_files.html) |
 | `01_processed_files` | [Sources prises en charge](01_processed_files.md) | [01_processed_files](../pages/01_processed_files.html) |
+| Aucun dossier défini (`02_templates`) | [Templates](02_templates.md) | [02_templates](../pages/02_templates.html) |
 | `02_format_controls` | [Contrôles de format](02_format_controls.md) | [02_format_controls](../pages/02_format_controls.html) |
 | `03_deltas` | [Vérification des écarts](03_deltas.md) | [03_deltas](../pages/03_deltas.html) |
 | `04_reports` | [Rapport consolidé](04_reports.md) | [04_reports](../pages/04_reports.html) |
@@ -115,6 +117,13 @@ minuscules.
 | `08_markdown` | [Conversion Markdown](08_markdown.md) | [08_markdown](../pages/08_markdown.html) |
 | `09_AI_Ready` | [Publication AI Ready](09_ai_ready.md) | [09_AI_Ready](../pages/09_ai_ready.html) |
 | `10_tracking_journal` | [Journal de suivi](10_tracking_journal.md) | [10_tracking_journal](../pages/10_tracking_journal.html) |
+
+**Décision utilisateur :** la page [02_templates](02_templates.md) est placée
+entre `01_processed_files` et `02_format_controls` dans le menu. Elle reprend les
+fonctions du dépôt avec trois clés `KM_TEMPLATES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH`
+distinctes dans `config.ini`, initialement vides. Son stockage et ses workflows
+restent à définir ; la consommation des templates ne modifie pas encore le
+parcours métier représenté ci-dessus.
 
 ## Adaptation INNO et responsabilités
 

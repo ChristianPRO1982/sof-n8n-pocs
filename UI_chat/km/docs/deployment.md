@@ -224,7 +224,7 @@ statique ; il ne teste pas n8n ni les webhooks.
 
 ## Recette après déploiement
 
-Vérifier `/km/`, le modèle, les onze liens et les images locales (200), `/km`
+Vérifier `/km/`, le modèle, les douze liens et les images locales (200), `/km`
 (301), `/km/config.ini` et `/km/statuses.json` (200 et `no-store`), une URL inexistante et les chemins
 `/km/CONTEXT.md`, `/km/docs/`, `/km/tests/` (404). Vérifier l'absence de requêtes
 GitHub et le responsive. Aucun appel métier n'est requis avec les chemins vides.

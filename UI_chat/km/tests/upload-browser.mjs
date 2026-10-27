@@ -5,6 +5,10 @@ import { createServer } from 'node:http';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve, extname } from 'node:path';
 
+const pageId = process.argv[3] || '01_upload_raw_files';
+assert.ok(['01_upload_raw_files', '02_templates'].includes(pageId));
+const templates = pageId === '02_templates';
+const webhookPath = (operation, test = false) => `/webhook${test ? '-test' : ''}/${templates ? 'templates/' : ''}${operation}`;
 const root = resolve(new URL('../../', import.meta.url).pathname);
 const files = new Map([['existing.pdf', { name: 'existing.pdf', size: 3, revision: 'v1' }]]);
 let pageStatus = 'development', statusError = false, statusReads = 0;
@@ -19,12 +23,16 @@ const server = createServer(async (req, res) => {
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Cache-Control', 'no-store');
       res.statusCode = statusError ? 503 : 200;
-      res.end(JSON.stringify({'01_upload_raw_files': pageStatus}));
+      res.end(JSON.stringify({[pageId]: pageStatus}));
       return;
     }
     if (path === '/km/config.ini') {
       res.end(`KM_WEBHOOK_BASE_URL=http://127.0.0.1:${server.address().port}/webhook/\n` +
-        ['LIST', 'UPLOAD', 'DELETE'].map((op) => `KM_FILES_${op}_WEBHOOK_PATH=${configured ? op.toLowerCase() : ''}`).join('\n'));
+        ['KM_FILES', 'KM_TEMPLATES'].flatMap((prefix) => ['LIST', 'UPLOAD', 'DELETE'].map((op) => {
+          const selected = prefix === (templates ? 'KM_TEMPLATES' : 'KM_FILES');
+          const path = `${prefix === 'KM_TEMPLATES' ? 'templates/' : ''}${op.toLowerCase()}`;
+          return `${prefix}_${op}_WEBHOOK_PATH=${!selected || configured ? path : ''}`;
+        })).join('\n'));
       return;
     }
     if (/^\/webhook(?:-test)?\//.test(path)) {
@@ -134,12 +142,12 @@ try {
       return originalInterval(fn, delay === 30000 ? 100 : delay, ...args);
     };
   `});
-  await call('Page.navigate', { url: `${origin}/km/pages/01_upload_raw_files.html` });
+  await call('Page.navigate', { url: `${origin}/km/pages/${pageId}.html` });
   await wait(`document.getElementById('webhook-list-toggle') && !document.getElementById('webhook-list-toggle').disabled`);
   assert.equal(await evaluate(`document.getElementById('webhook-list-toggle').getAttribute('aria-checked')`), 'false');
   assert.match(await text('server-files'), /existing.pdf/);
   await wait(`document.querySelector('.km-logo').complete && document.querySelector('.km-logo').naturalWidth > 0`);
-  const badgeSelector = '[data-km-status-page="01_upload_raw_files"]';
+  const badgeSelector = `[data-km-status-page="${pageId}"]`;
   await wait(`document.querySelector(${JSON.stringify(badgeSelector)}).dataset.kmStatus === 'development'`);
   assert.equal(await evaluate('window.kmStatusRefreshInterval'), 30000);
   pageStatus = 'validated';
@@ -214,7 +222,7 @@ try {
   assert.doesNotMatch(await text('server-files'), /existing.pdf/);
   await click('webhook-list-toggle');
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
-  assert.equal(calls.at(-1), '/webhook-test/list');
+  assert.equal(calls.at(-1), webhookPath('list', true));
   assert.equal(await evaluate(`document.getElementById('webhook-upload-toggle').getAttribute('aria-checked')`), 'false');
   const beforeUploadToggle = calls.length;
   await click('webhook-upload-toggle');
@@ -223,18 +231,18 @@ try {
   // Upload test must also work while list uses production.
   await click('webhook-list-toggle');
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
-  assert.equal(calls.at(-1), '/webhook/list');
+  assert.equal(calls.at(-1), webhookPath('list'));
   await add(['test.pdf']);
   await click('send-files');
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
-  assert.equal(uploads.at(-1).path, '/webhook-test/upload');
-  assert.equal(calls.at(-1), '/webhook/list');
+  assert.equal(uploads.at(-1).path, webhookPath('upload', true));
+  assert.equal(calls.at(-1), webhookPath('list'));
   await click('webhook-list-toggle');
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   await evaluate(`document.querySelector('#server-files button').click()`);
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
-  assert.equal(calls.filter((p) => p.endsWith('/delete')).at(-1), '/webhook/delete');
-  assert.equal(calls.at(-1), '/webhook-test/list');
+  assert.equal(calls.filter((p) => p.endsWith('/delete')).at(-1), webhookPath('delete'));
+  assert.equal(calls.at(-1), webhookPath('list', true));
   await click('webhook-list-toggle');
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   const beforeDeleteToggle = calls.length;
@@ -245,8 +253,8 @@ try {
   assert.equal(await evaluate(`document.getElementById('webhook-delete-toggle').getAttribute('aria-checked')`), 'true');
   await evaluate(`document.querySelector('#server-files button').click()`);
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
-  assert.equal(calls.filter((p) => p.endsWith('/delete')).at(-1), '/webhook-test/delete');
-  assert.equal(calls.at(-1), '/webhook/list');
+  assert.equal(calls.filter((p) => p.endsWith('/delete')).at(-1), webhookPath('delete', true));
+  assert.equal(calls.at(-1), webhookPath('list'));
 
   await click('new-batch');
   await add(['photo.PNG', 'other.zip']);
@@ -266,7 +274,7 @@ try {
     assert.equal(layout.sameRow, width >= 768, `panel order at ${width}`);
     assert.equal(layout.overflow || layout.contentOverflow, false, `overflow at ${width}: ${JSON.stringify(layout)} ${await evaluate('JSON.stringify({inner:innerWidth,doc:document.documentElement.scrollWidth,main:document.querySelector("main").scrollWidth,client:document.querySelector("main").clientWidth})')}`);
     const shot = await call('Page.captureScreenshot', { format: 'png' });
-    await writeFile(`/tmp/km-upload-${width}.png`, Buffer.from(shot.data, 'base64'));
+    await writeFile(`/tmp/km-${templates ? 'templates' : 'upload'}-${width}.png`, Buffer.from(shot.data, 'base64'));
   }
   await evaluate(`document.getElementById('choose-files').focus()`);
   await call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
@@ -288,10 +296,11 @@ try {
     await new Promise(done => setTimeout(done, 30));
   }
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
-  assert.equal(calls.at(-1), '/webhook/list');
+  assert.equal(calls.at(-1), webhookPath('list'));
   for (const operation of ['list', 'upload', 'delete']) {
     assert.equal(await evaluate(`document.getElementById('webhook-${operation}-toggle').getAttribute('aria-checked')`), 'false');
   }
+  const callsBeforeMissingConfig = calls.length;
   configured = false;
   await call('Page.reload');
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
@@ -300,8 +309,10 @@ try {
   assert.match(await text('selected-files'), /local.txt/);
   assert.equal(await evaluate(`document.getElementById('send-files').disabled`), true);
   assert.equal(await evaluate(`document.getElementById('refresh-files').disabled`), true);
+  assert.equal(calls.length, callsBeforeMissingConfig, 'Missing configuration must never fall back to the other deposit');
+  assert.ok(calls.every(path => ['list', 'upload', 'delete'].some(op => path === webhookPath(op) || path === webhookPath(op, true))), 'Requests must only use this deposit’s endpoints');
   assert.equal(browserErrors.length, 0, JSON.stringify(browserErrors));
-  console.log('Browser checks passed: sequential uploads, overwrite revisions, conflicts, retry, uncertain response, delete, toggle, icons, keyboard, configuration and five screen widths.');
+  console.log(pageId + ' browser checks passed: sequential uploads, overwrite revisions, conflicts, retry, uncertain response, delete, toggle, icons, keyboard, configuration and five screen widths.');
 } finally {
   await cdp('Target.closeTarget', { targetId });
   socket.close();

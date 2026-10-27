@@ -15,6 +15,7 @@ l'URL WebSocket `DevTools listening on…` affichée dans le terminal :
 ```sh
 google-chrome --headless --remote-debugging-port=0 --user-data-dir=/tmp/km-upload-browser-tests about:blank
 node UI_chat/km/tests/upload-browser.mjs 'ws://127.0.0.1:PORT/devtools/browser/IDENTIFIANT'
+node UI_chat/km/tests/upload-browser.mjs 'ws://127.0.0.1:PORT/devtools/browser/IDENTIFIANT' 02_templates
 ```
 
 Adapter le chemin du navigateur si nécessaire. Le test sert les fichiers statiques
@@ -32,6 +33,9 @@ de suppression avec nom incorrect (résultat incertain), trois bascules indépen
 liste/upload/delete, suppression test avec liste production et inversement,
 configuration absente, icônes de repli, clavier et largeurs 1 920, 1 366, 1 100,
 768 et 390 px. Les captures sont écrites sous `/tmp/km-upload-<largeur>.png`.
+La même suite couvre les deux pages avec des chemins distincts et vérifie
+l'absence de repli vers les webhooks de l'autre dépôt, même lorsque ceux-ci sont
+configurés. Les captures templates sont sous `/tmp/km-templates-<largeur>.png`.
 La recette réelle EC2 reste à effectuer après raccordement des workflows ; les
 tests locaux ne prouvent pas l'atomicité du contrôle des révisions dans n8n.
 
@@ -53,10 +57,11 @@ HTTP locales utilisent les IP du réseau de test (accès depuis l'hôte requis).
 Les conteneurs et le réseau sont supprimés à la fin ; les deux images de test
 restent disponibles pour une nouvelle exécution.
 
-Il vérifie les configurations Nginx, 29 routes (accueil, modèle, onze pages et
+Il vérifie les configurations Nginx, les routes (accueil, modèle, douze pages et
 assets) directement et via le proxy, les 404, le montage en lecture seule,
 `Cache-Control: no-store`, l'exclusion des docs/tests/PDF et l'absence de KM dans
-l'image commune. Il vérifie aussi la modification de configuration sans
+l'image commune. Les routes sont découvertes automatiquement depuis les fichiers.
+Il vérifie aussi la modification de configuration sans
 reconstruction, le healthcheck, puis recrée KM avec une autre IP et vérifie la
 récupération du proxy sans le redémarrer. Les services habituels du projet ne
 sont ni démarrés ni modifiés par ce script.

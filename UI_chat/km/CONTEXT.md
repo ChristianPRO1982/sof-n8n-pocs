@@ -13,7 +13,7 @@ routes, clés de configuration et futurs webhooks.
 - `config.ini` : base commune et trois chemins de webhooks KM. Les chemins
   restent vides tant que les workflows ne sont pas raccordés.
 - [docs/README.md](docs/README.md) : vue d'ensemble fonctionnelle, circulation,
-  correspondance des onze fiches avec les pages HTML et recette cible.
+  correspondance des douze fiches avec les pages HTML et recette cible.
 - [docs/Poc_n8n.pdf](docs/Poc_n8n.pdf) : référence fonctionnelle à lire avec la
   fiche de l'étape concernée avant d'implémenter son traitement.
 
@@ -38,9 +38,10 @@ sont en HTML/CSS/JavaScript natifs ; n8n porte l'orchestration et les traitement
 métier. Aucun framework front ni nouveau service n'est nécessaire.
 
 À cette étape, `index.html` explique les cinq pastilles de développement.
-Le dépôt `pages/01_upload_raw_files.html` est développé côté navigateur et en
-statut `development` ; les dix autres écrans restent provisoires (« Contenu à
-venir »). Les workflows n8n ne sont pas implémentés et leurs chemins restent
+Le dépôt `pages/01_upload_raw_files.html` et la gestion des templates
+`pages/02_templates.html` sont développés côté navigateur ; les dix autres
+écrans restent provisoires (« Contenu à venir »). Les statuts courants sont
+définis dans `statuses.json`. Les workflows n8n ne sont pas implémentés et leurs chemins restent
 vides. Aucun succès n'est simulé sans réponse serveur conforme.
 
 ## Gabarit et ajout d'une page
@@ -94,8 +95,9 @@ de contrôles automatiques ou des états d'exécution n8n.
 | `validated` | Vert | Validé |
 
 L'accueil affiche l'émoji 🏠 à la place d'une pastille dans le menu général et
-le bandeau ; il ne porte pas de statut de développement. Le dépôt est en
-`development`, les dix autres étapes restent en `not_started`.
+le bandeau ; il ne porte pas de statut de développement. Consulter
+`statuses.json` pour les statuts courants. La nouvelle page `02_templates`
+est en `development`.
 Un statut absent ou inconnu (notamment le modèle non enregistré) utilise
 `not_started`. Les libellés sont centralisés dans `statuses`, les couleurs dans
 `assets/km.css` et le rendu dans `statusBadge`. Les pastilles ont une infobulle
@@ -130,6 +132,27 @@ Le retour au mode ordinateur conserve le pourcentage mémorisé.
 Le menu et le corps défilent indépendamment, le bandeau reste visible. Les
 éléments de navigation sont accessibles au clavier et les animations respectent
 la préférence de réduction des mouvements.
+
+## Gestion des templates
+
+Par décision utilisateur, `pages/02_templates.html` est placée dans le registre
+entre `01_processed_files` et `02_format_controls`, avec le titre « Templates »
+et le statut `development`. Elle reprend toutes les fonctions du dépôt des
+sources : liste, sélection multiformat, accord de remplacement, lot séquentiel,
+reprise manuelle, suppression et trois bascules test indépendantes.
+
+Les styles `km-upload.css`, le contrôleur `km-upload.js` et le module API
+`km-upload-api.js` sont mutualisés. L'identifiant de page sélectionne explicitement
+le préfixe `KM_TEMPLATES` ou `KM_FILES`. La fonction `endpoint` garde `KM_FILES`
+par défaut et accepte le préfixe en quatrième argument. Aucun repli entre les
+deux configurations n'est permis.
+
+La base `KM_WEBHOOK_BASE_URL` reste commune ; les trois nouvelles clés
+`KM_TEMPLATES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH` de `config.ini` sont vides.
+Les contrats, délais et confirmations sont identiques au dépôt des sources.
+Voir [docs/02_templates.md](docs/02_templates.md). Aucun stockage templates n'est
+créé ; les workflows et la consommation des templates restent à définir.
+Les tests locaux simulés couvrent les deux pages et l'isolation des webhooks.
 
 ## Chaîne cible
 

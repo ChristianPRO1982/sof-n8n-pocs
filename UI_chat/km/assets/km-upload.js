@@ -1,5 +1,12 @@
 import { parseConfig, endpoint, request, validFile, iconName, imageBaseURL } from './km-upload-api.js';
 
+const endpointPrefix = {
+  '01_upload_raw_files': 'KM_FILES',
+  '02_templates': 'KM_TEMPLATES',
+}[document.body.dataset.kmPage];
+if (!endpointPrefix) throw new Error('Page de dépôt inconnue.');
+const serviceEndpoint = (operation) => endpoint(state.config, operation, state.test[operation], endpointPrefix);
+
 const $ = (id) => document.getElementById(id);
 const ui = Object.fromEntries(['webhook-list-toggle', 'webhook-list-toggle-image', 'webhook-upload-toggle', 'webhook-upload-toggle-image',
   'webhook-delete-toggle', 'webhook-delete-toggle-image', 'upload-notice',
@@ -47,7 +54,7 @@ function button(text, action, name, danger = false) {
   return result;
 }
 function configured(operation) {
-  try { endpoint(state.config, operation, state.test[operation]); return true; } catch { return false; }
+  try { serviceEndpoint(operation); return true; } catch { return false; }
 }
 function duplicates() {
   const names = new Set();
@@ -123,7 +130,7 @@ async function refresh() {
   ui['server-state'].textContent = 'Chargement des fichiers…';
   render();
   try {
-    const payload = await request(endpoint(state.config, 'list', state.test.list), {}, (data) =>
+    const payload = await request(serviceEndpoint('list'), {}, (data) =>
       Array.isArray(data.files) && data.files.every(validFile) && new Set(data.files.map((file) => file.name)).size === data.files.length);
     state.files = payload.files;
     state.ready = true;
@@ -170,7 +177,7 @@ async function sendBatch() {
       body.append('overwrite', String(approved.has(item.file.name)));
       if (approved.has(item.file.name)) body.append('expected_revision', approved.get(item.file.name));
       try {
-        await request(endpoint(state.config, 'upload', state.test.upload), { method: 'POST', body },
+        await request(serviceEndpoint('upload'), { method: 'POST', body },
           (data) => data.file?.name === item.file.name, 120000);
         item.status = 'success';
       } catch (error) {
@@ -198,7 +205,7 @@ async function deleteFile(file) {
   let confirmed = false;
   let errorMessage = '';
   try {
-    await request(endpoint(state.config, 'delete', state.test.delete), {
+    await request(serviceEndpoint('delete'), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: file.name, expected_revision: file.revision }),
     }, (data) => data.name === file.name);
