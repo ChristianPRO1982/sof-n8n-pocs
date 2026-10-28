@@ -1,13 +1,15 @@
-# 02_templates — Gestion des templates
+# 00a_templates — Gestion des templates
 
-**Page associée :** [02_templates](../pages/02_templates.html).
+**Page associée :** [00a_templates](../pages/00a_templates.html).
 **État :** interface développée, statut `development` ; raccordement n8n à réaliser.
 
 ## Objectif et provenance
 
 **Décision utilisateur :** gérer les fichiers templates avec les mêmes fonctions
-que le [dépôt des sources](01_upload_raw_files.md), via des webhooks distincts.
-La page reste entre `01_processed_files` et `02_format_controls` dans le menu.
+que le [dépôt des sources](01a_upload_files.md), via des webhooks distincts.
+La page est placée juste après l’accueil, avant les pages historiques
+`00b_upload_legacy_files` et `00c_processed_legacy_files`, puis l’entrée standard
+`01a_upload_files` et `01b_processed_files`.
 Le dépôt confirme le stockage du template ; son utilisation dans les contrôles
 ou les traitements suivants n'est pas implémentée par cet écran.
 
@@ -50,7 +52,7 @@ indisponibles et un message l'indique. Ne mettre aucun secret dans cette configu
 ## Contrats d'échange
 
 Les contrats et règles de confirmation sont identiques à ceux de la
-[fiche du dépôt](01_upload_raw_files.md), appliqués aux seuls templates :
+[fiche du dépôt](01a_upload_files.md), appliqués aux seuls templates :
 
 | Opération | Requête | Confirmation attendue |
 | --- | --- | --- |
@@ -67,8 +69,12 @@ signale un résultat incertain à vérifier avant toute nouvelle tentative.
 
 ## Stockage et traitements ultérieurs
 
+La [préparation historique](00b_upload_legacy_files.md) devra employer ces modèles
+pour produire les nouveaux documents, avec traçabilité des templates et versions.
+Cette consommation reste à développer ; déposer un template ne la déclenche pas.
+
 Le stockage physique et les workflows templates restent à définir. Aucun dossier
-métier `02_templates` n'est créé ni supposé existant sur EC2. Les workflows devront
+métier `00a_templates` n'est créé ni supposé existant sur EC2. Les workflows devront
 isoler les templates des sources et viser le même stockage templates en test et
 production. La sélection, le versionnement métier et la consommation des templates
 par les contrôles restent à définir avec les traitements concernés.
@@ -82,4 +88,4 @@ Ils vérifient les clés dédiées, l'absence de repli vers les sources lorsque 
 configuration templates est vide et la compatibilité du dépôt des sources.
 La recette avec les workflows réels reste à réaliser après raccordement.
 
-[Vue d'ensemble](README.md) · [Dépôt des sources](01_upload_raw_files.md) · [Contrôles de format](02_format_controls.md)
+[Vue d'ensemble](README.md) · [Dépôt des sources](01a_upload_files.md) · [Contrôles de format](02_format_controls.md)

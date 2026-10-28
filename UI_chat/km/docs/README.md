@@ -1,10 +1,12 @@
 # Chaîne documentaire Knowledge Manager — `km`
 
-Cette documentation décrit le fonctionnement cible du POC. Les interfaces de dépôt
-des sources et de gestion des templates sont développées ; les dix autres pages
-restent provisoires. Les contrats n8n du
-dépôt sont définis côté front, mais les chemins de webhooks restent vides et les
-workflows ne sont pas créés. Aucun traitement métier ni connecteur n'est implémenté.
+Cette documentation décrit le fonctionnement cible du POC et ses quatorze pages.
+Les interfaces de dépôt des sources, des templates et des historiques sont
+développées ; les onze autres pages sont provisoires ou descriptives. Les
+contrats des trois dépôts sont définis côté front. Les clés des sources et
+templates sont renseignées localement ; leurs workflows distants ne sont pas
+certifiés par ces fiches. Les clés historiques restent vides. La préparation,
+le découpage, le transfert et l’archivage des historiques restent à développer.
 
 ## Référence et périmètre
 
@@ -22,7 +24,7 @@ la publication du Markdown et de ses métadonnées dans AI Ready. Le titre du PD
 mentionne Sophia ; aucun contrat d'intégration avec Sophia n'y est fourni et
 aucun raccordement n'est supposé dans ces fiches.
 
-**Décision utilisateur :** le [dépôt des sources](01_upload_raw_files.md) est
+**Décision utilisateur :** le [dépôt des sources](01a_upload_files.md) est
 désormais spécifié pour tous types de fichiers, avec sélection multiple,
 glisser-déposer, liste préparatoire et bouton « Accord » validant le lot entier,
 y compris les écrasements annoncés. Les envois sont séquentiels avec confirmation
@@ -36,19 +38,39 @@ le toggle « N8N - webhook-test » (images PNG, OFF à chaque arrivée).
 Les fichiers à uploader et déjà uploadés sont précédés d'une icône PNG locale
 issue de `../assets/icons/`, choisie selon leur extension (Word, Excel,
 PowerPoint, PDF ou image), avec `file.png` comme icône générique de repli.
-La [fiche de dépôt](01_upload_raw_files.md) précise la correspondance commune
+La [fiche de dépôt](01a_upload_files.md) précise la correspondance commune
 aux listes et les critères de vérification.
 
 Ce dépôt multiformat ne garantit pas la compatibilité avec les traitements
 suivants : la chaîne de référence du PDF reste fondée sur un Word relu. Le
-découpage de documents volumineux en connaissances atomiques reste une extension
-hors de cette chaîne. La mention « Template
+découpage des historiques en documents basés sur les nouveaux templates constitue
+une extension en amont de cette chaîne, décidée par l’utilisateur et encore à
+développer côté traitement. La mention « Template
 MVP » dans le jeu de test du PDF désigne un livrable attendu ; le projet reste
 un POC et ne constitue pas un engagement de périmètre MVP.
 
 Les fiches distinguent les exigences du **PDF**, les **décisions utilisateur**
 et les **propositions INNO/interface**. Une proposition de vue ou d'action ne
 constitue ni un contrat API arrêté ni une fonctionnalité déjà disponible.
+
+## Préparation des fichiers historiques
+
+**Décision utilisateur :** [00b_upload_legacy_files](00b_upload_legacy_files.md)
+accueille les anciens documents hors templates. La préparation cible identifie
+les templates, découpe le contenu et produit un ou plusieurs fichiers aux nouveaux
+formats, puis les transfère automatiquement dans l’entrée standard `01a_upload_files`.
+Chaque dérivé suit ensuite les contrôles et validations habituels.
+
+La source rejoint [00c_processed_legacy_files](00c_processed_legacy_files.md)
+uniquement après préparation réussie, enregistrement des documents produits et
+transfert réussi de tous les dérivés. Un échec ou résultat partiel conserve la
+source en attente. Conserver les liens entre source, passages utilisés, dérivés
+et templates/version employés ; journaliser les résultats et erreurs.
+
+Seul le dépôt navigateur est développé ici ; `00c` explique la future consultation
+des sources archivées et de leurs dérivés. Aucun découpage, transfert, archivage,
+stockage historique ou workflow n8n n’est créé. Les règles et formats restent à
+préciser dans les deux fiches. Le parcours Word relu du PDF reste la référence.
 
 ## Parcours et circulation
 
@@ -58,9 +80,19 @@ vérification des écarts (AUTO 3) précède le rapport et les métadonnées (AU
 
 ```mermaid
 flowchart TD
-    raw["01_upload_raw_files : Word relu"] --> intake["Prise en charge initiale et résultats enregistrés"]
+    templates["00a_templates : modèles"] -.-> preparation
+    legacy["00b_upload_legacy_files : historique"] --> preparation["Préparation et découpage selon les templates"]
+    preparation --> transfer["Enregistrement des documents produits et transfert automatique"]
+    transfer -->|Réussite complète| raw
+    transfer -->|Réussite complète| legacyarchive["00c_processed_legacy_files : archive historique"]
+    preparation -->|Échec ou résultat partiel| pending["Source historique conservée en attente"]
+    transfer -->|Échec ou résultat partiel| pending
+    preparation -.-> journal
+    transfer -.-> journal
+    legacyarchive -.-> journal
+    raw["01a_upload_files : Word relu"] --> intake["Prise en charge initiale et résultats enregistrés"]
     intake --> controls["02_format_controls"]
-    intake --> archive["01_processed_files : archive source"]
+    intake --> archive["01b_processed_files : archive source"]
     controls --> deltas["03_deltas"]
     deltas --> report["04_reports : rapport consolidé"]
     report -->|Blocage| author["Retour rédacteur et correction"]
@@ -91,7 +123,7 @@ refus restent à détailler ; une révision du contenu peut nécessiter de nouve
 contrôles. Le journal doit couvrir toutes les étapes, même lorsque chaque lien
 n'est pas dessiné.
 
-**Décision utilisateur :** `01_processed_files` est une branche d'archivage des
+**Décision utilisateur :** `01b_processed_files` est une branche d'archivage des
 sources après prise en charge initiale et enregistrement des résultats associés.
 Le déplacement n'attend ni la validation métier ni AI Ready. La définition
 technique de cette prise en charge et la sécurisation du déplacement restent à
@@ -101,13 +133,19 @@ préciser. Ce dossier ne certifie donc aucune validation du contenu.
 
 Les noms de stockage sont conservés exactement, notamment les deux préfixes `01`
 et la casse de `09_AI_Ready`. Les fichiers HTML et Markdown ont des noms en
-minuscules.
+minuscules. La nouvelle codification concerne les pages, leurs identifiants et
+les fiches : `00a_templates`, `00b_upload_legacy_files`,
+`00c_processed_legacy_files`, `01a_upload_files`, `01b_processed_files`. Les
+chemins de stockage existants restent inchangés : `01_upload_raw_files` pour
+le dépôt et `01_processed_files` pour les sources prises en charge.
 
 | Dossier de traitement | Fiche | Page HTML associée |
 | --- | --- | --- |
-| `01_upload_raw_files` | [Dépôt des sources](01_upload_raw_files.md) | [01_upload_raw_files](../pages/01_upload_raw_files.html) |
-| `01_processed_files` | [Sources prises en charge](01_processed_files.md) | [01_processed_files](../pages/01_processed_files.html) |
-| Aucun dossier défini (`02_templates`) | [Templates](02_templates.md) | [02_templates](../pages/02_templates.html) |
+| Aucun dossier défini (`00a_templates`) | [Templates](00a_templates.md) | [00a_templates](../pages/00a_templates.html) |
+| Aucun dossier défini (`00b_upload_legacy_files`) | [Dépôt historique](00b_upload_legacy_files.md) | [00b_upload_legacy_files](../pages/00b_upload_legacy_files.html) |
+| Aucun dossier défini (`00c_processed_legacy_files`) | [Historiques traités](00c_processed_legacy_files.md) | [00c_processed_legacy_files](../pages/00c_processed_legacy_files.html) |
+| `01_upload_raw_files` | [Dépôt des sources](01a_upload_files.md) | [01a_upload_files](../pages/01a_upload_files.html) |
+| `01_processed_files` | [Sources prises en charge](01b_processed_files.md) | [01b_processed_files](../pages/01b_processed_files.html) |
 | `02_format_controls` | [Contrôles de format](02_format_controls.md) | [02_format_controls](../pages/02_format_controls.html) |
 | `03_deltas` | [Vérification des écarts](03_deltas.md) | [03_deltas](../pages/03_deltas.html) |
 | `04_reports` | [Rapport consolidé](04_reports.md) | [04_reports](../pages/04_reports.html) |
@@ -118,12 +156,13 @@ minuscules.
 | `09_AI_Ready` | [Publication AI Ready](09_ai_ready.md) | [09_AI_Ready](../pages/09_ai_ready.html) |
 | `10_tracking_journal` | [Journal de suivi](10_tracking_journal.md) | [10_tracking_journal](../pages/10_tracking_journal.html) |
 
-**Décision utilisateur :** la page [02_templates](02_templates.md) est placée
-entre `01_processed_files` et `02_format_controls` dans le menu. Elle reprend les
+**Décision utilisateur :** la page [00a_templates](00a_templates.md) est placée
+juste après l’accueil, suivie de `00b_upload_legacy_files`,
+`00c_processed_legacy_files`, `01a_upload_files` puis `01b_processed_files`. Elle reprend les
 fonctions du dépôt avec trois clés `KM_TEMPLATES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH`
-distinctes dans `config.ini`, initialement vides. Son stockage et ses workflows
-restent à définir ; la consommation des templates ne modifie pas encore le
-parcours métier représenté ci-dessus.
+distinctes dans `config.ini`. Son stockage et ses workflows restent à définir ;
+la consommation des templates par la préparation historique est une cible,
+non un traitement implémenté.
 
 ## Adaptation INNO et responsabilités
 
@@ -139,7 +178,7 @@ n8n sous `/home/node/.n8n-files/km/` avec le montage Compose existant.
 **Proposition INNO/interface :** représenter les échanges et la validation par
 des écrans internes ou des simulations clairement signalées. Le mapping des
 archives de versions, du glossaire et des référentiels doit encore être défini ;
-ne pas les confondre avec l'archive des sources `01_processed_files`.
+ne pas les confondre avec l'archive des sources `01b_processed_files`.
 
 n8n doit porter l'orchestration, les accès aux fichiers, les contrôles, les
 appels LLM et la publication. Les interfaces HTML/CSS/JS doivent présenter les
@@ -187,14 +226,20 @@ livraison effective n'est pas établie par le PDF.
   remplacement autorisé, suppression), renseigner leurs chemins et fixer les
   limites techniques et les règles serveur de nommage. Les règles
   fonctionnelles de sélection, de doublons et d'accord sont précisées dans
-  la [fiche de dépôt](01_upload_raw_files.md).
+  la [fiche de dépôt](01a_upload_files.md).
 
 ## Recette cible
+
+Pour l’extension historique : transformer une source en plusieurs documents
+rattachés aux passages sources et aux versions de templates, vérifier leur
+transfert vers l’entrée standard, puis l’archivage de la source. Provoquer un
+échec ou transfert partiel : la source doit rester en attente. Ces traitements
+ne sont pas implémentés par les deux nouveaux écrans.
 
 Ces scénarios reprennent la [page 3 du PDF](Poc_n8n.pdf#page=3) ; ils sont à
 exécuter après développement, pas des tests déjà réussis.
 
-La [recette future du dépôt](01_upload_raw_files.md#critères-de-vérification--recette-future)
+La [recette future du dépôt](01a_upload_files.md#critères-de-vérification--recette-future)
 complète ces scénarios : multisélection, disposition responsive, accord global,
 doublons, envoi séquentiel, erreurs n8n, actualisation et suppression.
 

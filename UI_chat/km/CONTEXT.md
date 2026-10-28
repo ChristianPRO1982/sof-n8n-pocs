@@ -10,10 +10,10 @@ routes, clés de configuration et futurs webhooks.
 - `../../Dockerfile.km_front`, `../../nginx/km.conf`,
   `../../Dockerfile.nginx_front` et `../../docker-compose.yml` : images, routage
   et montage en lecture seule de la configuration KM.
-- `config.ini` : base commune et trois chemins de webhooks KM. Les chemins
-  restent vides tant que les workflows ne sont pas raccordés.
+- `config.ini` : base commune et trois chemins par dépôt (sources, templates,
+  historiques). Les chemins historiques restent vides avant raccordement.
 - [docs/README.md](docs/README.md) : vue d'ensemble fonctionnelle, circulation,
-  correspondance des douze fiches avec les pages HTML et recette cible.
+  correspondance des quatorze fiches avec les pages HTML et recette cible.
 - [docs/Poc_n8n.pdf](docs/Poc_n8n.pdf) : référence fonctionnelle à lire avec la
   fiche de l'étape concernée avant d'implémenter son traitement.
 
@@ -37,12 +37,15 @@ Le module est indépendant des autres projets, avec n8n mutualisé. Les interfac
 sont en HTML/CSS/JavaScript natifs ; n8n porte l'orchestration et les traitements
 métier. Aucun framework front ni nouveau service n'est nécessaire.
 
-À cette étape, `index.html` explique les cinq pastilles de développement.
-Le dépôt `pages/01_upload_raw_files.html` et la gestion des templates
-`pages/02_templates.html` sont développés côté navigateur ; les dix autres
-écrans restent provisoires (« Contenu à venir »). Les statuts courants sont
-définis dans `statuses.json`. Les workflows n8n ne sont pas implémentés et leurs chemins restent
-vides. Aucun succès n'est simulé sans réponse serveur conforme.
+À cette étape, `index.html` présente un résumé des quatorze pages dans l’ordre du
+menu, puis explique les cinq pastilles de développement.
+Les trois dépôts `pages/01a_upload_files.html`, `pages/00a_templates.html` et
+`pages/00b_upload_legacy_files.html` sont développés côté navigateur ; les onze
+autres écrans sont provisoires ou descriptifs, dont `00c_processed_legacy_files`.
+Les statuts courants sont définis dans `statuses.json`. Les chemins des sources
+et templates sont renseignés localement ; l’export n8n des sources est présent
+mais ne certifie pas l’état distant. Aucun workflow historique n’est implémenté ;
+ses chemins restent vides. Aucun succès n’est simulé sans réponse conforme.
 
 ## Gabarit et ajout d'une page
 
@@ -51,7 +54,7 @@ vides. Aucun succès n'est simulé sans réponse serveur conforme.
   `/km/template.html` mais n'est pas une étape de la chaîne.
 - `assets/km.css` : styles partagés inspirés de `../chats/chat3.html` (palette,
   typographie, fonds clairs et panneaux arrondis), sans limiter la largeur du site.
-- `assets/km.js` : registre `pages` des identifiants, libellés exacts des dossiers,
+- `assets/km.js` : registre `pages` des identifiants et libellés des pages,
   titres et destinations ; construction de la navigation et du bandeau communs.
 
 Pour ajouter une page :
@@ -74,7 +77,7 @@ fonctionnent aussi depuis les pages imbriquées. Le logo Sofinco est embarqué
 dans `assets/logo-sofinco.png` et chargé localement par le script partagé. Le gabarit ne charge pas de données
 métier ; seul le module de dépôt ajoute les appels n8n lorsqu’ils sont configurés.
 `assets/km-upload.js`, `assets/km-upload-api.js` et `assets/km-upload.css` sont
-propres à cette page ; les icônes PNG sont dans `assets/icons/`.
+partagés par les trois pages de dépôt ; les icônes PNG sont dans `assets/icons/`.
 
 ### Pastilles de développement
 
@@ -96,8 +99,9 @@ de contrôles automatiques ou des états d'exécution n8n.
 
 L'accueil affiche l'émoji 🏠 à la place d'une pastille dans le menu général et
 le bandeau ; il ne porte pas de statut de développement. Consulter
-`statuses.json` pour les statuts courants. La nouvelle page `02_templates`
-est en `development`.
+`statuses.json` pour les statuts courants. Le dépôt historique
+`00b_upload_legacy_files` est initialisé en `development` et la page descriptive
+`00c_processed_legacy_files` en `not_started`.
 Un statut absent ou inconnu (notamment le modèle non enregistré) utilise
 `not_started`. Les libellés sont centralisés dans `statuses`, les couleurs dans
 `assets/km.css` et le rendu dans `statusBadge`. Les pastilles ont une infobulle
@@ -135,30 +139,55 @@ la préférence de réduction des mouvements.
 
 ## Gestion des templates
 
-Par décision utilisateur, `pages/02_templates.html` est placée dans le registre
-entre `01_processed_files` et `02_format_controls`, avec le titre « Templates »
-et le statut `development`. Elle reprend toutes les fonctions du dépôt des
+Par décision utilisateur, `pages/00a_templates.html` est placée dans le registre
+juste après l’accueil, avant `00b_upload_legacy_files`, `00c_processed_legacy_files`,
+`01a_upload_files` puis `01b_processed_files`, avec le titre « Templates ».
+Son statut courant est défini dans `statuses.json`. Elle reprend toutes les fonctions du dépôt des
 sources : liste, sélection multiformat, accord de remplacement, lot séquentiel,
 reprise manuelle, suppression et trois bascules test indépendantes.
 
 Les styles `km-upload.css`, le contrôleur `km-upload.js` et le module API
 `km-upload-api.js` sont mutualisés. L'identifiant de page sélectionne explicitement
-le préfixe `KM_TEMPLATES` ou `KM_FILES`. La fonction `endpoint` garde `KM_FILES`
+le préfixe `KM_TEMPLATES`, `KM_LEGACY_FILES` ou `KM_FILES`. La fonction `endpoint` garde `KM_FILES`
 par défaut et accepte le préfixe en quatrième argument. Aucun repli entre les
-deux configurations n'est permis.
+trois configurations n'est permis.
 
 La base `KM_WEBHOOK_BASE_URL` reste commune ; les trois nouvelles clés
-`KM_TEMPLATES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH` de `config.ini` sont vides.
+`KM_TEMPLATES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH` de `config.ini` sont renseignées
+localement, sans certification de l’état des workflows distants.
 Les contrats, délais et confirmations sont identiques au dépôt des sources.
-Voir [docs/02_templates.md](docs/02_templates.md). Aucun stockage templates n'est
+Voir [docs/00a_templates.md](docs/00a_templates.md). Aucun stockage templates n'est
 créé ; les workflows et la consommation des templates restent à définir.
-Les tests locaux simulés couvrent les deux pages et l'isolation des webhooks.
+La suite de tests avec réponses simulées couvre les trois dépôts et l’isolation
+des webhooks ; consulter les résultats de son exécution pour l’état vérifié.
+
+## Préparation des fichiers historiques
+
+Le dépôt `00b_upload_legacy_files` reprend les fonctions du dépôt standard avec
+les clés dédiées `KM_LEGACY_FILES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH`, initialement
+vides, sans repli vers sources ou templates. `00c_processed_legacy_files` décrit
+la future consultation des sources historiques archivées et de leurs dérivés,
+sans données simulées ni action de traitement.
+
+Extension décidée par l’utilisateur : historique hors templates → préparation et
+découpage selon les modèles → enregistrement de nouveaux documents → transfert
+automatique dans `01a_upload_files` → contrôles et validations habituels.
+Archiver la source historique seulement après réussite de la préparation,
+enregistrement des dérivés et transfert réussi de tous les documents produits.
+Un échec ou résultat partiel conserve la source en attente. Prévoir les liens
+source/passages/dérivés/templates et leurs versions dans le journal transversal.
+
+Seuls le front et le cadrage sont livrés. Aucun workflow, découpage, génération,
+transfert, archivage ou stockage historique n’est créé ; formats et règles
+restent à définir. Voir [le dépôt historique](docs/00b_upload_legacy_files.md) et
+[les historiques traités](docs/00c_processed_legacy_files.md). Le PDF conserve
+son parcours de référence Word relu ; cette extension intervient en amont.
 
 ## Chaîne cible
 
 ### Dépôt multiformat — interface développée, raccordement n8n à réaliser
 
-La fiche [01_upload_raw_files](docs/01_upload_raw_files.md) décrit la sélection
+La fiche [01a_upload_files](docs/01a_upload_files.md) décrit la sélection
 multiple par glisser-déposer ou bouton, la liste préparatoire (nom, taille,
 retrait individuel) et le bouton « Accord » validant le lot entier. Les doublons
 serveur portent un avertissement d'écrasement ; les conserver dans le lot et
@@ -197,7 +226,8 @@ sans contrôler la taille ni la révision ; la liste conserve une taille entièr
 en octets et une révision non vide.
 Le module utilise `KM_WEBHOOK_BASE_URL` et les trois
 `KM_FILES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH` de `config.ini`. Base commune :
-`http://15.236.66.128/n8n/webhook/` ; chemins laissés vides, aucun workflow créé.
+`http://15.236.66.128/n8n/webhook/` ; chemins sources renseignés localement,
+sans certification de l’état des workflows distants.
 La barre « N8N - test : » propose trois bascules indépendantes « WH - list »,
 « WH - upload » et « WH - delete », utilisant `toggle_blue_off.png`/`toggle_blue_on.png`. Chaque
 bascule remplace `/webhook/` par `/webhook-test/` pour son opération et revient
@@ -214,7 +244,7 @@ recette distante reste à faire. Voir [les tests](tests/README.md).
 
 ### Parcours métier de référence — Word relu
 
-1. Déposer et prendre en charge un Word relu (`01_upload_raw_files`).
+1. Déposer et prendre en charge un Word relu (`01a_upload_files`).
 2. Contrôler format/template sans LLM (`02_format_controls`).
 3. Vérifier les écarts par rapport à une référence avec extraction JSON LLM
    (`03_deltas`), puis consolider le rapport et les orientations (`04_reports`).
@@ -232,7 +262,7 @@ Le journal `10_tracking_journal` suit l'ensemble du parcours, pas seulement sa f
 Les numéros AUTO du PDF ne fixent pas l'ordre métier ; suivre son EPIC et la
 circulation documentée dans [docs/README.md](docs/README.md).
 
-**Décision utilisateur :** `01_processed_files` archive les fichiers sources
+**Décision utilisateur :** `01b_processed_files` archive les fichiers sources
 après leur prise en charge initiale et l'enregistrement des résultats associés,
 sans attendre la validation métier ou AI Ready. Il s'agit d'une branche
 d'archivage, distincte des connaissances validées et des archives de versions
@@ -241,8 +271,9 @@ publiées. La définition technique de cette prise en charge reste à préciser.
 Chaque fiche de `docs/` porte le même nom que sa page HTML et distingue les
 exigences du PDF, les décisions utilisateur et les propositions INNO/interface.
 Les renvois aux pages du PDF permettent de retrouver la source. Les schémas,
-contrats métier et fonctionnalités décrits comme cibles ne sont pas implémentés
-dans n8n ; le contrat du dépôt est désormais attendu par le front.
+contrats métier et fonctionnalités décrits comme cibles ne sont pas certifiés
+par ce dépôt ; les contrats des dépôts sont attendus par le front et les
+traitements historiques ne sont pas implémentés.
 
 Les templates, règles YAML, JSON Schema, vocabulaires, clés JSON finales et
 règle `doc_id` restent à fournir. Les règles de transition `en_validation` et
@@ -252,6 +283,13 @@ développement du registre JavaScript. Ne pas inventer de contrat de workflow à
 partir des noms de dossiers ou d'un état publié du Word.
 
 ## Stockage de traitement sur EC2
+
+La codification des premières pages et fiches est `00a_templates`,
+`00b_upload_legacy_files`, `00c_processed_legacy_files`, `01a_upload_files` et
+`01b_processed_files`, dans cet ordre après l’accueil. Ce renommage ne déplace
+pas les données : les pages de dépôt et d’archive utilisent respectivement les
+dossiers existants `01_upload_raw_files` et `01_processed_files`. Les chemins
+de l’export n8n et les URL de webhooks restent inchangés.
 
 Les onze dossiers fournis existent sous **`/n8n/n8n_files/km/`** sur EC2 :
 

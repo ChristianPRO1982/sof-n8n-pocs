@@ -13,10 +13,10 @@ des règles y est attribuée à Yasmine ; le YAML n'est pas fourni dans le PDF.
 
 ## Entrées
 
-- Word relu pris en charge depuis le [dépôt](01_upload_raw_files.md), avec accès
-  à sa source même si elle a rejoint [l'archive](01_processed_files.md).
+- Word relu pris en charge depuis le [dépôt](01a_upload_files.md), avec accès
+  à sa source même si elle a rejoint [l'archive](01b_processed_files.md).
 - Template et règles de contrôle YAML à fournir. La page
-  [02_templates](02_templates.md) permet de préparer leur dépôt via des webhooks
+  [00a_templates](00a_templates.md) permet de préparer leur dépôt via des webhooks
   dédiés ; leur utilisation par les contrôles reste à définir.
 - Éventuels glossaire et référentiels requis par les règles ; leur contenu n'est
   pas spécifié, même si ces listes sont prévues dans le socle du PDF.

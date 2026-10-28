@@ -35,7 +35,7 @@ prouve pas que la conversion Markdown ou la publication AI Ready a abouti.
 
 L'archive des versions précédentes doit recevoir un emplacement et une règle
 propres, encore à définir. Elle ne doit pas être assimilée au dossier
-[01_processed_files](01_processed_files.md), qui archive les sources prises en
+[01b_processed_files](01b_processed_files.md), qui archive les sources prises en
 charge, avant même leur validation.
 
 ## Interactions humaines et interface prévues

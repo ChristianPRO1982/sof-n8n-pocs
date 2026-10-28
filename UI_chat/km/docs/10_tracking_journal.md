@@ -23,6 +23,13 @@ pas à lui seul le format ou le moteur de persistance du journal.
 contrôles, écarts, rapport, métadonnées, décisions humaines, publication du Word,
 conversion et publication du couple AI Ready.
 
+L’extension historique doit également tracer la réception, la préparation et
+le découpage, les documents dérivés et leurs passages sources/templates/version,
+les transferts vers l’entrée standard et l’archivage de la source. Les échecs et
+transferts partiels restent visibles et ne valent pas réussite complète.
+Voir [le dépôt historique](00b_upload_legacy_files.md) et
+[l’archive historique](00c_processed_legacy_files.md). Ces événements sont cibles.
+
 ## Traitements et sorties
 
 Le journal est **transversal**, même si son dossier porte le préfixe `10`. Il
@@ -69,4 +76,4 @@ exécutions ; horodatage ; contenu des décisions ; visibilité et conservation 
 traitement des erreurs de journalisation ; collecte des mesures LLM ; emplacement
 des versions de workflows et organisation du bilan Go/No Go.
 
-[Vue d'ensemble](README.md) · [Archive des sources](01_processed_files.md) · [AI Ready](09_ai_ready.md)
+[Vue d'ensemble](README.md) · [Archive des sources](01b_processed_files.md) · [AI Ready](09_ai_ready.md)

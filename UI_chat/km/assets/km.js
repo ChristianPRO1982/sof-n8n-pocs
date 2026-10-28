@@ -1,9 +1,11 @@
-// Registry shared by every page. File names are lowercase; labels match storage.
+// Registry shared by every page. File names and labels follow the page nomenclature.
 const pages = [
   { id: "home", label: "Accueil", title: "Accueil", path: "./" },
-  { id: "01_upload_raw_files", label: "01_upload_raw_files", title: "Import des fichiers sources" },
-  { id: "01_processed_files", label: "01_processed_files", title: "Fichiers traités" },
-  { id: "02_templates", label: "02_templates", title: "Templates" },
+  { id: "00a_templates", label: "00a_templates", title: "Templates" },
+  { id: "00b_upload_legacy_files", label: "00b_upload_legacy_files", title: "Import des fichiers historiques" },
+  { id: "00c_processed_legacy_files", label: "00c_processed_legacy_files", title: "Fichiers historiques traités" },
+  { id: "01a_upload_files", label: "01a_upload_files", title: "Import des fichiers sources" },
+  { id: "01b_processed_files", label: "01b_processed_files", title: "Fichiers traités" },
   { id: "02_format_controls", label: "02_format_controls", title: "Contrôles de format" },
   { id: "03_deltas", label: "03_deltas", title: "Deltas" },
   { id: "04_reports", label: "04_reports", title: "Rapports" },

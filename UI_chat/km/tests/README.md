@@ -15,7 +15,8 @@ l'URL WebSocket `DevTools listening on…` affichée dans le terminal :
 ```sh
 google-chrome --headless --remote-debugging-port=0 --user-data-dir=/tmp/km-upload-browser-tests about:blank
 node UI_chat/km/tests/upload-browser.mjs 'ws://127.0.0.1:PORT/devtools/browser/IDENTIFIANT'
-node UI_chat/km/tests/upload-browser.mjs 'ws://127.0.0.1:PORT/devtools/browser/IDENTIFIANT' 02_templates
+node UI_chat/km/tests/upload-browser.mjs 'ws://127.0.0.1:PORT/devtools/browser/IDENTIFIANT' 00a_templates
+node UI_chat/km/tests/upload-browser.mjs 'ws://127.0.0.1:PORT/devtools/browser/IDENTIFIANT' 00b_upload_legacy_files
 ```
 
 Adapter le chemin du navigateur si nécessaire. Le test sert les fichiers statiques
@@ -33,9 +34,17 @@ de suppression avec nom incorrect (résultat incertain), trois bascules indépen
 liste/upload/delete, suppression test avec liste production et inversement,
 configuration absente, icônes de repli, clavier et largeurs 1 920, 1 366, 1 100,
 768 et 390 px. Les captures sont écrites sous `/tmp/km-upload-<largeur>.png`.
-La même suite couvre les deux pages avec des chemins distincts et vérifie
-l'absence de repli vers les webhooks de l'autre dépôt, même lorsque ceux-ci sont
-configurés. Les captures templates sont sous `/tmp/km-templates-<largeur>.png`.
+La même suite couvre les trois pages avec des chemins distincts et vérifie
+l’absence de repli vers les webhooks des deux autres dépôts, même lorsque ceux-ci sont
+configurés. Le test vérifie l’ordre des quinze liens du menu (accueil et quatorze
+pages). Les captures templates sont sous `/tmp/km-templates-<largeur>.png` et les
+captures historiques sous `/tmp/km-legacy-<largeur>.png`.
+Les tests du module API couvrent chaque préfixe (`KM_FILES`, `KM_TEMPLATES`,
+`KM_LEGACY_FILES`), les trois opérations, test/production et les chemins absents,
+vides ou invalides, en présence des configurations des autres dépôts.
+La page `00c_processed_legacy_files` reste descriptive : vérifier ses liens et
+l’absence de données fictives ou d’actions de traitement. Aucun test ne doit
+annoncer un découpage, transfert ou archivage métier déjà réalisé.
 La recette réelle EC2 reste à effectuer après raccordement des workflows ; les
 tests locaux ne prouvent pas l'atomicité du contrôle des révisions dans n8n.
 
@@ -57,7 +66,7 @@ HTTP locales utilisent les IP du réseau de test (accès depuis l'hôte requis).
 Les conteneurs et le réseau sont supprimés à la fin ; les deux images de test
 restent disponibles pour une nouvelle exécution.
 
-Il vérifie les configurations Nginx, les routes (accueil, modèle, douze pages et
+Il vérifie les configurations Nginx, les routes (accueil, modèle, quatorze pages et
 assets) directement et via le proxy, les 404, le montage en lecture seule,
 `Cache-Control: no-store`, l'exclusion des docs/tests/PDF et l'absence de KM dans
 l'image commune. Les routes sont découvertes automatiquement depuis les fichiers.

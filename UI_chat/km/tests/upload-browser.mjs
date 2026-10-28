@@ -5,10 +5,15 @@ import { createServer } from 'node:http';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve, extname } from 'node:path';
 
-const pageId = process.argv[3] || '01_upload_raw_files';
-assert.ok(['01_upload_raw_files', '02_templates'].includes(pageId));
-const templates = pageId === '02_templates';
-const webhookPath = (operation, test = false) => `/webhook${test ? '-test' : ''}/${templates ? 'templates/' : ''}${operation}`;
+const pageId = process.argv[3] || '01a_upload_files';
+const deposits = {
+  '01a_upload_files': { prefix: 'KM_FILES', path: '', screenshot: 'upload' },
+  '00a_templates': { prefix: 'KM_TEMPLATES', path: 'templates/', screenshot: 'templates' },
+  '00b_upload_legacy_files': { prefix: 'KM_LEGACY_FILES', path: 'legacy/', screenshot: 'legacy' },
+};
+assert.ok(Object.hasOwn(deposits, pageId));
+const deposit = deposits[pageId];
+const webhookPath = (operation, test = false) => `/webhook${test ? '-test' : ''}/${deposit.path}${operation}`;
 const root = resolve(new URL('../../', import.meta.url).pathname);
 const files = new Map([['existing.pdf', { name: 'existing.pdf', size: 3, revision: 'v1' }]]);
 let pageStatus = 'development', statusError = false, statusReads = 0;
@@ -28,9 +33,9 @@ const server = createServer(async (req, res) => {
     }
     if (path === '/km/config.ini') {
       res.end(`KM_WEBHOOK_BASE_URL=http://127.0.0.1:${server.address().port}/webhook/\n` +
-        ['KM_FILES', 'KM_TEMPLATES'].flatMap((prefix) => ['LIST', 'UPLOAD', 'DELETE'].map((op) => {
-          const selected = prefix === (templates ? 'KM_TEMPLATES' : 'KM_FILES');
-          const path = `${prefix === 'KM_TEMPLATES' ? 'templates/' : ''}${op.toLowerCase()}`;
+        Object.values(deposits).flatMap(({ prefix, path: depositPath }) => ['LIST', 'UPLOAD', 'DELETE'].map((op) => {
+          const selected = prefix === deposit.prefix;
+          const path = `${depositPath}${op.toLowerCase()}`;
           return `${prefix}_${op}_WEBHOOK_PATH=${!selected || configured ? path : ''}`;
         })).join('\n'));
       return;
@@ -146,6 +151,11 @@ try {
   await wait(`document.getElementById('webhook-list-toggle') && !document.getElementById('webhook-list-toggle').disabled`);
   assert.equal(await evaluate(`document.getElementById('webhook-list-toggle').getAttribute('aria-checked')`), 'false');
   assert.match(await text('server-files'), /existing.pdf/);
+  const menuPages = await evaluate(`[...document.querySelectorAll('.km-navigation a')].map(a => new URL(a.href).pathname)`);
+  assert.equal(menuPages.length, 15, 'Home and fourteen pages must be present');
+  assert.deepEqual(menuPages.slice(0, 6), ['/km/', '/km/pages/00a_templates.html',
+    '/km/pages/00b_upload_legacy_files.html', '/km/pages/00c_processed_legacy_files.html',
+    '/km/pages/01a_upload_files.html', '/km/pages/01b_processed_files.html']);
   await wait(`document.querySelector('.km-logo').complete && document.querySelector('.km-logo').naturalWidth > 0`);
   const badgeSelector = `[data-km-status-page="${pageId}"]`;
   await wait(`document.querySelector(${JSON.stringify(badgeSelector)}).dataset.kmStatus === 'development'`);
@@ -274,7 +284,7 @@ try {
     assert.equal(layout.sameRow, width >= 768, `panel order at ${width}`);
     assert.equal(layout.overflow || layout.contentOverflow, false, `overflow at ${width}: ${JSON.stringify(layout)} ${await evaluate('JSON.stringify({inner:innerWidth,doc:document.documentElement.scrollWidth,main:document.querySelector("main").scrollWidth,client:document.querySelector("main").clientWidth})')}`);
     const shot = await call('Page.captureScreenshot', { format: 'png' });
-    await writeFile(`/tmp/km-${templates ? 'templates' : 'upload'}-${width}.png`, Buffer.from(shot.data, 'base64'));
+    await writeFile(`/tmp/km-${deposit.screenshot}-${width}.png`, Buffer.from(shot.data, 'base64'));
   }
   await evaluate(`document.getElementById('choose-files').focus()`);
   await call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });

@@ -1,13 +1,13 @@
-# 01_processed_files — Sources prises en charge
+# 01b_processed_files — Sources prises en charge
 
-**Page associée :** [01_processed_files](../pages/01_processed_files.html).
+**Page associée :** [01b_processed_files](../pages/01b_processed_files.html).
 **Stockage cible EC2 :** `/n8n/n8n_files/km/01_processed_files/`.
 **État :** spécification cible ; écran provisoire sans archivage fonctionnel.
 
 ## Objectif et provenance
 
 **Décision utilisateur :** ce dossier est un ajout au parcours du PDF. Il contient
-les fichiers de `01_upload_raw_files` traités, déplacés après leur prise en charge
+les fichiers de `01a_upload_files` traités, déplacés après leur prise en charge
 initiale et l'enregistrement des résultats associés, sans attendre la validation
 métier ni la publication AI Ready.
 
@@ -17,7 +17,7 @@ mentionnées pages 2–3 ont une autre finalité.
 
 ## Entrées
 
-- Source Word issue de [01_upload_raw_files](01_upload_raw_files.md).
+- Source Word issue de [01a_upload_files](01a_upload_files.md).
 - Preuve de sa prise en charge initiale et résultats associés enregistrés.
 
 Une source simplement déposée ne remplit pas ces conditions. La nature exacte
@@ -60,4 +60,4 @@ Condition technique de fin de prise en charge ; opération de déplacement et
 gestion de son échec ; résolution des liens après déplacement ; doublons,
 versions sources et reprise ; durée de conservation et droits d'accès.
 
-[Vue d'ensemble](README.md) · [Dépôt initial](01_upload_raw_files.md) · [Journal](10_tracking_journal.md)
+[Vue d'ensemble](README.md) · [Dépôt initial](01a_upload_files.md) · [Journal](10_tracking_journal.md)

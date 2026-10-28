@@ -1,6 +1,6 @@
-# 01_upload_raw_files — Dépôt des sources
+# 01a_upload_files — Dépôt des sources
 
-**Page associée :** [01_upload_raw_files](../pages/01_upload_raw_files.html).
+**Page associée :** [01a_upload_files](../pages/01a_upload_files.html).
 **Stockage cible EC2 :** `/n8n/n8n_files/km/01_upload_raw_files/`.
 **État :** interface développée, statut `development` ; raccordement n8n de la suppression à finaliser.
 La lecture et l'upload ont été déclarés opérationnels par l'utilisateur.
@@ -18,9 +18,18 @@ sont décrits [page 2](Poc_n8n.pdf#page=2).
 le dépôt à tous types de fichiers, avec sélection multiple. Cette ouverture
 concerne le dépôt ; le parcours métier de référence reste celui d'un Word relu.
 Accepter un fichier au dépôt ne garantit pas sa compatibilité avec les contrôles
-et traitements suivants. Le découpage en documents atomiques reste une extension.
+et traitements suivants. Le découpage historique reste une extension préparatoire
+[documentée séparément](00b_upload_legacy_files.md), non implémentée par ce dépôt.
 
 ## Entrées
+
+**Extension historique :** les documents produits par la future préparation
+[00b_upload_legacy_files](00b_upload_legacy_files.md) rejoindront automatiquement
+cette entrée. Ils restent soumis aux contrôles et validations habituels. Le
+transfert sera réalisé par n8n, sans simuler un upload navigateur ; ses contrats,
+formats et règles de reprise restent à définir. La source historique est
+conservée dans son parcours distinct, consultable à terme dans
+[00c_processed_legacy_files](00c_processed_legacy_files.md).
 
 - Un ou plusieurs fichiers de tout type à déposer sur le serveur.
 - Pour le parcours métier de référence : Word relu par le métier.
@@ -38,7 +47,7 @@ filtre limité aux fichiers Word n'est retenu pour cet écran.
 
 **Décision utilisateur :** après prise en charge initiale et enregistrement des
 résultats associés, déplacer la source vers
-[01_processed_files](01_processed_files.md). Ne pas attendre AI Ready.
+[01b_processed_files](01b_processed_files.md). Ne pas attendre AI Ready.
 
 **Proposition INNO/interface :** conserver un lien entre la source déposée, la
 prise en charge et les résultats pour suivre le parcours malgré le déplacement.
@@ -398,4 +407,4 @@ résultats, condition exacte de déplacement vers l'archive et comportement en c
 d'échec de cette prise en charge. Ces inconnues ne remettent pas en question les
 règles d'accord global, de remplacement annoncé et d'envoi séquentiel ci-dessus.
 
-[Vue d'ensemble](README.md) · [Archive des sources](01_processed_files.md) · [Contrôles](02_format_controls.md)
+[Vue d'ensemble](README.md) · [Archive des sources](01b_processed_files.md) · [Contrôles](02_format_controls.md)

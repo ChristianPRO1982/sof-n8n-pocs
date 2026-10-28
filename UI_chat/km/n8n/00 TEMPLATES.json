@@ -1,0 +1,465 @@
+{
+  "name": "00 TEMPLATES",
+  "nodes": [
+    {
+      "parameters": {
+        "command": "=node <<'JS'\nconst fs = require('node:fs');\nconst path = require('node:path');\n\nconst directory = '/files/km/00_templates';\n\nconst files = fs.readdirSync(directory, { withFileTypes: true })\n  .filter(entry => entry.isFile())\n  .map(entry => {\n    const stat = fs.statSync(path.join(directory, entry.name), {\n      bigint: true\n    });\n\n    const size = Number(stat.size);\n\n    if (!Number.isSafeInteger(size)) {\n      throw new Error(`Taille non représentable : ${entry.name}`);\n    }\n\n    return {\n      name: entry.name,\n      size,\n      revision: [\n        stat.dev,\n        stat.ino,\n        stat.size,\n        stat.mtimeNs,\n        stat.ctimeNs\n      ].join(':')\n    };\n  })\n  .sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);\n\nprocess.stdout.write(JSON.stringify(files));\nJS"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        -240
+      ],
+      "id": "ca59e7dd-3271-4708-a0f8-59468c09c26a",
+      "name": "CMD $ls"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { exitCode, stderr, stdout } = $input.first().json;\n\ntry {\n  if (exitCode !== 0) {\n    throw new Error(stderr?.trim() || 'Impossible de lire le dossier.');\n  }\n\n  const files = JSON.parse(stdout);\n  const names = new Set();\n\n  if (!Array.isArray(files)) {\n    throw new Error('La réponse doit contenir une liste de fichiers.');\n  }\n\n  for (const file of files) {\n    if (\n      !file ||\n      typeof file.name !== 'string' ||\n      file.name.length === 0 ||\n      !Number.isSafeInteger(file.size) ||\n      file.size < 0 ||\n      typeof file.revision !== 'string' ||\n      file.revision.length === 0 ||\n      names.has(file.name)\n    ) {\n      throw new Error('Liste de fichiers invalide.');\n    }\n\n    names.add(file.name);\n  }\n\n  return [{ json: { ok: true, files } }];\n} catch (error) {\n  return [{\n    json: {\n      ok: false,\n      message: error.message\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        -240
+      ],
+      "id": "6effe683-d8a2-49db-84b1-acc4a8484bc6",
+      "name": "CODE list"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        -240
+      ],
+      "id": "1bb8fca5-886c-482c-ad91-869a86308069",
+      "name": "Respond-list"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/files/km/00_templates/{{ $binary.file.fileName }}",
+        "dataPropertyName": "file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        -32,
+        80
+      ],
+      "id": "71559e16-05f4-4d78-aa38-053ced959821",
+      "name": "upload file",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        -16
+      ],
+      "id": "cdc68fe8-7b66-4d6c-b0d4-f5ada3555acc",
+      "name": "Respond upload OK"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        176
+      ],
+      "id": "939b104e-06a0-4f04-8c94-dd325f17096e",
+      "name": "Respond upload KO"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
+              "name": "file.name",
+              "value": "={{ $binary.file.fileName }}",
+              "type": "string"
+            },
+            {
+              "id": "c8ebf587-0503-4ea1-abda-08d51b25ad87",
+              "name": "file.size",
+              "value": "={{ $binary.file.fileSize }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        192,
+        -16
+      ],
+      "id": "3df26551-ae73-438a-a6b1-fb37e745b986",
+      "name": "upload OK"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "3b2cbc1f-ac9a-44a7-ac9a-7e4a2982e2c8",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        192,
+        176
+      ],
+      "id": "a51bcb5b-12b8-459d-a499-951436971eea",
+      "name": "upload KO"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        400
+      ],
+      "id": "75fd566c-2efa-4aa0-8cb3-1c64e605955b",
+      "name": "Respond delete"
+    },
+    {
+      "parameters": {
+        "command": "=rm /files/km/00_templates/{{ $json.body.name }}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        496
+      ],
+      "id": "bdb4b385-5614-4a2f-86ce-64199e3e3c59",
+      "name": "Execute Command",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        592
+      ],
+      "id": "de701386-38ba-4fca-8b3f-7107c91fdda0",
+      "name": "Respond delete KO"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
+              "name": "name",
+              "value": "={{ $('WH-delete').item.json.body.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        192,
+        400
+      ],
+      "id": "c6169902-ac5b-4077-aceb-d2cb0b9dee9d",
+      "name": "delete OK"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        192,
+        592
+      ],
+      "id": "4c210d81-2144-42bd-b02f-030be27e5583",
+      "name": "delete KO"
+    },
+    {
+      "parameters": {
+        "path": "c7c88a00-d9d1-4016-804a-dc994913c1fa",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -256,
+        -240
+      ],
+      "id": "27284f64-b18b-44d0-8a17-68e96674dd73",
+      "name": "WH-list",
+      "webhookId": "c7c88a00-d9d1-4016-804a-dc994913c1fa"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "45e6492b-52df-4772-bbcc-148f448be677",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -256,
+        80
+      ],
+      "id": "9d120751-95a9-4bd5-a50d-872b0bf37159",
+      "name": "WH-upload",
+      "webhookId": "45e6492b-52df-4772-bbcc-148f448be677"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "9ba5d00d-bd98-4889-99e5-c81c91225a04",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -256,
+        496
+      ],
+      "id": "1a24aa6a-6421-4b78-ac45-6b14d1d75c0f",
+      "name": "WH-delete",
+      "webhookId": "9ba5d00d-bd98-4889-99e5-c81c91225a04"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "CMD $ls": {
+      "main": [
+        [
+          {
+            "node": "CODE list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CODE list": {
+      "main": [
+        [
+          {
+            "node": "Respond-list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload file": {
+      "main": [
+        [
+          {
+            "node": "upload OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "upload KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload OK": {
+      "main": [
+        [
+          {
+            "node": "Respond upload OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload KO": {
+      "main": [
+        [
+          {
+            "node": "Respond upload KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Command": {
+      "main": [
+        [
+          {
+            "node": "delete OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "delete KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete OK": {
+      "main": [
+        [
+          {
+            "node": "Respond delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete KO": {
+      "main": [
+        [
+          {
+            "node": "Respond delete KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-list": {
+      "main": [
+        [
+          {
+            "node": "CMD $ls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-upload": {
+      "main": [
+        [
+          {
+            "node": "upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-delete": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "d4544171-189d-496a-a73e-ea7fea15cc51",
+  "meta": {
+    "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
+  },
+  "nodeGroups": [],
+  "id": "voC6PF4SFmRG3CM3",
+  "tags": [
+    {
+      "updatedAt": "2026-10-23T07:45:52.085Z",
+      "createdAt": "2026-10-23T07:45:52.085Z",
+      "id": "aTY4iOvJFOjQpknu",
+      "name": "KM"
+    }
+  ]
+}

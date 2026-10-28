@@ -1,7 +1,7 @@
 // Relative asset base resolved by the caller against this module location.
 export const imageBaseURL = "./";
 
-// Contract shared by the KM sources and templates deposit screens. No endpoint or success is fabricated.
+// Contract shared by the KM sources, templates and legacy deposit screens. No endpoint or success is fabricated.
 export function parseConfig(text) {
   return Object.fromEntries(text.split(/\r?\n/).map((line) => line.trim())
     .filter((line) => line && !line.startsWith('#') && line.includes('='))
@@ -9,7 +9,7 @@ export function parseConfig(text) {
 }
 
 export function endpoint(config, operation, test = false, prefix = 'KM_FILES') {
-  if (!['KM_FILES', 'KM_TEMPLATES'].includes(prefix)) throw new Error('Configuration de dépôt inconnue.');
+  if (!['KM_FILES', 'KM_TEMPLATES', 'KM_LEGACY_FILES'].includes(prefix)) throw new Error('Configuration de dépôt inconnue.');
   const base = new URL(config.KM_WEBHOOK_BASE_URL);
   if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password ||
       base.search || base.hash || !base.pathname.endsWith('/webhook/')) {

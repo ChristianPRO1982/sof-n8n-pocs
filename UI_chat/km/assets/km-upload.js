@@ -1,8 +1,9 @@
 import { parseConfig, endpoint, request, validFile, iconName, imageBaseURL } from './km-upload-api.js';
 
 const endpointPrefix = {
-  '01_upload_raw_files': 'KM_FILES',
-  '02_templates': 'KM_TEMPLATES',
+  '01a_upload_files': 'KM_FILES',
+  '00a_templates': 'KM_TEMPLATES',
+  '00b_upload_legacy_files': 'KM_LEGACY_FILES',
 }[document.body.dataset.kmPage];
 if (!endpointPrefix) throw new Error('Page de dépôt inconnue.');
 const serviceEndpoint = (operation) => endpoint(state.config, operation, state.test[operation], endpointPrefix);

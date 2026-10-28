@@ -36,20 +36,27 @@ test('strict confirmations, conflicts, HTTP failures and timeouts', async () => 
   } finally { globalThis.fetch = original; }
 });
 
-test('templates use dedicated keys for every operation, without source fallback', () => {
+test('all three deposits use dedicated keys without fallback for every operation', () => {
+  const deposits = {
+    KM_FILES: 'sources',
+    KM_TEMPLATES: 'templates',
+    KM_LEGACY_FILES: 'legacy',
+  };
   for (const operation of ['list', 'upload', 'delete']) {
     const key = operation.toUpperCase();
     const settings = {
       KM_WEBHOOK_BASE_URL: 'http://localhost/n8n/webhook/',
-      [`KM_FILES_${key}_WEBHOOK_PATH`]: `sources/${operation}`,
-      [`KM_TEMPLATES_${key}_WEBHOOK_PATH`]: `templates/${operation}`,
+      ...Object.fromEntries(Object.entries(deposits).map(([prefix, path]) =>
+        [`${prefix}_${key}_WEBHOOK_PATH`, `${path}/${operation}`])),
     };
     for (const mode of [false, true]) {
       const base = mode ? 'webhook-test' : 'webhook';
       assert.equal(endpoint(settings, operation, mode), `http://localhost/n8n/${base}/sources/${operation}`);
-      assert.equal(endpoint(settings, operation, mode, 'KM_TEMPLATES'), `http://localhost/n8n/${base}/templates/${operation}`);
-      for (const path of [undefined, '', '../sources', '/sources', '%2e%2e/sources']) {
-        assert.throws(() => endpoint({ ...settings, [`KM_TEMPLATES_${key}_WEBHOOK_PATH`]: path }, operation, mode, 'KM_TEMPLATES'));
+      for (const [prefix, path] of Object.entries(deposits)) {
+        assert.equal(endpoint(settings, operation, mode, prefix), `http://localhost/n8n/${base}/${path}/${operation}`);
+        for (const missing of [undefined, '', '   ', '../sources', '/sources', '%2e%2e/sources']) {
+          assert.throws(() => endpoint({ ...settings, [`${prefix}_${key}_WEBHOOK_PATH`]: missing }, operation, mode, prefix));
+        }
       }
     }
   }

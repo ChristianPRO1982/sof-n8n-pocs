@@ -114,9 +114,9 @@ with tempfile.TemporaryDirectory(prefix='km-docker-check-') as temp:
         assert b'updated-without-rebuild' in get(public, '/km/config.ini')[2]
         assert docker('inspect', '-f', '{{.Id}}', km) == before_id
         _, previous_headers, _ = get(public, '/km/statuses.json')
-        statuses.write_text('{"01_upload_raw_files":"validated"}')
+        statuses.write_text('{"01a_upload_files":"validated"}')
         status, headers, body = get(public, '/km/statuses.json')
-        assert status == 200 and json.loads(body)['01_upload_raw_files'] == 'validated'
+        assert status == 200 and json.loads(body)['01a_upload_files'] == 'validated'
         assert 'ETag' not in headers
         request = urllib.request.Request(public + '/km/statuses.json', headers={
             'If-Modified-Since': previous_headers.get('Last-Modified', 'Thu, 01 Jan 1970 00:00:00 GMT')})

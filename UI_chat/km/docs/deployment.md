@@ -92,12 +92,37 @@ le fichier Compose et tous les fichiers nécessaires aux autres services.
 Conserver aussi `n8n_data/`, `n8n_files/` et les volumes PostgreSQL : ils ne sont
 pas remplacés par l'image du front.
 
+## Livraison du dépôt historique
+
+L’image KM inclut automatiquement les nouvelles pages `00b_upload_legacy_files`
+et `00c_processed_legacy_files`. À la prochaine livraison manuelle, reporter les
+deux entrées de `statuses.json` (`development` et `not_started`) dans le fichier
+monté sur EC2, en conservant les autres statuts. Ajouter dans la configuration
+existante, sans remplacer les clés déjà renseignées :
+
+```ini
+KM_LEGACY_FILES_LIST_WEBHOOK_PATH=
+KM_LEGACY_FILES_UPLOAD_WEBHOOK_PATH=
+KM_LEGACY_FILES_DELETE_WEBHOOK_PATH=
+```
+
+Ces clés restent vides jusqu’au raccordement des workflows historiques. Aucun
+repli vers les autres dépôts, dossier métier ni workflow historique n’est créé.
+Le découpage et l’archivage ne sont pas inclus dans cette livraison. Aucune
+publication ou opération EC2 n’est exécutée par cette modification du dépôt.
+
 ## Pastilles actualisées sans cache
+
+La codification des pages est désormais `00a_templates`, `01a_upload_files` et
+`01b_processed_files`. Lors de la livraison de ce renommage, reporter ces trois
+clés dans le fichier `statuses.json` monté sur EC2 en conservant leurs statuts
+et les autres entrées. L’image contient les pages renommées ; les chemins des
+webhooks et les dossiers de données existants ne changent pas.
 
 Modifier **`/home/ubuntu/n8n/UI_chat/km/statuses.json`**, sans toucher à `km.js`.
 Ce JSON associe chaque identifiant de page à l'une des valeurs `not_started`,
 `bugs`, `development`, `testing`, `validated`. Par exemple, modifier la valeur
-existante de `01_upload_raw_files` en `testing` pour obtenir une pastille orange ;
+existante de `01a_upload_files` en `testing` pour obtenir une pastille orange ;
 conserver les autres entrées du fichier. L'accueil reste une maison sans statut.
 
 Le navigateur lit ce fichier sans cache à chaque ouverture, toutes les
@@ -224,7 +249,7 @@ statique ; il ne teste pas n8n ni les webhooks.
 
 ## Recette après déploiement
 
-Vérifier `/km/`, le modèle, les douze liens et les images locales (200), `/km`
+Vérifier `/km/`, le modèle, les quatorze liens et les images locales (200), `/km`
 (301), `/km/config.ini` et `/km/statuses.json` (200 et `no-store`), une URL inexistante et les chemins
 `/km/CONTEXT.md`, `/km/docs/`, `/km/tests/` (404). Vérifier l'absence de requêtes
 GitHub et le responsive. Aucun appel métier n'est requis avec les chemins vides.
