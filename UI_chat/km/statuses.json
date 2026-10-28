@@ -8,7 +8,7 @@
   },
   "00a_templates": "testing",
   "00b_upload_legacy_files": "development",
-  "00c_processed_legacy_files": "not_started",
+  "00c_processed_legacy_files": "development",
   "01a_upload_files": "testing",
   "01b_processed_files": "development",
   "02_format_controls": "development",
