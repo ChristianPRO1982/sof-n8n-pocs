@@ -20,10 +20,30 @@
         <nav class="km-context" data-km-context></nav>
       </header>
       <main class="km-content" id="km-content" tabindex="-1">
-        <h2>Site en cours de développement et de test</h2>
-        <p>Chaque partie de Knowledge Manager possède une pastille de statut dans
-          le menu général et dans le menu contextuel de sa page.</p>
-        <ul class="km-status-legend" data-km-status-legend aria-label="Légende des statuts"></ul>
+        <section class="km-home-panel" aria-labelledby="km-pages-heading">
+          <h2 id="km-pages-heading">Les pages de Knowledge Manager</h2>
+          <p>Rôle de chaque page dans le parcours cible ; les pastilles indiquent son état de développement.</p>
+          <ul class="km-page-summaries">
+            <li><a href="pages/01_upload_raw_files.html">01 — Import des fichiers sources</a> : déposer des fichiers de tous types, gérer les remplacements autorisés et supprimer les fichiers déposés.</li>
+            <li><a href="pages/01_processed_files.html">01 — Fichiers traités</a> : retrouver les sources archivées après leur prise en charge initiale et l’enregistrement des résultats, avant validation métier.</li>
+            <li><a href="pages/02_templates.html">02 — Templates</a> : déposer, remplacer et supprimer les modèles de documents dans un espace distinct des sources.</li>
+            <li><a href="pages/02_format_controls.html">02 — Contrôles de format</a> : vérifier sans LLM les styles, sections obligatoires, tableaux et acronymes du Word selon les règles du template.</li>
+            <li><a href="pages/03_deltas.html">03 — Deltas</a> : comparer le document à une référence avec une extraction JSON par LLM pour détecter et expliquer les écarts.</li>
+            <li><a href="pages/04_reports.html">04 — Rapports</a> : consolider les contrôles et les écarts pour orienter le document vers une correction, une justification ou la suite du parcours.</li>
+            <li><a href="pages/05_metadata.html">05 — Métadonnées</a> : proposer les métadonnées par règles et LLM, puis vérifier leur conformité au JSON Schema avant revue métier.</li>
+            <li><a href="pages/06_business_validation.html">06 — Validation humaine</a> : approuver ou refuser la version du document et ses métadonnées, avec retour en brouillon en cas de refus.</li>
+            <li><a href="pages/07_knowledges.html">07 — Connaissances</a> : publier le Word approuvé avec ses métadonnées et archiver les versions précédentes.</li>
+            <li><a href="pages/08_markdown.html">08 — Export Markdown</a> : convertir le Word publié sans LLM en préservant les titres, listes et tableaux, puis contrôler la structure produite.</li>
+            <li><a href="pages/09_ai_ready.html">09 — Base AI Ready</a> : publier le couple de fichiers Markdown et JSON de métadonnées portant le même identifiant et correspondant à la version approuvée.</li>
+            <li><a href="pages/10_tracking_journal.html">10 — Journal de suivi</a> : retracer les traitements, résultats, erreurs et décisions humaines tout au long du parcours documentaire.</li>
+          </ul>
+        </section>
+        <section class="km-home-panel" aria-labelledby="km-status-heading">
+          <h2 id="km-status-heading">Site en cours de développement et de test</h2>
+          <p>Chaque partie de Knowledge Manager possède une pastille de statut dans
+            le menu général et dans le menu contextuel de sa page.</p>
+          <ul class="km-status-legend" data-km-status-legend aria-label="Légende des statuts"></ul>
+        </section>
       </main>
     </div>
   </div>
