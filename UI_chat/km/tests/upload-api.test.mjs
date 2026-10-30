@@ -15,7 +15,10 @@ test('production/test URLs share a base and reject escaping paths', () => {
 });
 test('icons follow final extension, case-insensitively, with generic fallback', () => {
   for (const [name, icon] of [['a.B.C.DOCX', 'word'], ['a.csv', 'excel'], ['a.pptm', 'powerpoint'],
-    ['a.PDF', 'pdf'], ['a.JPEG', 'image'], ['a.zip', 'file'], ['README', 'file']]) assert.equal(iconName(name), icon);
+    ['a.PDF', 'pdf'], ['a.JPEG', 'image'], ['a.zip', 'file'], ['README', 'file'],
+    ['guide.MD', 'markdown'], ['guide.markdown', 'markdown'], ['guide.mdown', 'markdown'],
+    ['guide.mkd', 'markdown'], ['guide.mkdn', 'markdown'], ['guide.mdwn', 'markdown'],
+    ['schema.MMD', 'markdown'], ['schema.mermaid', 'markdown'], ['guide.md.pdf', 'pdf']]) assert.equal(iconName(name), icon);
 });
 test('strict confirmations, conflicts, HTTP failures and timeouts', async () => {
   const original = globalThis.fetch;

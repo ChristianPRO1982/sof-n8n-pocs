@@ -237,9 +237,13 @@ La configuration du webhook n8n d'entrée et de réponse est détaillée dans la
 
 Dans la liste préparatoire, le suivi d'envoi et la liste serveur, chaque nom de
 fichier est précédé d'une icône PNG locale de `assets/icons/` : `word.png`,
-`excel.png`, `powerpoint.png`, `pdf.png` ou `image.png` selon l'extension,
+`excel.png`, `powerpoint.png`, `pdf.png`, `image.png` ou `markdown.png` selon l'extension,
 sans distinction de casse. `file.png` est le repli générique pour les autres
 types, les fichiers sans extension ou une icône spécialisée indisponible.
+La correspondance partagée des trois dépôts utilise `markdown.png` pour `.md`,
+`.markdown`, `.mdown`, `.mkd`, `.mkdn`, `.mdwn` ainsi que les fichiers Mermaid
+`.mmd` et `.mermaid`. Un Markdown contenant des blocs Mermaid conserve cette
+icône ; le contenu des fichiers n'est pas inspecté pour choisir l'icône.
 Le logo, les icônes et les images du toggle sont embarqués dans le conteneur
 `km-front` et servis localement sous `/km/assets/`, sans dépendance à GitHub.
 La correspondance détaillée et la recette sont dans la fiche de dépôt ; ces

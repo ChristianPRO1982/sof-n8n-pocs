@@ -130,6 +130,7 @@ extension du nom, sans distinction entre majuscules et minuscules :
 | `.ppt`, `.pptx`, `.pptm` | [powerpoint.png](../assets/icons/powerpoint.png) |
 | `.pdf` | [pdf.png](../assets/icons/pdf.png) |
 | `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`, `.bmp`, `.tif`, `.tiff`, `.avif`, `.ico` | [image.png](../assets/icons/image.png) |
+| `.md`, `.markdown`, `.mdown`, `.mkd`, `.mkdn`, `.mdwn`, `.mmd`, `.mermaid` | [markdown.png](../assets/icons/markdown.png) |
 | Toute autre extension, extension inconnue ou nom sans extension | [file.png](../assets/icons/file.png) (générique) |
 
 Si une icône spécialisée ne peut pas être chargée, utiliser `file.png` en repli.
