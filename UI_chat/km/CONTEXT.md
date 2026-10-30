@@ -22,6 +22,18 @@ référence si le contexte devient obsolète.
 
 ## Objectif et état initial
 
+Ajout sur `00b_upload_legacy_files` : bouton « Voir », immédiatement avant
+« Supprimer », et toggle indépendant « WH - view », initialement OFF.
+Le bouton ouvre un GET vers `KM_LEGACY_FILES_VIEW_WEBHOOK_PATH` avec le nom encodé
+en paramètre `name`, dans un nouvel onglet sans confirmation. Il est désactivé
+pendant les opérations ou si la liste ou la configuration est indisponible.
+Le chemin est renseigné localement ; le workflow distant reste à configurer.
+Le même bouton et le même toggle sont présents sur les templates et les sources,
+avec les clés isolées `KM_TEMPLATES_VIEW_WEBHOOK_PATH` et
+`KM_FILES_VIEW_WEBHOOK_PATH`, initialement vides. Aucun repli entre dépôts.
+Le toggle ne lance aucun appel réseau et conserve les lots et résultats.
+Aucun workflow de lecture n'est créé. Voir `docs/00b_upload_legacy_files.md`.
+
 POC INNO de transformation des documents Sofinco (PDF, Word, etc.) volumineux et
 parfois redondants en connaissances atomiques, normalisées, structurées et liées
 entre elles. Préserver la traçabilité vers les documents et passages sources.
@@ -49,6 +61,14 @@ ses chemins restent vides. Aucun succès n’est simulé sans réponse conforme.
 
 ## Gabarit et ajout d'une page
 
+`config.ini` porte `KM_VERSION` en première ligne, initialisée à `0.4.0`.
+Le script commun ajoute un pied de page global « POC INNO · Sofinco · <version> »,
+hors du menu, visible en bas à gauche sur toutes les pages et sur mobile, même
+menu ouvert. La grille réserve sa hauteur ; contenu et navigation restent
+défilants. Le script lit la version sans cache à l'ouverture et au retour depuis
+le cache d'historique. Une lecture en erreur ou une version invalide affiche
+« version indisponible » sans bloquer l'interface.
+
 - `template.html` : modèle HTML à copier, avec les points d'insertion du contenu
   et des options contextuelles. Le modèle lui-même est consultable sous
   `/km/template.html` mais n'est pas une étape de la chaîne.
@@ -71,6 +91,12 @@ Pour ajouter une page :
    déjà le `h1` de la page.
 5. Ajouter les options propres à la page dans `nav[data-km-context]`. Le script
    ajoute les liens communs avant ces options sans supprimer leur contenu.
+
+Les toggles n8n des pages de dépôt sont regroupés dans un
+`div.km-webhook-controls`, après cette navigation dans le bandeau. Les styles
+partagés réservent une ligne entière à ce groupe, avec retour à la ligne sur
+petits écrans. Le lien « Retour à l’accueil » reste dans la navigation du haut.
+Réutiliser ce groupe pour les futurs toggles des autres pages.
 
 La racine du module est résolue depuis l'URL du script partagé ; les liens
 fonctionnent aussi depuis les pages imbriquées. Le logo Sofinco est embarqué
@@ -350,11 +376,19 @@ Le front KM est servi par le conteneur `km-front`, utilisant
 `christianpro1982/km:${KM_IMAGE_TAG:-latest}` depuis Docker Hub, sans `build` dans
 Compose. `Dockerfile.km_front` et `nginx/km.conf` restent sur le poste de
 développement pour construire l’image. La publication manuelle est préparée
-par `scripts/publish-km.sh VERSION` (amd64/arm64, version et latest) ; aucune
+par `scripts/publish-km.sh [VERSION]` (amd64/arm64, version et latest) ; aucune
 publication réelle n’a été effectuée. Le Nginx commun transmet `/km/` au service interne,
 sans nouveau port hôte. Son image exclut désormais KM grâce à
 `Dockerfile.nginx_front.dockerignore`. Le proxy résout `km-front` à l'exécution
 via le DNS Docker (validité 5 s) pour supporter sa recréation avec une nouvelle IP.
+
+La publication inscrit d'abord `KM_VERSION` en première ligne, sans doublon et
+en préservant l'inode ainsi que les autres paramètres, avant tout appel Docker.
+Sans argument, elle incrémente le dernier nombre (`0.4.0` → `0.4.1`) et retire
+un éventuel suffixe ; une valeur absente ou invalide exige une version explicite.
+Une erreur Docker conserve la nouvelle version locale. Lors du déploiement,
+synchroniser `KM_VERSION` dans le fichier monté EC2 sans écraser ses webhooks :
+la version affichée provient de ce fichier, pas du tag de l'image.
 
 Seuls les fichiers du front et ses images sont copiés dans l'image KM ; ni docs,
 ni PDF, ni tests, ni données métier. Les chemins de contexte, docs et tests sont

@@ -25,7 +25,7 @@ ou les traitements suivants n'est pas implémentée par cet écran.
   bilan et reprise manuelle après actualisation et nouvel accord.
 - Suppression individuelle confirmée avec le nom ; retrait uniquement après
   confirmation serveur conforme. Aucun succès simulé ni relance automatique.
-- Trois bascules indépendantes « WH - list », « WH - upload », « WH - delete »,
+- Quatre bascules indépendantes « WH - list », « WH - upload », « WH - view », « WH - delete »,
   initialement OFF, y compris au retour par l'historique. Seule la bascule de liste
   recharge la liste ; les actualisations suivent toujours son mode.
 
@@ -42,6 +42,7 @@ les chemins relatifs dans les clés suivantes, initialement vides :
 KM_TEMPLATES_LIST_WEBHOOK_PATH=
 KM_TEMPLATES_UPLOAD_WEBHOOK_PATH=
 KM_TEMPLATES_DELETE_WEBHOOK_PATH=
+KM_TEMPLATES_VIEW_WEBHOOK_PATH=
 ```
 
 Le mode test remplace `/webhook/` par `/webhook-test/`, en conservant le chemin
@@ -68,6 +69,16 @@ suppression, 120 s par envoi. Une confirmation inexploitable ou une interruption
 signale un résultat incertain à vérifier avant toute nouvelle tentative.
 
 ## Stockage et traitements ultérieurs
+
+Le bouton « Voir », à gauche de « Supprimer », ouvre un GET vers
+`KM_TEMPLATES_VIEW_WEBHOOK_PATH` avec le nom encodé en paramètre `name`, dans
+un nouvel onglet sans confirmation (`noopener,noreferrer`). Il suit uniquement
+« WH - view », initialement OFF ; il est désactivé pendant une opération, sans
+liste valide ou sans configuration de consultation. Une clé vide ne bloque pas
+le dépôt. Le toggle conserve les lots et résultats et ne lance aucun appel.
+Le contrat binaire et les réglages n8n sont ceux de la
+[consultation historique](00b_upload_legacy_files.md#réglages-n8n), en utilisant
+le chemin et le dossier propres aux templates. Le workflow reste à configurer.
 
 La [préparation historique](00b_upload_legacy_files.md) devra employer ces modèles
 pour produire les nouveaux documents, avec traçabilité des templates et versions.

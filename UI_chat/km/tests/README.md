@@ -30,8 +30,9 @@ l'instance Chrome lancée pour le test.
 Couverture : sélection par bouton et drop, doublons, ordre séquentiel, accord de
 remplacement et révision, échec intermédiaire, conflit, reprise manuelle, réponse
 inexploitable, suppression annulée/refusée/confirmée, corps POST JSON et confirmation
-de suppression avec nom incorrect (résultat incertain), trois bascules indépendantes
-liste/upload/delete, suppression test avec liste production et inversement,
+de suppression avec nom incorrect (résultat incertain), quatre bascules indépendantes
+liste/upload/view/delete, ouverture de « Voir » dans un nouvel onglet en test et
+production avec configuration propre à chaque dépôt, suppression test avec liste production et inversement,
 configuration absente, icônes de repli, clavier et largeurs 1 920, 1 366, 1 100,
 768 et 390 px. Les captures sont écrites sous `/tmp/km-upload-<largeur>.png`.
 La même suite couvre les trois pages avec des chemins distincts et vérifie
@@ -88,7 +89,26 @@ exclusif au réseau HTTP `frontend`, aucune dépendance et les deux montages
 `config.ini`/`statuses.json` en lecture seule. Un faux exécutable Docker vérifie les commandes du script de
 publication : deux architectures et deux tags, refus d'un tag existant, d'une
 erreur d'authentification, d'un builder incompatible ou d'une version invalide.
+Les scripts et configurations de publication sont copiés dans des répertoires
+temporaires. Les tests vérifient la version explicite, l'incrément du dernier
+nombre (dont `0.4.9` → `0.4.10`), les suffixes, les clés absentes/dupliquées,
+la conservation des paramètres et de l'inode, l'écriture avant le premier appel
+Docker et la conservation de la version après échec. Le vrai `config.ini`
+n'est pas modifié.
 Aucune authentification, construction ou publication réelle n'est déclenchée.
+
+Pied de page partagé, avec Chrome/Chromium et un serveur local simulé :
+
+```sh
+python3 UI_chat/km/tests/footer-browser.py
+```
+
+Le test couvre l'accueil, le modèle et toutes les pages, cinq largeurs,
+le menu mobile ouvert/fermé, le défilement indépendant, l'absence de recouvrement
+et les versions absentes, invalides ou indisponibles. Aucun webhook distant
+n'est appelé. L'option `--chrome /chemin/du/navigateur` permet de choisir le
+binaire ; `--no-sandbox` est réservé aux environnements de test isolés qui
+l'exigent.
 
 ## Image téléchargée après publication
 

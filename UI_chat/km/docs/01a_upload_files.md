@@ -1,5 +1,18 @@
 # 01a_upload_files — Dépôt des sources
 
+## Consultation des fichiers
+
+Le bouton « Voir », à gauche de « Supprimer », ouvre un GET vers
+`KM_FILES_VIEW_WEBHOOK_PATH` avec le nom encodé en paramètre `name`, dans un
+nouvel onglet sans confirmation (`noopener,noreferrer`). Le toggle indépendant
+« WH - view », initialement OFF, sélectionne production ou test ; sa bascule
+conserve les lots et résultats sans lancer d'appel réseau. Le bouton est
+désactivé pendant une opération, sans liste valide ou sans configuration de
+consultation ; une clé vide ne bloque pas le dépôt. Aucun repli vers les autres
+dépôts n'est permis. Le workflow reste à configurer : voir les
+[réglages n8n de consultation](00b_upload_legacy_files.md#réglages-n8n), avec le
+chemin et le dossier propres aux sources.
+
 **Page associée :** [01a_upload_files](../pages/01a_upload_files.html).
 **Stockage cible EC2 :** `/n8n/n8n_files/km/01_upload_raw_files/`.
 **État :** interface développée, statut `development` ; raccordement n8n de la suppression à finaliser.

@@ -163,6 +163,13 @@ Certains commentaires parlent de `renov_liens` au pluriel ; le schéma fourni ut
 
 ## Développement et vérifications ciblées
 
+Publication KM : `scripts/publish-km.sh [VERSION]` écrit d'abord `KM_VERSION`
+en première ligne de `UI_chat/km/config.ini` ; sans argument, il incrémente le
+dernier nombre. La valeur reste enregistrée si Docker échoue ensuite. Le pied
+de page partagé affiche « POC INNO · Sofinco · <version> », toujours visible sur
+mobile. À chaque déploiement ou retour arrière, synchroniser cette clé dans la
+configuration montée EC2 tout en préservant les webhooks. Voir le guide KM.
+
 Depuis la racine, pour installer les dépendances Python verrouillées :
 
 ```bash

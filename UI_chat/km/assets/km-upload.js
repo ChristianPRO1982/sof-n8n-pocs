@@ -6,15 +6,16 @@ const endpointPrefix = {
   '00b_upload_legacy_files': 'KM_LEGACY_FILES',
 }[document.body.dataset.kmPage];
 if (!endpointPrefix) throw new Error('Page de dépôt inconnue.');
+const operations = ['list', 'upload', 'delete', 'view'];
 const serviceEndpoint = (operation) => endpoint(state.config, operation, state.test[operation], endpointPrefix);
 
 const $ = (id) => document.getElementById(id);
 const ui = Object.fromEntries(['webhook-list-toggle', 'webhook-list-toggle-image', 'webhook-upload-toggle', 'webhook-upload-toggle-image',
-  'webhook-delete-toggle', 'webhook-delete-toggle-image', 'upload-notice',
+  'webhook-delete-toggle', 'webhook-delete-toggle-image', 'webhook-view-toggle', 'webhook-view-toggle-image', 'upload-notice',
   'refresh-files', 'server-state', 'server-files', 'file-picker', 'choose-files', 'upload-drop',
   'selection-count', 'selected-files', 'agreement-summary', 'send-files', 'retry-files',
   'new-batch', 'upload-progress', 'upload-result'].map((id) => [id, $(id)]));
-const state = { config: {}, test: { list: false, upload: false, delete: false }, busy: true, ready: false, files: [], items: [], completed: false };
+const state = { config: {}, test: { list: false, upload: false, delete: false, view: false }, busy: true, ready: false, files: [], items: [], completed: false };
 const statusLabels = { pending: 'En attente', sending: 'En cours…', success: 'Réussi', failed: 'Échoué' };
 
 function node(tag, className = '', text = '') {
@@ -57,6 +58,16 @@ function button(text, action, name, danger = false) {
 function configured(operation) {
   try { serviceEndpoint(operation); return true; } catch { return false; }
 }
+function viewFile(file) {
+  if (state.busy || !state.ready) return;
+  try {
+    const url = new URL(serviceEndpoint('view'));
+    url.searchParams.set('name', file.name);
+    window.open(url.href, '_blank', 'noopener,noreferrer');
+  } catch (error) {
+    message(error.message, true);
+  }
+}
 function duplicates() {
   const names = new Set();
   const repeated = new Set();
@@ -69,7 +80,7 @@ function duplicates() {
 function render() {
   const repeated = duplicates();
   const existing = new Map(state.files.map((file) => [file.name, file]));
-  for (const operation of ['list', 'upload', 'delete']) {
+  for (const operation of operations) {
     ui[`webhook-${operation}-toggle`].disabled = state.busy;
     ui[`webhook-${operation}-toggle`].setAttribute('aria-checked', String(state.test[operation]));
     ui[`webhook-${operation}-toggle-image`].src = new URL(`icons/toggle_blue_${state.test[operation] ? 'on' : 'off'}.png`, new URL(imageBaseURL, import.meta.url)).href;
@@ -98,6 +109,9 @@ function render() {
   ui['server-files'].replaceChildren();
   for (const file of state.files) {
     const { row } = fileRow(file);
+    const view = button('Voir', () => viewFile(file), file.name);
+    view.disabled = state.busy || !state.ready || !configured('view');
+    row.append(view);
     const remove = button('Supprimer', () => deleteFile(file), file.name, true);
     remove.disabled = state.busy || !state.ready || !configured('delete');
     row.append(remove);
@@ -266,10 +280,16 @@ ui['retry-files'].addEventListener('click', async () => {
     message('Échecs préparés. Vérifiez les remplacements signalés puis donnez un nouvel accord.');
   } finally { state.busy = false; render(); }
 });
-for (const operation of ['list', 'upload', 'delete']) ui[`webhook-${operation}-toggle`].addEventListener('click', async () => {
+for (const operation of operations) ui[`webhook-${operation}-toggle`].addEventListener('click', async () => {
   if (state.busy) return;
   state.busy = true;
   state.test[operation] = !state.test[operation];
+  if (operation === 'view') {
+    message(`WH - view : ${state.test.view ? 'test' : 'production'}.`);
+    state.busy = false;
+    render();
+    return;
+  }
   // Keep pending selections, but clear results before preparing another batch.
   state.items = state.items.filter((item) => item.status === 'pending');
   state.completed = false;

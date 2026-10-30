@@ -42,7 +42,7 @@ test('all three deposits use dedicated keys without fallback for every operation
     KM_TEMPLATES: 'templates',
     KM_LEGACY_FILES: 'legacy',
   };
-  for (const operation of ['list', 'upload', 'delete']) {
+  for (const operation of ['list', 'upload', 'delete', 'view']) {
     const key = operation.toUpperCase();
     const settings = {
       KM_WEBHOOK_BASE_URL: 'http://localhost/n8n/webhook/',

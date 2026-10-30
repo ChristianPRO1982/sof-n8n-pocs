@@ -58,6 +58,50 @@ locale fonctionne, les opérations serveur sont indisponibles et un message
 signale le service non raccordé. Le mode test utilise `/webhook-test/` et doit
 viser le même stockage historique que le mode production.
 
+## Consultation — bouton et webhook
+
+Le bouton « Voir » précède « Supprimer » pour chaque fichier historique. Il
+ouvre directement le webhook GET dans un nouvel onglet, sans confirmation,
+avec `name` en paramètre de requête, encodé par `URLSearchParams`. L'ouverture
+utilise `noopener,noreferrer`. Le bouton est désactivé pendant une opération,
+si la liste n'est pas disponible ou si la clé
+`KM_LEGACY_FILES_VIEW_WEBHOOK_PATH` est absente ou invalide. Le toggle indépendant
+« WH - view » sélectionne production (`/webhook/`) ou test (`/webhook-test/`)
+avec ce même chemin ; il revient sur OFF à chaque arrivée, y compris par
+l'historique. Le basculer ne fait aucun appel réseau et conserve le lot ainsi
+que ses résultats. Il est bloqué pendant les opérations en cours. Cette
+configuration ne conditionne pas la disponibilité des opérations de dépôt.
+Aucun workflow de consultation n'est créé dans le dépôt ; le raccordement réel
+n8n reste à réaliser. Le navigateur reçoit directement le binaire, sans passer
+par le parseur de confirmation JSON des autres opérations.
+
+### Réglages n8n
+
+Chaîne : Webhook → validation du nom → lecture du fichier → Respond to Webhook.
+
+- Webhook : HTTP Method `GET`, Path identique à la valeur de
+  `KM_LEGACY_FILES_VIEW_WEBHOOK_PATH` dans `config.ini`, Respond
+  `Using 'Respond to Webhook' Node`. Le nom reçu est dans `$json.query.name`.
+- Valider côté serveur un nom simple non vide : refuser les séparateurs `/`
+  et `\`, les caractères de contrôle, `.` et `..`. Ne jamais accepter un chemin
+  complet du navigateur. Limiter la lecture au dossier historique déjà utilisé
+  par l'upload ; ce dossier exact reste à confirmer. Le montage Compose local
+  actuel le rend accessible sous `/files/km/`. Pour le sélecteur de lecture,
+  échapper les caractères de glob du nom afin de lire exactement un fichier.
+- Read/Write Files from Disk : `Read File(s) From Disk`, File(s) Selector =
+  chemin exact validé du fichier, Put Output File in Field = `data`.
+- Respond to Webhook : Respond With `Binary File`, Response Data Source
+  `Specify Myself`, Input Field Name `data`, Response Code `200`.
+  Response Headers : `Content-Disposition: inline` et
+  `Content-Type: {{ $binary.data.mimeType || 'application/octet-stream' }}`
+  (expression n8n). Prévoir une réponse 400 pour un nom invalide et 404 pour
+  un fichier absent ; aucune branche ne doit finir sans réponse.
+
+Le MIME doit correspondre au fichier réel : PDF et images peuvent s'afficher
+directement ; Word et Excel sont généralement téléchargés par le navigateur.
+En test, activer « Listen for test event » et « WH - view » ; en production,
+publier/activer le workflow et laisser ce toggle sur OFF.
+
 ## Préparation cible — à développer dans n8n
 
 1. Prendre en charge le fichier historique et identifier les templates utiles
