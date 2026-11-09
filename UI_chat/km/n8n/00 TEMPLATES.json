@@ -8,7 +8,7 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -32,
+        -48,
         -240
       ],
       "id": "ca59e7dd-3271-4708-a0f8-59468c09c26a",
@@ -21,7 +21,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        192,
+        176,
         -240
       ],
       "id": "6effe683-d8a2-49db-84b1-acc4a8484bc6",
@@ -34,7 +34,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        416,
+        400,
         -240
       ],
       "id": "1bb8fca5-886c-482c-ad91-869a86308069",
@@ -50,7 +50,7 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1.1,
       "position": [
-        -32,
+        -48,
         80
       ],
       "id": "71559e16-05f4-4d78-aa38-053ced959821",
@@ -66,7 +66,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        416,
+        400,
         -16
       ],
       "id": "cdc68fe8-7b66-4d6c-b0d4-f5ada3555acc",
@@ -81,7 +81,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        416,
+        400,
         176
       ],
       "id": "939b104e-06a0-4f04-8c94-dd325f17096e",
@@ -116,7 +116,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        192,
+        176,
         -16
       ],
       "id": "3df26551-ae73-438a-a6b1-fb37e745b986",
@@ -145,7 +145,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        192,
+        176,
         176
       ],
       "id": "a51bcb5b-12b8-459d-a499-951436971eea",
@@ -160,7 +160,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        416,
+        400,
         400
       ],
       "id": "75fd566c-2efa-4aa0-8cb3-1c64e605955b",
@@ -173,7 +173,7 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -32,
+        -48,
         496
       ],
       "id": "bdb4b385-5614-4a2f-86ce-64199e3e3c59",
@@ -189,7 +189,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        416,
+        400,
         592
       ],
       "id": "de701386-38ba-4fca-8b3f-7107c91fdda0",
@@ -218,7 +218,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        192,
+        176,
         400
       ],
       "id": "c6169902-ac5b-4077-aceb-d2cb0b9dee9d",
@@ -247,7 +247,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        192,
+        176,
         592
       ],
       "id": "4c210d81-2144-42bd-b02f-030be27e5583",
@@ -262,7 +262,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -256,
+        -272,
         -240
       ],
       "id": "27284f64-b18b-44d0-8a17-68e96674dd73",
@@ -279,7 +279,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -256,
+        -272,
         80
       ],
       "id": "9d120751-95a9-4bd5-a50d-872b0bf37159",
@@ -296,12 +296,56 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -256,
+        -272,
         496
       ],
       "id": "1a24aa6a-6421-4b78-ac45-6b14d1d75c0f",
       "name": "WH-delete",
       "webhookId": "9ba5d00d-bd98-4889-99e5-c81c91225a04"
+    },
+    {
+      "parameters": {
+        "path": "06d1417b-bd0b-4b47-bc64-a0f15046146b",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -272,
+        816
+      ],
+      "id": "35c2a246-ae3d-487e-9012-40f48860860f",
+      "name": "WH-download file",
+      "webhookId": "06d1417b-bd0b-4b47-bc64-a0f15046146b"
+    },
+    {
+      "parameters": {
+        "fileSelector": "=/files/km/00_templates/{{ $json.query.name }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        -48,
+        816
+      ],
+      "id": "aff2348b-07ad-4cfe-8f7b-5023af3f904a",
+      "name": "Read file"
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        176,
+        816
+      ],
+      "id": "69b9d786-0d72-4f5e-9fda-25d8221af430",
+      "name": "Respond file"
     }
   ],
   "pinData": {},
@@ -440,6 +484,28 @@
           }
         ]
       ]
+    },
+    "WH-download file": {
+      "main": [
+        [
+          {
+            "node": "Read file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read file": {
+      "main": [
+        [
+          {
+            "node": "Respond file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -448,7 +514,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "d4544171-189d-496a-a73e-ea7fea15cc51",
+  "versionId": "6664c62f-c48b-431e-a16f-809931c3e9fd",
   "meta": {
     "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
   },

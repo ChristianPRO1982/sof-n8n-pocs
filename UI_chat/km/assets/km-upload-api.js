@@ -69,6 +69,7 @@ export function iconName(name) {
   if (['xls', 'xlsx', 'xlsm', 'csv'].includes(ext)) return 'excel';
   if (['ppt', 'pptx', 'pptm'].includes(ext)) return 'powerpoint';
   if (ext === 'pdf') return 'pdf';
+  if (['md', 'markdown', 'mdown', 'mkd', 'mkdn', 'mdwn', 'mmd', 'mermaid'].includes(ext)) return 'markdown';
   if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'tif', 'tiff', 'avif', 'ico'].includes(ext)) return 'image';
   return 'file';
 }

@@ -40,16 +40,33 @@ Aucun mot de passe ni jeton n'est ajouté au dépôt. Conserver l'authentificati
 dans le mécanisme habituel de Docker.
 
 Avant publication, effectuer les [vérifications locales](../tests/README.md).
-Puis, depuis la racine du dépôt, choisir une version encore inutilisée :
+Puis, depuis la racine du dépôt, choisir une version encore inutilisée ou
+incrémenter automatiquement celle enregistrée :
 
 ```sh
-./scripts/publish-km.sh 0.1.0
+./scripts/publish-km.sh 0.5.0  # version explicite
+# Ou, sans argument : 0.4.0 devient 0.4.1
+./scripts/publish-km.sh
 ```
 
-Le script vérifie le builder `docker-container`, consulte le tag de version et
+La première ligne de `UI_chat/km/config.ini` est `KM_VERSION=0.4.0` lors de
+l'initialisation. Avec un argument, le script inscrit cette version ; sans
+argument, il incrémente le dernier nombre et retire un éventuel suffixe
+(`0.4.9-rc.1` devient `0.4.10`). Une version enregistrée absente, invalide ou
+dupliquée nécessite un argument explicite. Un argument invalide ne modifie rien.
+La clé est placée une seule fois en première ligne, sans changer les autres
+paramètres. Le fichier est modifié en place pour préserver les montages Docker.
+
+L'écriture a lieu **avant tout appel Docker**. Si elle échoue, le script s'arrête.
+Si une étape Docker échoue ensuite, la version enregistrée est conservée ; un
+nouveau lancement sans argument l'incrémente encore. Cette valeur indique la
+version préparée et ne prouve pas une publication réussie.
+
+Le script vérifie ensuite le builder `docker-container`, consulte le tag de version et
 refuse de continuer s'il existe déjà ou si sa disponibilité ne peut pas être
 établie. Il construit les deux architectures et publie les tags
-`christianpro1982/km:0.1.0` et `christianpro1982/km:latest` pour la même livraison.
+`christianpro1982/km:0.5.0` (dans l'exemple explicite) et
+`christianpro1982/km:latest` pour la même livraison.
 Une erreur arrête la commande. Les versions sont conservées : ne jamais
 réutiliser un numéro, même pour corriger une livraison. Le script ne protège
 pas contre deux publications simultanées ; lancer une seule publication à la fois.
@@ -59,7 +76,7 @@ leur mise à jour n'est pas une transaction atomique.
 Après publication, contrôler le manifeste :
 
 ```sh
-docker buildx imagetools inspect christianpro1982/km:0.1.0
+docker buildx imagetools inspect christianpro1982/km:0.5.0
 docker buildx imagetools inspect christianpro1982/km:latest
 ```
 
@@ -79,11 +96,24 @@ Pour le front KM, seuls ces deux fichiers source sont nécessaires :
 
 `config.ini` est monté en lecture seule dans `/usr/share/nginx/html/km/config.ini`, servi
 sous `/km/config.ini` avec `Cache-Control: no-store`. Il ne contient que des
-paramètres publics : `KM_WEBHOOK_BASE_URL` et les trois
-`KM_FILES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH`. La base reste
+paramètres publics : `KM_VERSION`, `KM_WEBHOOK_BASE_URL` et les chemins de webhooks
+propres aux dépôts. La base reste
 `http://15.236.66.128/n8n/webhook/` ; les chemins sont à renseigner lorsque les
 workflows seront raccordés. Ne pas écraser des valeurs déjà configurées sur EC2
 lors du transfert d'un fichier modèle. Le montage exige un fichier existant.
+
+Toutes les pages, y compris l'accueil et le modèle, affichent
+`POC INNO · Sofinco · <version>` dans un pied de page permanent en bas à gauche,
+visible sur mobile avec le menu ouvert ou fermé. Le navigateur lit `KM_VERSION`
+dans le fichier servi sans cache à l'ouverture et au retour depuis l'historique
+du navigateur. Une version absente, invalide ou une lecture en échec affiche
+`version indisponible` sans bloquer la page.
+
+**À chaque déploiement EC2**, synchroniser la ligne `KM_VERSION` avec la version
+publiée, en conservant les webhooks et autres réglages distants. L'image
+n'embarque pas `config.ini` : tirer une nouvelle image ou changer `KM_IMAGE_TAG`
+ne met pas à jour ce fichier monté. Après un retour arrière, ajuster également
+`KM_VERSION`. Recharger la page pour relire la version.
 
 Les HTML, CSS, JS et images KM sur EC2 deviennent inutiles **après migration
 vérifiée**. Aucune suppression automatique n'est prévue. Garder `config.ini`,

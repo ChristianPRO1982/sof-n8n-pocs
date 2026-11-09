@@ -15,7 +15,10 @@ test('production/test URLs share a base and reject escaping paths', () => {
 });
 test('icons follow final extension, case-insensitively, with generic fallback', () => {
   for (const [name, icon] of [['a.B.C.DOCX', 'word'], ['a.csv', 'excel'], ['a.pptm', 'powerpoint'],
-    ['a.PDF', 'pdf'], ['a.JPEG', 'image'], ['a.zip', 'file'], ['README', 'file']]) assert.equal(iconName(name), icon);
+    ['a.PDF', 'pdf'], ['a.JPEG', 'image'], ['a.zip', 'file'], ['README', 'file'],
+    ['guide.MD', 'markdown'], ['guide.markdown', 'markdown'], ['guide.mdown', 'markdown'],
+    ['guide.mkd', 'markdown'], ['guide.mkdn', 'markdown'], ['guide.mdwn', 'markdown'],
+    ['schema.MMD', 'markdown'], ['schema.mermaid', 'markdown'], ['guide.md.pdf', 'pdf']]) assert.equal(iconName(name), icon);
 });
 test('strict confirmations, conflicts, HTTP failures and timeouts', async () => {
   const original = globalThis.fetch;
@@ -42,7 +45,7 @@ test('all three deposits use dedicated keys without fallback for every operation
     KM_TEMPLATES: 'templates',
     KM_LEGACY_FILES: 'legacy',
   };
-  for (const operation of ['list', 'upload', 'delete']) {
+  for (const operation of ['list', 'upload', 'delete', 'view']) {
     const key = operation.toUpperCase();
     const settings = {
       KM_WEBHOOK_BASE_URL: 'http://localhost/n8n/webhook/',

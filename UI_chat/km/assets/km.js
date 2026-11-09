@@ -1,3 +1,5 @@
+import { parseConfig } from './km-upload-api.js';
+
 // Registry shared by every page. File names and labels follow the page nomenclature.
 const pages = [
   { id: "home", label: "Accueil", title: "Accueil", path: "./" },
@@ -110,7 +112,33 @@ for (const entry of pages) {
   list.append(item);
 }
 navigation.append(list);
-sidebar.append(sidebarHeading, navigation, element("p", "km-sidebar-footer", "POC INNO · Sofinco"));
+sidebar.append(sidebarHeading, navigation);
+const footer = element("footer", "km-footer", "POC INNO · Sofinco · ");
+const versionBadge = element("span", "km-version-badge", "version indisponible");
+footer.append(versionBadge);
+layout.after(footer);
+
+let versionReadPending = false;
+async function refreshVersion() {
+  if (versionReadPending) return;
+  versionReadPending = true;
+  try {
+    const response = await fetch(new URL("config.ini", rootURL), {
+      cache: "no-store",
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const version = parseConfig(await response.text()).KM_VERSION;
+    if (!version || version.length > 128 || !/^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9][A-Za-z0-9.-]*)?$/.test(version)) {
+      throw new Error("KM_VERSION absente ou invalide.");
+    }
+    versionBadge.textContent = version;
+  } catch {
+    versionBadge.textContent = "version indisponible";
+  } finally { versionReadPending = false; }
+}
+refreshVersion();
+window.addEventListener("pageshow", (event) => { if (event.persisted) refreshVersion(); });
 
 const hamburger = iconButton("Ouvrir le menu général", "km-hamburger", "M4 6h16M4 12h16M4 18h16");
 hamburger.setAttribute("aria-controls", "km-sidebar");

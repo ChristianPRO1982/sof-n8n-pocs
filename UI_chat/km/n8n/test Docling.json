@@ -1,0 +1,1326 @@
+{
+  "name": "test Docling",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "aa24377f-3834-45a7-9fcf-275626c05c44",
+              "name": "baseUrl",
+              "value": "https://carthographie.fr/docling-online",
+              "type": "string"
+            },
+            {
+              "id": "1b82b993-6911-40ba-bce3-7ca4756e7230",
+              "name": "auth/token",
+              "value": "/auth/token",
+              "type": "string"
+            },
+            {
+              "id": "fd79b4fe-ad81-4be7-85ce-9690a583d493",
+              "name": "v1/status",
+              "value": "/v1/status",
+              "type": "string"
+            },
+            {
+              "id": "cf0b9ade-e0c1-4b84-9928-bbf81068ed0f",
+              "name": "v1/extractions",
+              "value": "/v1/extractions",
+              "type": "string"
+            },
+            {
+              "id": "ee558f3d-29cb-42e5-a469-10e198a7de64",
+              "name": "openapi-json",
+              "value": "/openapi.json",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        368,
+        960
+      ],
+      "id": "7c847bb6-aa9f-40ee-abad-1f849c5ca6a6",
+      "name": "Configuration Docling"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Configuration Docling').item.json.baseUrl }}{{ $('Configuration Docling').item.json['v1/status'] }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('token').last().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        16
+      ],
+      "id": "800c9c3d-fe72-4a87-9abe-2e626f6d72f5",
+      "name": "status"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuration Docling').item.json.baseUrl }}{{ $('Configuration Docling').item.json['auth/token'] }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        592,
+        960
+      ],
+      "id": "3a2c6c72-5c1b-415a-a0f7-38eeb8480173",
+      "name": "token",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "2StZgGeiSKu4aGfE",
+          "name": "Docling Online — Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Liste des actions\n\n| Action | Nom | Méthode / route | Paramètre nécessaire | HTTP attendu |\n|---:|---|---|---|---:|\n| 1 | Status | `GET v1/status` | Aucun | `200` |\n| 2 | Upload / création extraction | `POST v1/extractions` | Fichier binaire | `202` |\n| 3 | Suivi extraction | `GET v1/extractions/{id}` | `extraction_id` | `200` |\n| 4 | Récupération résultat | `GET v1/extractions/{id}/result` | `extraction_id` | `200` |\n| 5 | Suppression / acquittement | `DELETE v1/extractions/{id}` | `extraction_id` | `204` |\n| 6 | Schéma OpenAPI | `GET openapi.json` | Aucun | `200` |\n| *7* | *Arrêt administratif — réservé au responsable de Docling : Christian Martiny sur carthographie.fr* | *`POST v1/admin/stop`* | *Credential admin spécifique* | *`202`* |",
+        "height": 512,
+        "width": 1136,
+        "color": "#034654"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        144
+      ],
+      "id": "6bd7072e-633a-4b57-b015-b2822fb73dc5",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2059f437-3b7a-4f6f-b009-b19ec8427b15",
+              "name": "action",
+              "value": 1,
+              "type": "number"
+            },
+            {
+              "id": "3b6ee851-76f9-4a26-9797-dfc95be6f0ae",
+              "name": "fileName",
+              "value": "source_historique_financement_travaux_POC.pdf",
+              "type": "string"
+            },
+            {
+              "id": "30c63d65-00e6-4366-9006-40f9505a90a8",
+              "name": "extraction_id",
+              "value": "7fd6a3a7-7036-4bdc-a502-a5b1761b3344",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        144,
+        960
+      ],
+      "id": "677111d8-3fb4-4ebe-b904-99bcb5eac27d",
+      "name": "ACTION"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('ACTION').item.json.action }}",
+                    "rightValue": 1,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "58dd3754-a6fb-4e1c-a8f3-332233357faf"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "7b6250ec-f20c-4dc2-84fd-cae4d78b5b21",
+                    "leftValue": "={{ $('ACTION').item.json.action }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a7a36399-da71-408f-9cc3-914a846756b3",
+                    "leftValue": "={{ $('ACTION').item.json.action }}",
+                    "rightValue": 3,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a8ebfcd3-3761-438a-a2d6-f619241c1aa3",
+                    "leftValue": "={{ $('ACTION').item.json.action }}",
+                    "rightValue": 4,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d5e6ec5e-85ca-4293-9d14-1bbc0d59db7d",
+                    "leftValue": "={{ $('ACTION').item.json.action }}",
+                    "rightValue": 5,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "cae5586d-0bb8-4696-8ecf-5466949287e4",
+                    "leftValue": "={{ $('ACTION').item.json.action }}",
+                    "rightValue": 6,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        816,
+        896
+      ],
+      "id": "907768d6-1411-42c6-8bbe-cc54781503a0",
+      "name": "Switch ACTION"
+    },
+    {
+      "parameters": {
+        "command": "=ls /files/km/00_upload_legacy_files/{{ $('ACTION').item.json.fileName }}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        384
+      ],
+      "id": "b8fea877-e5fc-4946-984d-b09dc59cd28a",
+      "name": "File exist ?",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "fileSelector": "=/files/km/00_upload_legacy_files/{{ $('ACTION').item.json.fileName }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        1264,
+        304
+      ],
+      "id": "37b35804-d197-4541-8ee4-6fe1b664fb81",
+      "name": "Read File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuration Docling').item.json.baseUrl }}{{ $('Configuration Docling').item.json['v1/extractions'] }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('token').last().json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1488,
+        304
+      ],
+      "id": "24b4e95c-4fe1-43c5-b914-38e3520c4e80",
+      "name": "UPLOAD file"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1936,
+        480
+      ],
+      "id": "660a3781-4fa4-45c3-b3b4-4c2ba17f3763",
+      "name": "ERROR during UPLOAD"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "44c703a8-7406-4a5f-8d17-81f76dfe00c5",
+              "name": "id",
+              "value": "={{ $('UPLOAD file').item.json.body.id }}",
+              "type": "string"
+            },
+            {
+              "id": "cbdb1619-74c3-4763-82de-2a5183628c6f",
+              "name": "status_url",
+              "value": "={{ $('UPLOAD file').item.json.body.status_url }}",
+              "type": "string"
+            },
+            {
+              "id": "85b58789-afe7-437a-b1f0-e272fb91ce12",
+              "name": "result_url",
+              "value": "={{ $('UPLOAD file').item.json.body.result_url }}",
+              "type": "string"
+            },
+            {
+              "id": "b2013f01-cc6f-489a-8698-d17279cdc2bd",
+              "name": "acknowledge_url",
+              "value": "={{ $json.body.acknowledge_url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1936,
+        256
+      ],
+      "id": "f242c09c-95da-4475-8b92-288b2ee1d65f",
+      "name": "Extraction Docling in progress"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Configuration Docling').item.json.baseUrl }}{{ $('Configuration Docling').item.json['v1/extractions'] }}/{{ $('ACTION').item.json.extraction_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('token').last().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        768
+      ],
+      "id": "af608c4c-e5b9-42b5-9a2f-93bbb256944f",
+      "name": "extraction status"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        672
+      ],
+      "id": "6164ae35-639f-46d8-ab4a-6e6112813e47",
+      "name": "extraction status OK"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        864
+      ],
+      "id": "4b4a0a35-e746-4cba-8ae3-06c8b1f6d58d",
+      "name": "extraction status KO"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        -80
+      ],
+      "id": "b33f511f-1b57-42c2-bbe9-792b96e1ca16",
+      "name": "status OK"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        112
+      ],
+      "id": "b8d02134-8ecc-4883-8fa6-ecc212b7c78b",
+      "name": "status KO"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Configuration Docling').item.json.baseUrl }}{{ $('Configuration Docling').item.json['v1/extractions'] }}/{{ $('ACTION').item.json.extraction_id }}/result",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('token').last().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        1152
+      ],
+      "id": "1368be16-e7e8-42ba-9110-f59f335e6ee8",
+      "name": "download"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2c6bdba0-b47a-481c-bf1e-8616703566f3",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "1010a2a1-5ed8-4cff-8039-aeca23ea1b27",
+              "leftValue": "={{ $json.body.schema_version }}",
+              "rightValue": "1",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "40c426f7-ea26-4d46-b7ef-5f0ed114d2b0",
+              "leftValue": "={{ $json.body.page_count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "d5ead6de-bf84-438a-8a6c-29655651ec85",
+              "leftValue": "={{ $json.body.document.schema_name }}",
+              "rightValue": "DoclingDocument",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "38e96d1e-28eb-4900-aefc-c646609f7c4a",
+              "leftValue": "={{ $json.body.markdown }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1264,
+        1152
+      ],
+      "id": "8cf1ce04-1609-4115-8bbe-6b3d6c1161cd",
+      "name": "IF download"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "884c29ab-751a-4b00-8dba-450857ed23d5",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "8100f4a2-970e-4210-90c7-cb5f927be822",
+              "leftValue": "={{ $json.statusMessage }}",
+              "rightValue": "OK",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1264,
+        16
+      ],
+      "id": "7760e2c8-7528-4f51-9b3c-af76b12ae446",
+      "name": "IF status"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "61816aa4-a8de-4678-b0f3-84f2de39652a",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "bc9af6d1-59f5-4b86-93cf-3c91fb5d6a33",
+              "leftValue": "={{ $json.body.state }}",
+              "rightValue": "succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cd84597d-7890-4f93-a92b-d975e47ae488",
+              "leftValue": "={{ $json.body.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1264,
+        768
+      ],
+      "id": "576ead15-1930-4db9-9b94-2c5ca413f812",
+      "name": "IF extraction status"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f2990573-b519-41ae-8e64-7b07221cfb74",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 202,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1712,
+        304
+      ],
+      "id": "1031d47e-fef8-4759-9339-485976de5105",
+      "name": "IF upload"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        1248
+      ],
+      "id": "08c27107-b527-470d-9770-351006bd6c9d",
+      "name": "download KO"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "55e8b225-f7cb-4851-b8df-79041440a4ea",
+              "name": "body",
+              "value": "={{ $('download').item.json.body }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        1056
+      ],
+      "id": "b68af9ef-c7f9-4365-bdfb-d2f7608d0667",
+      "name": "SET body"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {
+          "fileName": "={{ $('ACTION').item.json.fileName }}.json"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1712,
+        1056
+      ],
+      "id": "016e25e3-3118-42dd-9239-f5796bc1414b",
+      "name": "body to json"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/files/km/00_processed_legacy_files/{{ $('ACTION').item.json.fileName }}.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        1936,
+        1056
+      ],
+      "id": "9359ddb5-8cc4-4b52-80fc-286852d7a7b7",
+      "name": "Write body.json"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4a4b53ef-06ac-4348-bca6-bc4853c4a9b2",
+              "name": "markdown",
+              "value": "={{ $('download').item.json.body.markdown }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2160,
+        1056
+      ],
+      "id": "56d64042-bee8-4f4e-917f-8ccbbd4a7d02",
+      "name": "SET markdown"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/files/km/01_upload_raw_files/{{ $('ACTION').item.json.fileName }}.md",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        2608,
+        1056
+      ],
+      "id": "e150b206-3ad4-49d7-8d7a-7de36aa0ac18",
+      "name": "Write body.json1"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {
+          "fileName": "={{ $('ACTION').item.json.fileName }}.md"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2384,
+        1056
+      ],
+      "id": "a959db35-1630-4f2e-8db4-a8e3a2792f37",
+      "name": "markdown to md"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $('Configuration Docling').item.json.baseUrl }}{{ $('Configuration Docling').item.json['v1/extractions'] }}/{{ $('ACTION').item.json.extraction_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('token').last().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        1536
+      ],
+      "id": "5a7752cf-b690-4f00-8a31-7a18239e48d5",
+      "name": "delete"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0d9883c2-ea7b-49c7-9d77-18ae0d66fb8a",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 204,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1264,
+        1536
+      ],
+      "id": "c8345a04-49b4-4202-b990-637aa65a9b84",
+      "name": "IF delete"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        1632
+      ],
+      "id": "e8b0b53a-6524-4723-8d38-5bb7d5b43468",
+      "name": "delete KO"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        1440
+      ],
+      "id": "708a5a66-5e3a-4002-b8b5-0f1b9f54cef1",
+      "name": "delete OK"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Configuration Docling').item.json.baseUrl }}{{ $('Configuration Docling').item.json['openapi-json'] }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('token').last().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        1728
+      ],
+      "id": "716c61d6-1309-4e2e-9c71-ffe5f8783b3e",
+      "name": "Schema Docling"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        960
+      ],
+      "id": "ad4959e8-af44-40f7-9be3-80651137a7bb",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Configuration Docling": {
+      "main": [
+        [
+          {
+            "node": "token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "token": {
+      "main": [
+        [
+          {
+            "node": "Switch ACTION",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ACTION": {
+      "main": [
+        [
+          {
+            "node": "Configuration Docling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch ACTION": {
+      "main": [
+        [
+          {
+            "node": "status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "File exist ?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "extraction status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "download",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "delete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Schema Docling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File exist ?": {
+      "main": [
+        [
+          {
+            "node": "Read File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR during UPLOAD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read File": {
+      "main": [
+        [
+          {
+            "node": "UPLOAD file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UPLOAD file": {
+      "main": [
+        [
+          {
+            "node": "IF upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extraction status": {
+      "main": [
+        [
+          {
+            "node": "IF extraction status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "status": {
+      "main": [
+        [
+          {
+            "node": "IF status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "download": {
+      "main": [
+        [
+          {
+            "node": "IF download",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF status": {
+      "main": [
+        [
+          {
+            "node": "status OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "status KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF extraction status": {
+      "main": [
+        [
+          {
+            "node": "extraction status OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "extraction status KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF upload": {
+      "main": [
+        [
+          {
+            "node": "Extraction Docling in progress",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR during UPLOAD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF download": {
+      "main": [
+        [
+          {
+            "node": "SET body",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "download KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET body": {
+      "main": [
+        [
+          {
+            "node": "body to json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "body to json": {
+      "main": [
+        [
+          {
+            "node": "Write body.json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write body.json": {
+      "main": [
+        [
+          {
+            "node": "SET markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET markdown": {
+      "main": [
+        [
+          {
+            "node": "markdown to md",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "markdown to md": {
+      "main": [
+        [
+          {
+            "node": "Write body.json1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete": {
+      "main": [
+        [
+          {
+            "node": "IF delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF delete": {
+      "main": [
+        [
+          {
+            "node": "delete OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "delete KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "ACTION",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "3cbd1d7f-73c5-48dd-bb1b-ec6d1c23af05",
+  "meta": {
+    "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
+  },
+  "nodeGroups": [],
+  "id": "34bS7dAruypxY6aH",
+  "tags": [
+    {
+      "updatedAt": "2026-10-23T07:45:52.085Z",
+      "createdAt": "2026-10-23T07:45:52.085Z",
+      "id": "aTY4iOvJFOjQpknu",
+      "name": "KM"
+    }
+  ]
+}

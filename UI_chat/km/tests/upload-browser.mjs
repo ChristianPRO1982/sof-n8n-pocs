@@ -32,8 +32,8 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (path === '/km/config.ini') {
-      res.end(`KM_WEBHOOK_BASE_URL=http://127.0.0.1:${server.address().port}/webhook/\n` +
-        Object.values(deposits).flatMap(({ prefix, path: depositPath }) => ['LIST', 'UPLOAD', 'DELETE'].map((op) => {
+      res.end(`KM_VERSION=0.4.0\nKM_WEBHOOK_BASE_URL=http://127.0.0.1:${server.address().port}/webhook/\n` +
+        Object.values(deposits).flatMap(({ prefix, path: depositPath }) => ['LIST', 'UPLOAD', 'DELETE', 'VIEW'].map((op) => {
           const selected = prefix === deposit.prefix;
           const path = `${depositPath}${op.toLowerCase()}`;
           return `${prefix}_${op}_WEBHOOK_PATH=${!selected || configured ? path : ''}`;
@@ -151,6 +151,27 @@ try {
   await wait(`document.getElementById('webhook-list-toggle') && !document.getElementById('webhook-list-toggle').disabled`);
   assert.equal(await evaluate(`document.getElementById('webhook-list-toggle').getAttribute('aria-checked')`), 'false');
   assert.match(await text('server-files'), /existing.pdf/);
+  await wait(`document.querySelector('.km-footer')?.textContent === 'POC INNO · Sofinco · 0.4.0'`);
+  // Capture the new-tab navigation without making a file request.
+  await evaluate(`window.kmOriginalOpen = window.open; window.kmViewCalls = [];
+    window.open = (...args) => window.kmViewCalls.push(args)`);
+  const view = `document.querySelector('#server-files button[aria-label="Voir existing.pdf"]')`;
+  assert.equal(await evaluate(`${view}.nextElementSibling.textContent`), 'Supprimer');
+  assert.equal(await evaluate(`document.getElementById('webhook-view-toggle').getAttribute('aria-checked')`), 'false');
+  const beforeView = calls.length;
+  for (const test of [false, true]) {
+    if (test) await click('webhook-view-toggle');
+    await evaluate(`${view}.click()`);
+    const [href, target, features] = await evaluate('window.kmViewCalls.at(-1)');
+    const url = new URL(href);
+    assert.equal(url.pathname, webhookPath('view', test));
+    assert.equal(url.searchParams.get('name'), 'existing.pdf');
+    assert.equal(target, '_blank');
+    assert.equal(features, 'noopener,noreferrer');
+  }
+  assert.equal(calls.length, beforeView, 'Changing view mode does not call a webhook');
+  await click('webhook-view-toggle');
+  await evaluate('window.open = window.kmOriginalOpen');
   const menuPages = await evaluate(`[...document.querySelectorAll('.km-navigation a')].map(a => new URL(a.href).pathname)`);
   assert.equal(menuPages.length, 15, 'Home and fourteen pages must be present');
   assert.deepEqual(menuPages.slice(0, 6), ['/km/', '/km/pages/00a_templates.html',

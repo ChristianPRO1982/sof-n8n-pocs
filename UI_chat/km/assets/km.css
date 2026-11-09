@@ -27,6 +27,9 @@ body {
   height: 100dvh;
   overflow: hidden;
   padding: clamp(8px, 0.7vw, 12px);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 4px;
   background:
     radial-gradient(circle at 15% 10%, rgb(0 91 187 / 11%), transparent 30%),
     radial-gradient(circle at 85% 16%, rgb(255 122 0 / 8%), transparent 30%),
@@ -48,11 +51,12 @@ a { color: var(--primary); }
 }
 .km-skip-link:focus { transform: none; }
 .km-layout {
-  height: 100%;
+  position: relative;
   display: grid;
   grid-template-columns: var(--km-sidebar-width, 22%) 8px minmax(0, 1fr);
   gap: 4px;
   min-width: 0;
+  min-height: 0;
 }
 .km-sidebar, .km-header, .km-content {
   background: var(--panel);
@@ -101,12 +105,24 @@ a { color: var(--primary); }
   font-weight: 600;
   box-shadow: inset 3px 0 var(--primary);
 }
-.km-sidebar-footer {
-  margin: auto 0 0;
-  padding: 12px;
-  border-top: 1px solid var(--border);
+.km-footer {
+  position: relative;
+  z-index: 21;
+  padding: 4px 0;
   color: var(--muted);
   font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+.km-version-badge {
+  display: inline-block;
+  max-width: 100%;
+  padding: 3px 9px;
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  font-weight: 700;
+  vertical-align: middle;
 }
 .km-resizer {
   cursor: col-resize;
@@ -141,6 +157,7 @@ body.km-resizing { cursor: col-resize; user-select: none; }
 .km-page-heading { flex: 1 1 180px; min-width: 0; display: flex; align-items: center; gap: 8px; }
 .km-page-title { margin: 0; font-size: 1.15rem; overflow-wrap: anywhere; }
 .km-context { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 44px; }
+.km-webhook-controls { display: flex; flex: 0 0 100%; min-width: 0; flex-wrap: wrap; align-items: center; gap: 8px; }
 .km-context a {
   display: inline-flex;
   align-items: center;
@@ -218,8 +235,8 @@ body.km-resizing { cursor: col-resize; user-select: none; }
   .km-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .km-resizer { display: none; }
   .km-sidebar {
-    position: fixed;
-    inset: 8px auto 8px 8px;
+    position: absolute;
+    inset: 0 auto 0 0;
     width: min(360px, 90vw);
     z-index: 30;
     box-shadow: 0 18px 40px rgb(8 44 92 / 22%);

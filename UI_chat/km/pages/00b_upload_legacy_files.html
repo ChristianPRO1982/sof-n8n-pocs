@@ -19,7 +19,8 @@
     <div class="km-workspace">
       <header class="km-header" data-km-header>
         <!-- Ajouter ici les actions propres à la page, après les liens communs. -->
-        <nav class="km-context" data-km-context>
+        <nav class="km-context" data-km-context></nav>
+        <div class="km-webhook-controls" role="group" aria-label="Mode test des webhooks n8n">
           <span>N8N - test :</span>
           <button type="button" class="km-upload-button km-webhook-toggle" id="webhook-list-toggle"
             role="switch" aria-checked="false" disabled>
@@ -31,12 +32,17 @@
             <span>WH - upload</span>
             <img src="../assets/icons/toggle_blue_off.png" alt="" id="webhook-upload-toggle-image">
           </button>
+          <button type="button" class="km-upload-button km-webhook-toggle" id="webhook-view-toggle"
+            role="switch" aria-checked="false" disabled>
+            <span>WH - view</span>
+            <img src="../assets/icons/toggle_blue_off.png" alt="" id="webhook-view-toggle-image">
+          </button>
           <button type="button" class="km-upload-button km-webhook-toggle" id="webhook-delete-toggle"
             role="switch" aria-checked="false" disabled>
             <span>WH - delete</span>
             <img src="../assets/icons/toggle_blue_off.png" alt="" id="webhook-delete-toggle-image">
           </button>
-        </nav>
+        </div>
       </header>
       <main class="km-content" id="km-content" tabindex="-1">
         <h2>Import des fichiers historiques</h2>
