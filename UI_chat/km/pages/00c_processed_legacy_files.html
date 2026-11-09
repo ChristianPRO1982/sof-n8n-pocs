@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fichiers historiques traités — Knowledge Manager</title>
   <link rel="stylesheet" href="../assets/km.css">
+  <link rel="stylesheet" href="../assets/km-upload.css">
   <script type="module" src="../assets/km.js"></script>
+  <script type="module" src="../assets/km-processed-legacy.js"></script>
 </head>
 <body data-km-page="00c_processed_legacy_files">
   <a class="km-skip-link" href="#km-content">Aller au contenu</a>
@@ -18,19 +20,47 @@
       <header class="km-header" data-km-header>
         <!-- Ajouter ici les actions propres à la page, après les liens communs. -->
         <nav class="km-context" data-km-context></nav>
+        <div class="km-webhook-controls" role="group" aria-label="Mode test des webhooks n8n">
+          <span>N8N - test :</span>
+          <button type="button" class="km-upload-button km-webhook-toggle" id="webhook-list-toggle"
+            role="switch" aria-checked="false" disabled>
+            <span>WH - list</span>
+            <img src="../assets/icons/toggle_blue_off.png" alt="" id="webhook-list-toggle-image">
+          </button>
+          <button type="button" class="km-upload-button km-webhook-toggle" id="webhook-view-toggle"
+            role="switch" aria-checked="false" disabled>
+            <span>WH - view</span>
+            <img src="../assets/icons/toggle_blue_off.png" alt="" id="webhook-view-toggle-image">
+          </button>
+          <button type="button" class="km-upload-button km-webhook-toggle" id="webhook-replay-toggle"
+            role="switch" aria-checked="false" disabled>
+            <span>WH - replay</span>
+            <img src="../assets/icons/toggle_blue_off.png" alt="" id="webhook-replay-toggle-image">
+          </button>
+          <button type="button" class="km-upload-button km-webhook-toggle" id="webhook-delete-toggle"
+            role="switch" aria-checked="false" disabled>
+            <span>WH - delete</span>
+            <img src="../assets/icons/toggle_blue_off.png" alt="" id="webhook-delete-toggle-image">
+          </button>
+        </div>
       </header>
       <main class="km-content" id="km-content" tabindex="-1">
         <h2>Fichiers historiques traités</h2>
-        <p>Fonctionnement cible — la consultation des archives historiques et leur traitement restent à développer.</p>
-        <p>Cette page permettra de retrouver les fichiers historiques d’origine après leur préparation,
-          avec des liens vers les documents produits selon les templates et vers les passages sources utilisés.</p>
-        <p>L’archivage interviendra seulement après la réussite de la préparation, l’enregistrement des
-          documents produits et leur transfert automatique dans l’entrée standard. Un échec ou un résultat
-          partiel conservera la source en attente.</p>
-        <p>Les documents issus de cette préparation suivront les contrôles et validations habituels ;
-          l’archivage du fichier historique ne vaudra pas validation métier.</p>
+        <p class="km-upload-muted">Consultez les fichiers historiques traités, demandez leur rejeu ou supprimez-les.
+          Une demande de rejeu prise en compte ne confirme pas la réussite du traitement.</p>
+        <div id="upload-notice" role="status" aria-live="polite" class="km-upload-message">Chargement de la configuration…</div>
+        <section class="km-upload-panel" aria-labelledby="server-heading">
+          <div class="km-upload-toolbar">
+            <h3 id="server-heading">Fichiers historiques traités sur le serveur</h3>
+            <button type="button" class="km-upload-button" id="refresh-files" disabled>Actualiser</button>
+          </div>
+          <p class="km-upload-muted">Le rejeu et la suppression demandent une confirmation pour le fichier concerné.</p>
+          <p id="server-state" role="status" aria-live="polite">Chargement…</p>
+          <ul id="server-files" class="km-upload-list" aria-label="Fichiers historiques traités sur le serveur"></ul>
+        </section>
         <p><a href="00b_upload_legacy_files.html">Déposer des fichiers historiques</a> ·
           <a href="01a_upload_files.html">Consulter l’entrée standard</a></p>
+        <noscript>Activez JavaScript pour gérer les fichiers historiques traités.</noscript>
       </main>
     </div>
   </div>

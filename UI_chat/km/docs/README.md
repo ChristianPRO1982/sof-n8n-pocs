@@ -2,10 +2,11 @@
 
 Cette documentation décrit le fonctionnement cible du POC et ses quatorze pages.
 Les interfaces de dépôt des sources, des templates et des historiques sont
-développées ; les onze autres pages sont provisoires ou descriptives. Les
-contrats des trois dépôts sont définis côté front. Les clés des sources et
-templates sont renseignées localement ; leurs workflows distants ne sont pas
-certifiés par ces fiches. Les clés historiques restent vides. La préparation,
+développées, ainsi que la gestion des historiques traités (`00c`) ; les dix
+autres pages sont provisoires. Les contrats des trois dépôts et de la liste
+`00c` sont définis côté front. Les clés sources, templates et dépôt historique
+sont renseignées localement, sans certification des workflows distants. Les
+quatre clés propres aux historiques traités restent vides. La préparation,
 le découpage, le transfert et l’archivage des historiques restent à développer.
 
 ## Référence et périmètre
@@ -67,9 +68,14 @@ transfert réussi de tous les dérivés. Un échec ou résultat partiel conserve
 source en attente. Conserver les liens entre source, passages utilisés, dérivés
 et templates/version employés ; journaliser les résultats et erreurs.
 
-Seul le dépôt navigateur est développé ici ; `00c` explique la future consultation
-des sources archivées et de leurs dérivés. Aucun découpage, transfert, archivage,
-stockage historique ou workflow n8n n’est créé. Les règles et formats restent à
+Les interfaces navigateur du dépôt historique et de `00c` sont développées.
+`00c` fournit une liste, « Voir », « Rejouer » et « Supprimer », sans upload manuel.
+Ses quatre clés `KM_PROCESSED_LEGACY_FILES_{LIST,VIEW,DELETE,REPLAY}_WEBHOOK_PATH`
+sont isolées des trois dépôts. Le rejeu transmet une demande au webhook : sa
+prise en compte ne certifie pas la réussite du traitement et ne retire aucune
+entrée par elle-même. Les actions du workflow restent à définir ; les liens
+vers les dérivés et leur traçabilité sont des cibles. Aucun découpage, transfert,
+archivage, stockage historique ou workflow n8n n’est créé. Les règles et formats restent à
 préciser dans les deux fiches. Le parcours Word relu du PDF reste la référence.
 
 ## Parcours et circulation

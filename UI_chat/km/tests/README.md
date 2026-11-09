@@ -40,14 +40,36 @@ l’absence de repli vers les webhooks des deux autres dépôts, même lorsque c
 configurés. Le test vérifie l’ordre des quinze liens du menu (accueil et quatorze
 pages). Les captures templates sont sous `/tmp/km-templates-<largeur>.png` et les
 captures historiques sous `/tmp/km-legacy-<largeur>.png`.
-Les tests du module API couvrent chaque préfixe (`KM_FILES`, `KM_TEMPLATES`,
-`KM_LEGACY_FILES`), les trois opérations, test/production et les chemins absents,
-vides ou invalides, en présence des configurations des autres dépôts.
-La page `00c_processed_legacy_files` reste descriptive : vérifier ses liens et
-l’absence de données fictives ou d’actions de traitement. Aucun test ne doit
-annoncer un découpage, transfert ou archivage métier déjà réalisé.
+Les tests du module API couvrent les quatre préfixes (`KM_FILES`, `KM_TEMPLATES`,
+`KM_LEGACY_FILES`, `KM_PROCESSED_LEGACY_FILES`), leurs opérations (dont `replay`
+pour les historiques traités), test/production et les chemins absents, vides ou
+invalides, en présence des configurations des autres écrans.
+Aucun test ne doit annoncer un découpage, transfert ou archivage métier déjà réalisé.
 La recette réelle EC2 reste à effectuer après raccordement des workflows ; les
 tests locaux ne prouvent pas l'atomicité du contrôle des révisions dans n8n.
+
+## Historiques traités : liste, Voir, Rejouer et Supprimer
+
+Avec la même instance Chrome isolée :
+
+```sh
+node UI_chat/km/tests/processed-legacy-browser.mjs 'ws://127.0.0.1:PORT/devtools/browser/IDENTIFIANT'
+```
+
+Cette suite utilise uniquement un serveur localhost avec réponses n8n simulées.
+Elle couvre la page `00c_processed_legacy_files` sans upload manuel : liste
+chargée/vide/en erreur, noms dupliqués et entrées invalides, Voir avec nom encodé
+et nouvel onglet, confirmation nominative et annulation du rejeu/suppression,
+corps POST avec révision, conflits, réponses invalides, refus et délais.
+Le délai de production de 30 s est contrôlé puis accéléré dans le navigateur de
+test uniquement. Un rejeu accepté conserve la source, y compris si la lecture
+suivante échoue, et ne certifie pas la réussite du traitement. Les tests bloquent
+les doubles clics et les opérations concurrentes, vérifient les quatre bascules,
+le mode indépendant de la liste, le retour par l’historique, chaque clé absente
+et l’absence de repli vers les trois dépôts pourtant configurés.
+Les icônes et leur repli, le clavier et les cinq largeurs existantes sont couverts ;
+les captures sont sous `/tmp/km-processed-legacy-<largeur>.png`. La configuration,
+les statuts, les fichiers métier et les workflows distants ne sont pas modifiés.
 
 ## Vérifications Docker isolées
 

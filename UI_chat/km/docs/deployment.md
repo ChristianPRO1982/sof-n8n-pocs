@@ -126,7 +126,7 @@ pas remplacés par l'image du front.
 
 L’image KM inclut automatiquement les nouvelles pages `00b_upload_legacy_files`
 et `00c_processed_legacy_files`. À la prochaine livraison manuelle, reporter les
-deux entrées de `statuses.json` (`development` et `not_started`) dans le fichier
+deux entrées de `statuses.json` avec leurs statuts courants dans le fichier
 monté sur EC2, en conservant les autres statuts. Ajouter dans la configuration
 existante, sans remplacer les clés déjà renseignées :
 
@@ -140,6 +140,26 @@ Ces clés restent vides jusqu’au raccordement des workflows historiques. Aucun
 repli vers les autres dépôts, dossier métier ni workflow historique n’est créé.
 Le découpage et l’archivage ne sont pas inclus dans cette livraison. Aucune
 publication ou opération EC2 n’est exécutée par cette modification du dépôt.
+
+## Gestion des historiques traités (`00c`)
+
+La page `00c_processed_legacy_files` fournit une liste, Voir, Rejouer et Supprimer,
+sans upload manuel. Ajouter les quatre clés ci-dessous au fichier de configuration
+monté sur EC2, en conservant les valeurs existantes et `KM_VERSION` :
+
+```ini
+KM_PROCESSED_LEGACY_FILES_LIST_WEBHOOK_PATH=
+KM_PROCESSED_LEGACY_FILES_VIEW_WEBHOOK_PATH=
+KM_PROCESSED_LEGACY_FILES_DELETE_WEBHOOK_PATH=
+KM_PROCESSED_LEGACY_FILES_REPLAY_WEBHOOK_PATH=
+```
+
+Les clés restent vides avant raccordement ; aucun repli vers les trois dépôts.
+Le statut `development` existant est conservé. La nouvelle image embarquera le
+contrôleur dédié et la page ; aucune publication ni opération EC2 n’est exécutée
+par cette modification. Aucun nouveau stockage ou workflow n’est créé.
+Voir [le contrat de la page](00c_processed_legacy_files.md), notamment la distinction
+entre acceptation d’une demande de rejeu et réussite du traitement.
 
 ## Pastilles actualisées sans cache
 

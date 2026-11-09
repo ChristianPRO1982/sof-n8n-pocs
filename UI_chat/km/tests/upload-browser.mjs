@@ -227,12 +227,12 @@ try {
   malformed = false;
   await evaluate('window.confirm = () => false');
   const beforeDelete = calls.filter((p) => p.endsWith('/delete')).length;
-  await evaluate(`document.querySelector('#server-files button').click()`);
+  await evaluate(`document.querySelector('#server-files button.km-upload-danger').click()`);
   assert.equal(calls.filter((p) => p.endsWith('/delete')).length, beforeDelete);
   await evaluate('window.confirm = () => true');
   // A changed revision must be refused without removal.
   files.get('existing.pdf').revision = 'v3';
-  await evaluate(`document.querySelector('#server-files button').click()`);
+  await evaluate(`document.querySelector('#server-files button.km-upload-danger').click()`);
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.match(await text('upload-notice'), /non confirmée/);
   assert.match(await text('server-files'), /existing.pdf/);
@@ -241,12 +241,12 @@ try {
     data: { name: 'existing.pdf', expected_revision: 'v2' },
   });
   invalidDelete = true;
-  await evaluate(`document.querySelector('#server-files button').click()`);
+  await evaluate(`document.querySelector('#server-files button.km-upload-danger').click()`);
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.match(await text('upload-notice'), /non confirmée pour existing\.pdf.*Résultat incertain/);
   assert.match(await text('server-files'), /existing.pdf/);
   invalidDelete = false;
-  await evaluate(`document.querySelector('#server-files button').click()`);
+  await evaluate(`document.querySelector('#server-files button.km-upload-danger').click()`);
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.match(await text('upload-notice'), /Suppression confirmée/);
   assert.deepEqual(deletions.at(-1).data, { name: 'existing.pdf', expected_revision: 'v3' });
@@ -270,7 +270,7 @@ try {
   assert.equal(calls.at(-1), webhookPath('list'));
   await click('webhook-list-toggle');
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
-  await evaluate(`document.querySelector('#server-files button').click()`);
+  await evaluate(`document.querySelector('#server-files button.km-upload-danger').click()`);
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.equal(calls.filter((p) => p.endsWith('/delete')).at(-1), webhookPath('delete'));
   assert.equal(calls.at(-1), webhookPath('list', true));
@@ -282,7 +282,7 @@ try {
   assert.equal(await evaluate(`document.getElementById('webhook-list-toggle').getAttribute('aria-checked')`), 'false');
   assert.equal(await evaluate(`document.getElementById('webhook-upload-toggle').getAttribute('aria-checked')`), 'true');
   assert.equal(await evaluate(`document.getElementById('webhook-delete-toggle').getAttribute('aria-checked')`), 'true');
-  await evaluate(`document.querySelector('#server-files button').click()`);
+  await evaluate(`document.querySelector('#server-files button.km-upload-danger').click()`);
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.equal(calls.filter((p) => p.endsWith('/delete')).at(-1), webhookPath('delete', true));
   assert.equal(calls.at(-1), webhookPath('list'));

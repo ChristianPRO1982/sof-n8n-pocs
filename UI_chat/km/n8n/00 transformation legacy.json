@@ -1,0 +1,2577 @@
+{
+  "name": "00 transformation legacy",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c2d06f4d-9c3b-4a83-b09f-4608995d986e",
+              "name": "filename",
+              "value": "={{ $('Loop Over Items').item.json.files[0].name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        -944
+      ],
+      "id": "7c726ade-11a0-4d1a-bfa4-de6d1145e406",
+      "name": "file"
+    },
+    {
+      "parameters": {
+        "fileSelector": "={{ $('init 1').item.json.source_path }}{{ $('file').item.json.filename }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        1136,
+        -1040
+      ],
+      "id": "bd7d9aee-45d9-4e3f-8374-2eb0479adda1",
+      "name": "read file",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e8813f7b-c5bd-411e-817d-8041ac3ce1f3",
+              "name": "error",
+              "value": "Impossible de lire le fichier sur le server",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1584,
+        -848
+      ],
+      "id": "379b7535-984e-458b-9f79-a9aceceb25f2",
+      "name": "read file error"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "44cb9915-0d2f-4bd2-8843-c573260967c4",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1808,
+        -752
+      ],
+      "id": "4ab816bd-9ad5-4fdd-9bae-2ba64b3bbf07",
+      "name": "node de sortie erreur test"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('init 1').first().json.baseUrl }}{{ $('init 1').first().json.extractions }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('token 1').first().json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1360,
+        -1104
+      ],
+      "id": "1512cb0a-1124-435e-aa0e-95d1c12953da",
+      "name": "upload file",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4ae7be74-24b1-43a5-be6a-c595a890a6e9",
+              "name": "error",
+              "value": "impossible d'uploader le fichier sur le server Docling-online",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1584,
+        -1040
+      ],
+      "id": "5eafbd27-1069-4306-a127-cd113b11b580",
+      "name": "upload file error"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "FixaEhBKpKdtJDH1",
+          "mode": "list",
+          "cachedResultName": "docling_jobs",
+          "cachedResultUrl": "/projects/i5ASDarJ8CkFcYlF/datatables/FixaEhBKpKdtJDH1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "docling_id": "={{ $json.body.id }}",
+            "file_name": "={{ $('file').first().json.filename }}",
+            "source_path": "={{ $('init 1').first().json.source_path + $('file').first().json.filename }}",
+            "state": "={{ $json.body.state }}",
+            "status_url": "={{ $json.body.status_url }}",
+            "result_url": "={{ $json.body.result_url }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "docling_id",
+              "displayName": "docling_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "source_path",
+              "displayName": "source_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status_url",
+              "displayName": "status_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "result_url",
+              "displayName": "result_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1808,
+        -1184
+      ],
+      "id": "1ee7d670-3002-43df-b8c3-2bbb7c271458",
+      "name": "Insert JOB"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        -144
+      ],
+      "id": "6650f6da-7941-4774-8307-914dc6717e0c",
+      "name": "currentDate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a892f0b5-1a17-47c7-ad75-7ab37e123eaf",
+              "leftValue": "={{ $json.timeDifference.hours }}",
+              "rightValue": 4,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "926afa2f-04e1-4a4f-84df-0e29b8f3d91b",
+              "leftValue": "={{ $('Get JOBs for delete').item.json.state }}",
+              "rightValue": "running",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -208,
+        -144
+      ],
+      "id": "9e34e45a-7660-4562-8ee9-1b4052a15079",
+      "name": "to delete"
+    },
+    {
+      "parameters": {
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "value": "FixaEhBKpKdtJDH1",
+          "mode": "list",
+          "cachedResultName": "docling_jobs",
+          "cachedResultUrl": "/projects/i5ASDarJ8CkFcYlF/datatables/FixaEhBKpKdtJDH1"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $('Get JOBs for delete').item.json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        16,
+        -144
+      ],
+      "id": "b42549c4-3e53-466d-a3da-c528ded3f4c3",
+      "name": "Delete JOBs"
+    },
+    {
+      "parameters": {
+        "operation": "getTimeBetweenDates",
+        "startDate": "={{ $('Get JOBs for delete').item.json.createdAt }}",
+        "endDate": "={{ $json.currentDate }}",
+        "units": [
+          "hour"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        -432,
+        -144
+      ],
+      "id": "a4960222-9a82-4821-884c-6fe0f4ee1588",
+      "name": "JOBs - createdAt between now"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1104,
+        336
+      ],
+      "id": "26497085-7896-4b26-b8c6-9634ffef3cda",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "FixaEhBKpKdtJDH1",
+          "mode": "list",
+          "cachedResultName": "docling_jobs",
+          "cachedResultUrl": "/projects/i5ASDarJ8CkFcYlF/datatables/FixaEhBKpKdtJDH1"
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -880,
+        -144
+      ],
+      "id": "ca00a10b-bfea-4740-9804-64cd364f787a",
+      "name": "Get JOBs for delete"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "FixaEhBKpKdtJDH1",
+          "mode": "list",
+          "cachedResultName": "docling_jobs",
+          "cachedResultUrl": "/projects/i5ASDarJ8CkFcYlF/datatables/FixaEhBKpKdtJDH1"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "state",
+              "keyValue": "running"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -432,
+        496
+      ],
+      "id": "4399d9f4-0a4c-470d-95a0-5d0e623a2a48",
+      "name": "Get JOBs"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('init 1').item.json.baseUrl }}{{ $('init 1').item.json['auth/token'] }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        240,
+        -848
+      ],
+      "id": "f1b9a3db-3ad0-40f6-8e71-7505dd74d381",
+      "name": "token 1",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "2StZgGeiSKu4aGfE",
+          "name": "Docling Online — Production"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('init 2').item.json.baseUrl }}{{ $json.baseUrlAdd }}{{ $json['auth/token'] }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -656,
+        592
+      ],
+      "id": "28b08f51-07f4-483d-a329-33bcbff12a57",
+      "name": "token 2",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "2StZgGeiSKu4aGfE",
+          "name": "Docling Online — Production"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "047d9140-a47e-4505-a069-afac921c0b57",
+              "name": "error",
+              "value": "impossible de récupérer le token 1",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1584,
+        -464
+      ],
+      "id": "e759b3f2-8cd6-43fa-8644-42c23f376b62",
+      "name": "token 1 error"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "047d9140-a47e-4505-a069-afac921c0b57",
+              "name": "error",
+              "value": "impossible de récupérer le token 2",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -432,
+        688
+      ],
+      "id": "be86120d-c113-4043-8def-991ca717b324",
+      "name": "token 2 error"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2b752f7e-f3b4-4bec-9792-0cc119c74b28",
+              "name": "source_path",
+              "value": "/files/km/00_upload_legacy_files/",
+              "type": "string"
+            },
+            {
+              "id": "79e17013-b79e-41cb-87a1-9545b771e2fb",
+              "name": "baseUrl",
+              "value": "https://carthographie.fr/docling-online",
+              "type": "string"
+            },
+            {
+              "id": "6f7436ff-c96f-4486-b22b-5aa0e4b81256",
+              "name": "auth/token",
+              "value": "/auth/token",
+              "type": "string"
+            },
+            {
+              "id": "d86e18e0-5baa-453a-9c41-a52c8ffeddef",
+              "name": "status",
+              "value": "/v1/status",
+              "type": "string"
+            },
+            {
+              "id": "1b66394f-0055-40c1-9e60-6cca959fc0b2",
+              "name": "extractions",
+              "value": "/v1/extractions",
+              "type": "string"
+            },
+            {
+              "id": "622cb157-44d9-46ff-b1de-e0b0305252e0",
+              "name": "openapi.json",
+              "value": "/openapi.json",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        16,
+        -848
+      ],
+      "id": "304b498e-2ca3-4280-844d-ec6171f89207",
+      "name": "init 1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2b752f7e-f3b4-4bec-9792-0cc119c74b28",
+              "name": "source_path",
+              "value": "/files/km/00_upload_legacy_files/",
+              "type": "string"
+            },
+            {
+              "id": "c078245f-6efb-4bbf-bc12-acffa608e64a",
+              "name": "processed_legacy_files_path",
+              "value": "/files/km/00_processed_legacy_files/",
+              "type": "string"
+            },
+            {
+              "id": "817bd3b8-8fcd-4339-a73a-b91356a4241f",
+              "name": "upload_raw_files_path",
+              "value": "/files/km/01_upload_raw_files/",
+              "type": "string"
+            },
+            {
+              "id": "79e17013-b79e-41cb-87a1-9545b771e2fb",
+              "name": "baseUrl",
+              "value": "https://carthographie.fr",
+              "type": "string"
+            },
+            {
+              "id": "e1e75e87-dd0a-4ac5-b751-66799ebf89a6",
+              "name": "baseUrlAdd",
+              "value": "/docling-online",
+              "type": "string"
+            },
+            {
+              "id": "6f7436ff-c96f-4486-b22b-5aa0e4b81256",
+              "name": "auth/token",
+              "value": "/auth/token",
+              "type": "string"
+            },
+            {
+              "id": "d86e18e0-5baa-453a-9c41-a52c8ffeddef",
+              "name": "status",
+              "value": "/v1/status",
+              "type": "string"
+            },
+            {
+              "id": "1b66394f-0055-40c1-9e60-6cca959fc0b2",
+              "name": "extractions",
+              "value": "/v1/extractions",
+              "type": "string"
+            },
+            {
+              "id": "622cb157-44d9-46ff-b1de-e0b0305252e0",
+              "name": "openapi.json",
+              "value": "/openapi.json",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -880,
+        592
+      ],
+      "id": "af0ab5af-bdb6-475d-9c6e-202456acc3ab",
+      "name": "init 2"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('init 2').item.json.baseUrl }}{{ $('Get JOBs').item.json.status_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('token 2').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        16,
+        496
+      ],
+      "id": "07e041ed-604f-4700-b81e-88c155db7fec",
+      "name": "Get Docling status",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c701c26a-be90-4cc9-b9b8-e49b12694bae",
+              "name": "error",
+              "value": "impossible de récupérer le statut du JOB",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        880
+      ],
+      "id": "4268b0c7-6766-407d-a0e9-42258d74a02c",
+      "name": "Get Docling status error"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -208,
+        496
+      ],
+      "id": "3ed4f493-a212-4f01-ac29-f6fb258bbab9",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('init 2').first().json.baseUrl + $('Get JOBs').item.json.result_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('token 2').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        688,
+        64
+      ],
+      "id": "dd4ddc08-ffcf-4065-9fad-0c81f35e309e",
+      "name": "Download Docling result",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8529cfe4-6c5b-46df-9c41-e065b21da266",
+              "name": "error",
+              "value": "impossible de récupérer le résultat de Docling",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        240
+      ],
+      "id": "95f748dd-19df-4a08-97ae-48f3247c3793",
+      "name": "Download Docling result error"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "21538773-3dc0-4711-a605-27d2ccfc03df",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "aaa7c568-5de6-48a5-b5e3-3d9854e00698",
+              "leftValue": "={{ $json.body.schema_version }}",
+              "rightValue": "1",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "c879cf2e-8472-4f84-94e8-89ec1705f985",
+              "leftValue": "={{ $json.body.document.schema_name }}",
+              "rightValue": "DoclingDocument",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "d5742366-6ef0-422b-93fa-dbb4e3f9d64a",
+              "leftValue": "={{ $json.body.markdown }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        912,
+        -48
+      ],
+      "id": "9f2c3edb-7b2f-41af-95d0-7015ba02fdf8",
+      "name": "IF Download OK"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9f357b59-59a1-467b-8001-53f73086ca9a",
+              "name": "error",
+              "value": "Échec de récupération Docling : réponse invalide ou document incomplet. JOB conservé pour nouvelle tentative.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        48
+      ],
+      "id": "6e17aff0-72ee-44b2-8290-32ddfbd492e9",
+      "name": "IF Download OK error"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "44cb9915-0d2f-4bd2-8843-c573260967c4",
+              "name": "text",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1360,
+        576
+      ],
+      "id": "b9143a38-15ff-4f13-83c2-93d86efc71a4",
+      "name": "error"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a547755f-eef9-4cbd-a078-e2a00860b7b9",
+              "leftValue": "={{ $('Get JOBs').item.json.error1 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1584,
+        576
+      ],
+      "id": "8833f169-64f1-460e-a5bb-cfe0cb575997",
+      "name": "If error1 is empty"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a547755f-eef9-4cbd-a078-e2a00860b7b9",
+              "leftValue": "={{ $('Get JOBs').item.json.error2 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1808,
+        592
+      ],
+      "id": "e631210c-5d09-4396-bf42-25f7b4d0b7f3",
+      "name": "If error2 is empty"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "FixaEhBKpKdtJDH1",
+          "mode": "list",
+          "cachedResultName": "docling_jobs",
+          "cachedResultUrl": "/projects/i5ASDarJ8CkFcYlF/datatables/FixaEhBKpKdtJDH1"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $('Get JOBs').item.json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "error1": "={{ $('error').item.json.text }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "docling_id",
+              "displayName": "docling_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "source_path",
+              "displayName": "source_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "status_url",
+              "displayName": "status_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "result_url",
+              "displayName": "result_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "error1",
+              "displayName": "error1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error2",
+              "displayName": "error2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1808,
+        48
+      ],
+      "id": "bcbb1920-20be-4af1-9aa2-61760047d6cf",
+      "name": "Update JOB error1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "FixaEhBKpKdtJDH1",
+          "mode": "list",
+          "cachedResultName": "docling_jobs",
+          "cachedResultUrl": "/projects/i5ASDarJ8CkFcYlF/datatables/FixaEhBKpKdtJDH1"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $('Get JOBs').item.json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "error2": "={{ $('error').item.json.text }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "docling_id",
+              "displayName": "docling_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "source_path",
+              "displayName": "source_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "status_url",
+              "displayName": "status_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "result_url",
+              "displayName": "result_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "error1",
+              "displayName": "error1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "error2",
+              "displayName": "error2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2032,
+        144
+      ],
+      "id": "eacf9a9e-6fdd-4dd7-bc11-6a98ec2aaba9",
+      "name": "Update JOB error3"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "FixaEhBKpKdtJDH1",
+          "mode": "list",
+          "cachedResultName": "docling_jobs",
+          "cachedResultUrl": "/projects/i5ASDarJ8CkFcYlF/datatables/FixaEhBKpKdtJDH1"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $('Get JOBs').item.json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "state": "onError"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "docling_id",
+              "displayName": "docling_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "source_path",
+              "displayName": "source_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status_url",
+              "displayName": "status_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "result_url",
+              "displayName": "result_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "error1",
+              "displayName": "error1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "error2",
+              "displayName": "error2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2032,
+        688
+      ],
+      "id": "dd2fa44c-a5ba-4a83-9118-d091a06d7542",
+      "name": "Update JOB onError"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "55e95d97-79f1-4bf9-b3ff-85b38a09f3d4",
+              "name": "schema_version",
+              "value": "={{ $('Download Docling result').item.json.body.schema_version }}",
+              "type": "string"
+            },
+            {
+              "id": "93995891-3bc2-4a29-9d75-574f5569c557",
+              "name": "page_count",
+              "value": "={{ $('Download Docling result').item.json.body.page_count }}",
+              "type": "number"
+            },
+            {
+              "id": "46da2ffa-6402-4525-b946-1710e7f071ec",
+              "name": "document",
+              "value": "={{ $('Download Docling result').item.json.body.document }}",
+              "type": "object"
+            },
+            {
+              "id": "0b4f3d67-1622-4e07-83b5-16858415dddd",
+              "name": "markdown",
+              "value": "={{ $('Download Docling result').item.json.body.markdown }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        -144
+      ],
+      "id": "6a9f1b8f-ef17-43a2-a857-508f5a4e0fce",
+      "name": "Prepare JSON"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "mode": "each",
+        "options": {
+          "format": true,
+          "encoding": "utf8"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1360,
+        -144
+      ],
+      "id": "aed30f69-a2b0-4265-b6e5-61c7705ad111",
+      "name": "Convert to json"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $('init 2').item.json.processed_legacy_files_path }}{{ $('Get JOBs').item.json.file_name }}.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        1584,
+        -144
+      ],
+      "id": "998c812d-80e8-4d8d-a1b0-9b50aaacf3ac",
+      "name": "Write json File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ae71c730-e204-4d09-8980-edc5b5d573b1",
+              "name": "markdown",
+              "value": "={{ $('Download Docling result').item.json.body.markdown }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1808,
+        -144
+      ],
+      "id": "df324594-8118-4022-82ce-964bb3f34a74",
+      "name": "Prepare Markdown"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "markdown",
+        "options": {
+          "encoding": "utf8"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2032,
+        -144
+      ],
+      "id": "4c05596f-e8b7-4b72-b3e4-35e160dac462",
+      "name": "Convert to md"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $('init 2').item.json.upload_raw_files_path }}{{ $('Get JOBs').item.json.file_name }}.md",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        2256,
+        -144
+      ],
+      "id": "18034b7b-c1dd-4698-aa77-50934c73fc99",
+      "name": "Write md File"
+    },
+    {
+      "parameters": {
+        "command": "={{ 'mv -- ' + [ $('Get JOBs').item.json.source_path, '/files/km/00_processed_legacy_files/' + $('Get JOBs').item.json.file_name ].map(p => \"'\" + p.replace(/'/g, \"'\\\\''\") + \"'\").join(' ') }}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        2480,
+        -144
+      ],
+      "id": "fb77b5ae-912e-4805-9d4b-668e13c23b50",
+      "name": "move legacy file"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "FixaEhBKpKdtJDH1",
+          "mode": "list",
+          "cachedResultName": "docling_jobs",
+          "cachedResultUrl": "/projects/i5ASDarJ8CkFcYlF/datatables/FixaEhBKpKdtJDH1"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $('Get JOBs').item.json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "state": "completed"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "docling_id",
+              "displayName": "docling_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "source_path",
+              "displayName": "source_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status_url",
+              "displayName": "status_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "result_url",
+              "displayName": "result_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "error1",
+              "displayName": "error1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "error2",
+              "displayName": "error2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2704,
+        -144
+      ],
+      "id": "f13745d5-e962-4fa6-8554-4b94ce265ad9",
+      "name": "Update JOB completed"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cb6e8698-7c59-4cfe-a528-4bc93b122e86",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        240,
+        400
+      ],
+      "id": "dc55d71e-0f2e-4372-bd88-0285f6afd0ab",
+      "name": "Extraction succeeded 1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dd842f29-e390-44d5-8992-8f2defdd7c56",
+              "name": "error",
+              "value": "l'extraction n'a pas le code retour 200",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        688
+      ],
+      "id": "be093b1c-2e27-4a6c-941d-be83409c7a59",
+      "name": "Extraction succeeded 1 error"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.state }}",
+                    "rightValue": "succeeded",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "00a4020a-c020-4a8b-a2be-b844b3a0d63a"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b8f8c79b-b553-49dc-b586-549d5941bed4",
+                    "leftValue": "={{ $json.body.state }}",
+                    "rightValue": "running",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "7d3f4b99-9d9c-4c39-9a7d-cf7059e0db98",
+                    "leftValue": "",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        224
+      ],
+      "id": "fcc81512-f8a1-4fb0-8df0-5a5f222c5941",
+      "name": "Extraction succeeded 2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        688,
+        256
+      ],
+      "id": "9e92b34f-016b-469e-8763-2a0254769f5f",
+      "name": "JOB is running"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dd842f29-e390-44d5-8992-8f2defdd7c56",
+              "name": "error",
+              "value": "l'extraction a échoué",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        496
+      ],
+      "id": "5234b790-9f9d-4286-b285-2174f85cc4fb",
+      "name": "Extraction succeeded 2 error"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -432,
+        -768
+      ],
+      "id": "d795795b-beeb-419d-b3d3-04a169d10627",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        -848
+      ],
+      "id": "0bc9803f-946b-4e47-b321-f50142b7f2bc",
+      "placeholder": true
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2032,
+        -752
+      ],
+      "id": "0aa07a7b-f95f-45dd-ba8c-22dfbf54d0e6",
+      "name": "Wait",
+      "webhookId": "11e5a245-25e3-45cf-a084-57a3d1ad1c4b"
+    },
+    {
+      "parameters": {
+        "command": "node <<'JS'\nconst fs = require('node:fs');\nconst path = require('node:path');\n\nconst directory = '/files/km/00_upload_legacy_files';\n\nconst files = fs.readdirSync(directory, { withFileTypes: true })\n  .filter(entry => entry.isFile())\n  .map(entry => {\n    const stat = fs.statSync(path.join(directory, entry.name), {\n      bigint: true\n    });\n\n    const size = Number(stat.size);\n\n    if (!Number.isSafeInteger(size)) {\n      throw new Error(`Taille non représentable : ${entry.name}`);\n    }\n\n    return {\n      name: entry.name,\n      size,\n      revision: [\n        stat.dev,\n        stat.ino,\n        stat.size,\n        stat.mtimeNs,\n        stat.ctimeNs\n      ].join(':')\n    };\n  })\n  .sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);\n\nprocess.stdout.write(JSON.stringify(files));\nJS"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        -768
+      ],
+      "id": "0a76ea0c-9f36-4e93-bd0c-7c57b129542c",
+      "name": "CMD $ls"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { exitCode, stderr, stdout } = $input.first().json;\n\ntry {\n  if (exitCode !== 0) {\n    throw new Error(stderr?.trim() || 'Impossible de lire le dossier.');\n  }\n\n  const files = JSON.parse(stdout);\n  const names = new Set();\n\n  if (!Array.isArray(files)) {\n    throw new Error('La réponse doit contenir une liste de fichiers.');\n  }\n\n  for (const file of files) {\n    if (\n      !file ||\n      typeof file.name !== 'string' ||\n      file.name.length === 0 ||\n      !Number.isSafeInteger(file.size) ||\n      file.size < 0 ||\n      typeof file.revision !== 'string' ||\n      file.revision.length === 0 ||\n      names.has(file.name)\n    ) {\n      throw new Error('Liste de fichiers invalide.');\n    }\n\n    names.add(file.name);\n  }\n\n  return [{ json: { ok: true, files } }];\n} catch (error) {\n  return [{\n    json: {\n      ok: false,\n      message: error.message\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        -768
+      ],
+      "id": "7c7150f9-102f-40cf-9d8c-b86af5b4ac47",
+      "name": "CODE list"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1104,
+        -624
+      ],
+      "id": "3dec9eac-207e-4298-99fe-7b79ebdbb39f",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e02a300e-f114-4dca-aab3-91ab69648196",
+              "leftValue": "={{ $json.file_name }}",
+              "rightValue": "={{ $('file').item.json.filename }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        912,
+        -944
+      ],
+      "id": "bede63b9-c7d1-4ecc-9c48-ef280cdf40af",
+      "name": "If JOB still exist"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "FixaEhBKpKdtJDH1",
+          "mode": "list",
+          "cachedResultName": "docling_jobs",
+          "cachedResultUrl": "/projects/i5ASDarJ8CkFcYlF/datatables/FixaEhBKpKdtJDH1"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "state",
+              "keyValue": "running"
+            },
+            {
+              "keyName": "file_name",
+              "keyValue": "={{ $json.filename }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        -944
+      ],
+      "id": "d65d2569-4e8e-40fb-85f1-3997e58e8914",
+      "name": "Get JOBs in running state",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1584,
+        -656
+      ],
+      "id": "79185e99-fa15-4a40-92ae-98517e6083e0",
+      "name": "JOB still exist"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "file": {
+      "main": [
+        [
+          {
+            "node": "Get JOBs in running state",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "read file": {
+      "main": [
+        [
+          {
+            "node": "upload file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "read file error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "read file error": {
+      "main": [
+        [
+          {
+            "node": "node de sortie erreur test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload file": {
+      "main": [
+        [
+          {
+            "node": "Insert JOB",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "upload file error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload file error": {
+      "main": [
+        [
+          {
+            "node": "node de sortie erreur test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "currentDate": {
+      "main": [
+        [
+          {
+            "node": "JOBs - createdAt between now",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "to delete": {
+      "main": [
+        [
+          {
+            "node": "Delete JOBs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JOBs - createdAt between now": {
+      "main": [
+        [
+          {
+            "node": "to delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "init 2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get JOBs for delete",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "CMD $ls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get JOBs for delete": {
+      "main": [
+        [
+          {
+            "node": "currentDate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get JOBs": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "token 1": {
+      "main": [
+        [
+          {
+            "node": "file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "token 1 error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "token 1 error": {
+      "main": [
+        [
+          {
+            "node": "node de sortie erreur test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "token 2 error": {
+      "main": [
+        []
+      ]
+    },
+    "token 2": {
+      "main": [
+        [
+          {
+            "node": "Get JOBs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "token 2 error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "init 1": {
+      "main": [
+        [
+          {
+            "node": "token 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "init 2": {
+      "main": [
+        [
+          {
+            "node": "token 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Docling status": {
+      "main": [
+        [
+          {
+            "node": "Extraction succeeded 1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Docling status error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Docling status error": {
+      "main": [
+        [
+          {
+            "node": "error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get Docling status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Docling result": {
+      "main": [
+        [
+          {
+            "node": "IF Download OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Download Docling result error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Docling result error": {
+      "main": [
+        [
+          {
+            "node": "error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Download OK": {
+      "main": [
+        [
+          {
+            "node": "Prepare JSON",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF Download OK error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Download OK error": {
+      "main": [
+        [
+          {
+            "node": "error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "error": {
+      "main": [
+        [
+          {
+            "node": "If error1 is empty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If error1 is empty": {
+      "main": [
+        [
+          {
+            "node": "Update JOB error1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If error2 is empty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If error2 is empty": {
+      "main": [
+        [
+          {
+            "node": "Update JOB error3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update JOB onError",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare JSON": {
+      "main": [
+        [
+          {
+            "node": "Convert to json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to json": {
+      "main": [
+        [
+          {
+            "node": "Write json File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write json File": {
+      "main": [
+        [
+          {
+            "node": "Prepare Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Markdown": {
+      "main": [
+        [
+          {
+            "node": "Convert to md",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to md": {
+      "main": [
+        [
+          {
+            "node": "Write md File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write md File": {
+      "main": [
+        [
+          {
+            "node": "move legacy file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "move legacy file": {
+      "main": [
+        [
+          {
+            "node": "Update JOB completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update JOB completed": {
+      "main": [
+        []
+      ]
+    },
+    "Update JOB error1": {
+      "main": [
+        []
+      ]
+    },
+    "Update JOB error3": {
+      "main": [
+        []
+      ]
+    },
+    "Update JOB onError": {
+      "main": [
+        []
+      ]
+    },
+    "Extraction succeeded 1": {
+      "main": [
+        [
+          {
+            "node": "Extraction succeeded 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extraction succeeded 1 error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraction succeeded 1 error": {
+      "main": [
+        [
+          {
+            "node": "error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraction succeeded 2": {
+      "main": [
+        [
+          {
+            "node": "Download Docling result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "JOB is running",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extraction succeeded 2 error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraction succeeded 2 error": {
+      "main": [
+        [
+          {
+            "node": "error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JOB is running": {
+      "main": [
+        []
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me": {
+      "main": [
+        [
+          {
+            "node": "init 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert JOB": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "node de sortie erreur test": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CMD $ls": {
+      "main": [
+        [
+          {
+            "node": "CODE list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CODE list": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "CMD $ls",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get JOBs for delete",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "init 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get JOBs in running state": {
+      "main": [
+        [
+          {
+            "node": "If JOB still exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If JOB still exist": {
+      "main": [
+        [
+          {
+            "node": "read file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "JOB still exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JOB still exist": {
+      "main": [
+        [
+          {
+            "node": "node de sortie erreur test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "04b779f6-4418-4bf5-8100-38025ea26441",
+  "meta": {
+    "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
+  },
+  "nodeGroups": [],
+  "id": "SA6QtXIzhJTYw6eC",
+  "tags": [
+    {
+      "updatedAt": "2026-10-23T07:45:52.085Z",
+      "createdAt": "2026-10-23T07:45:52.085Z",
+      "id": "aTY4iOvJFOjQpknu",
+      "name": "KM"
+    }
+  ]
+}

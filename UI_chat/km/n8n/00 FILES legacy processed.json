@@ -1,0 +1,528 @@
+{
+  "name": "00 FILES legacy processed",
+  "nodes": [
+    {
+      "parameters": {
+        "command": "=node <<'JS'\nconst fs = require('node:fs');\nconst path = require('node:path');\n\nconst directory = '/files/km/00_processed_legacy_files';\n\nconst files = fs.readdirSync(directory, { withFileTypes: true })\n  .filter(entry => entry.isFile())\n  .map(entry => {\n    const stat = fs.statSync(path.join(directory, entry.name), {\n      bigint: true\n    });\n\n    const size = Number(stat.size);\n\n    if (!Number.isSafeInteger(size)) {\n      throw new Error(`Taille non représentable : ${entry.name}`);\n    }\n\n    return {\n      name: entry.name,\n      size,\n      revision: [\n        stat.dev,\n        stat.ino,\n        stat.size,\n        stat.mtimeNs,\n        stat.ctimeNs\n      ].join(':')\n    };\n  })\n  .sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);\n\nprocess.stdout.write(JSON.stringify(files));\nJS"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -784,
+        -432
+      ],
+      "id": "ffe30524-4de5-41db-8d6b-314c24dd4948",
+      "name": "CMD $ls"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { exitCode, stderr, stdout } = $input.first().json;\n\ntry {\n  if (exitCode !== 0) {\n    throw new Error(stderr?.trim() || 'Impossible de lire le dossier.');\n  }\n\n  const files = JSON.parse(stdout);\n  const names = new Set();\n\n  if (!Array.isArray(files)) {\n    throw new Error('La réponse doit contenir une liste de fichiers.');\n  }\n\n  for (const file of files) {\n    if (\n      !file ||\n      typeof file.name !== 'string' ||\n      file.name.length === 0 ||\n      !Number.isSafeInteger(file.size) ||\n      file.size < 0 ||\n      typeof file.revision !== 'string' ||\n      file.revision.length === 0 ||\n      names.has(file.name)\n    ) {\n      throw new Error('Liste de fichiers invalide.');\n    }\n\n    names.add(file.name);\n  }\n\n  return [{ json: { ok: true, files } }];\n} catch (error) {\n  return [{\n    json: {\n      ok: false,\n      message: error.message\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        -432
+      ],
+      "id": "769c32a8-9f11-416f-a7f1-f164fe25f52a",
+      "name": "CODE list"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -336,
+        -432
+      ],
+      "id": "da73af1f-0476-48e4-bf77-a5791b1352cb",
+      "name": "Respond-list"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -336,
+        208
+      ],
+      "id": "c2b889ac-631d-4a68-8c08-7a40f08b6436",
+      "name": "Respond delete"
+    },
+    {
+      "parameters": {
+        "command": "=rm -- \"/files/km/00_processed_legacy_files/{{ $json.body.name }}\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -784,
+        304
+      ],
+      "id": "958fe5dd-bbe4-413e-8adb-8d4b52dc5182",
+      "name": "Execute Command",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -336,
+        400
+      ],
+      "id": "a70153da-1a8a-49e9-bbd3-ac0290c7d2ff",
+      "name": "Respond delete KO"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
+              "name": "name",
+              "value": "={{ $('WH-delete').item.json.body.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -560,
+        208
+      ],
+      "id": "352ef8e1-3741-442e-b732-095cc424d774",
+      "name": "delete OK"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -560,
+        400
+      ],
+      "id": "6652b17e-4069-4a9d-9231-713673ff296e",
+      "name": "delete KO"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "b1be9307-ba2f-456d-9495-7efdd340da01",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1008,
+        304
+      ],
+      "id": "a495357c-ca95-4f62-b250-30291dc2cc69",
+      "name": "WH-delete",
+      "webhookId": "f7d33e33-fc91-4782-8277-963e82c115d2"
+    },
+    {
+      "parameters": {
+        "path": "897dcac1-216a-4cf9-b78d-6685bfb03a15",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1008,
+        624
+      ],
+      "id": "b86fd4f1-855d-4ea5-b331-29e5e440c403",
+      "name": "WH-download file",
+      "webhookId": "59822322-fb9a-40c0-bf7c-a06ddb0378b7"
+    },
+    {
+      "parameters": {
+        "fileSelector": "=/files/km/00_processed_legacy_files/{{ $json.query.name }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        -784,
+        624
+      ],
+      "id": "85f8abfd-dc7b-440a-88c4-877c0021369b",
+      "name": "Read file"
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -560,
+        624
+      ],
+      "id": "7aed469c-f9d3-4f4e-adf8-5ba677fb8ae4",
+      "name": "Respond file"
+    },
+    {
+      "parameters": {
+        "path": "ab8bc886-a570-4983-9ed4-cad3a0c8a02e",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1008,
+        -432
+      ],
+      "id": "bd7ea6d7-8008-4d27-932e-b5c2498f2b8a",
+      "name": "WH-list",
+      "webhookId": "ab8bc886-a570-4983-9ed4-cad3a0c8a02e"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "4328223c-b6f6-4c8a-ab2b-fb31e87ba469",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1008,
+        -112
+      ],
+      "id": "5e213178-1d75-4132-8e4b-786b1c81a75d",
+      "name": "WH-replay",
+      "webhookId": "1d9da65d-3769-4783-ba12-0efb4a0360e1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
+              "name": "file.name",
+              "value": "={{ $binary.file.fileName }}",
+              "type": "string"
+            },
+            {
+              "id": "c8ebf587-0503-4ea1-abda-08d51b25ad87",
+              "name": "file.size",
+              "value": "={{ $binary.file.fileSize }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -560,
+        -208
+      ],
+      "id": "543eff59-4910-4ad0-bcac-cacb16b8133d",
+      "name": "replay OK"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -336,
+        -208
+      ],
+      "id": "1ad52ae6-9d74-4b63-8ed1-139121e4cdf8",
+      "name": "Respond replay OK"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "3b2cbc1f-ac9a-44a7-ac9a-7e4a2982e2c8",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -560,
+        -16
+      ],
+      "id": "edf82587-50b4-44d6-8541-c5ea2698072a",
+      "name": "replay KO"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -336,
+        -16
+      ],
+      "id": "431ece4a-278f-4054-bcdb-4ef9a4696dbd",
+      "name": "Respond replay KO"
+    },
+    {
+      "parameters": {
+        "command": "=mv /files/km/00_processed_legacy_files/{{ $json.body.name }} /files/km/00_upload_legacy_files/{{ $json.body.name }}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -784,
+        -112
+      ],
+      "id": "b72a5a4f-1070-4be4-a503-77e5e58c1506",
+      "name": "CMD replay",
+      "onError": "continueErrorOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "CMD $ls": {
+      "main": [
+        [
+          {
+            "node": "CODE list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CODE list": {
+      "main": [
+        [
+          {
+            "node": "Respond-list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Command": {
+      "main": [
+        [
+          {
+            "node": "delete OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "delete KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete OK": {
+      "main": [
+        [
+          {
+            "node": "Respond delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete KO": {
+      "main": [
+        [
+          {
+            "node": "Respond delete KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-delete": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-download file": {
+      "main": [
+        [
+          {
+            "node": "Read file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read file": {
+      "main": [
+        [
+          {
+            "node": "Respond file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-list": {
+      "main": [
+        [
+          {
+            "node": "CMD $ls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-replay": {
+      "main": [
+        [
+          {
+            "node": "CMD replay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "replay OK": {
+      "main": [
+        [
+          {
+            "node": "Respond replay OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "replay KO": {
+      "main": [
+        [
+          {
+            "node": "Respond replay KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CMD replay": {
+      "main": [
+        [
+          {
+            "node": "replay OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "replay KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "2c9044dc-41d7-461b-b0d8-b2d8534ed271",
+  "meta": {
+    "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
+  },
+  "nodeGroups": [],
+  "id": "nQmNhTHtszPUHcZh",
+  "tags": [
+    {
+      "updatedAt": "2026-10-23T07:45:52.085Z",
+      "createdAt": "2026-10-23T07:45:52.085Z",
+      "id": "aTY4iOvJFOjQpknu",
+      "name": "KM"
+    }
+  ]
+}

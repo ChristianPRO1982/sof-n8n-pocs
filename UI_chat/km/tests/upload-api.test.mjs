@@ -39,23 +39,29 @@ test('strict confirmations, conflicts, HTTP failures and timeouts', async () => 
   } finally { globalThis.fetch = original; }
 });
 
-test('all three deposits use dedicated keys without fallback for every operation', () => {
+test('all four file screens use dedicated keys without fallback for every operation', () => {
   const deposits = {
     KM_FILES: 'sources',
     KM_TEMPLATES: 'templates',
     KM_LEGACY_FILES: 'legacy',
+    KM_PROCESSED_LEGACY_FILES: 'processed-legacy',
   };
-  for (const operation of ['list', 'upload', 'delete', 'view']) {
+  for (const operation of ['list', 'upload', 'delete', 'view', 'replay']) {
     const key = operation.toUpperCase();
     const settings = {
       KM_WEBHOOK_BASE_URL: 'http://localhost/n8n/webhook/',
-      ...Object.fromEntries(Object.entries(deposits).map(([prefix, path]) =>
+      ...Object.fromEntries(Object.entries(deposits).filter(([prefix]) =>
+        prefix === 'KM_PROCESSED_LEGACY_FILES' ? operation !== 'upload' : operation !== 'replay').map(([prefix, path]) =>
         [`${prefix}_${key}_WEBHOOK_PATH`, `${path}/${operation}`])),
     };
     for (const mode of [false, true]) {
       const base = mode ? 'webhook-test' : 'webhook';
-      assert.equal(endpoint(settings, operation, mode), `http://localhost/n8n/${base}/sources/${operation}`);
+      if (operation !== 'replay') assert.equal(endpoint(settings, operation, mode), `http://localhost/n8n/${base}/sources/${operation}`);
       for (const [prefix, path] of Object.entries(deposits)) {
+        if (!(`${prefix}_${key}_WEBHOOK_PATH` in settings)) {
+          assert.throws(() => endpoint(settings, operation, mode, prefix));
+          continue;
+        }
         assert.equal(endpoint(settings, operation, mode, prefix), `http://localhost/n8n/${base}/${path}/${operation}`);
         for (const missing of [undefined, '', '   ', '../sources', '/sources', '%2e%2e/sources']) {
           assert.throws(() => endpoint({ ...settings, [`${prefix}_${key}_WEBHOOK_PATH`]: missing }, operation, mode, prefix));

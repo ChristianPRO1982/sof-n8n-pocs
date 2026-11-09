@@ -10,8 +10,8 @@ routes, clés de configuration et futurs webhooks.
 - `../../Dockerfile.km_front`, `../../nginx/km.conf`,
   `../../Dockerfile.nginx_front` et `../../docker-compose.yml` : images, routage
   et montage en lecture seule de la configuration KM.
-- `config.ini` : base commune et trois chemins par dépôt (sources, templates,
-  historiques). Les chemins historiques restent vides avant raccordement.
+- `config.ini` : base commune, quatre chemins par dépôt (sources, templates,
+  historiques) et quatre clés dédiées aux historiques traités, initialement vides.
 - [docs/README.md](docs/README.md) : vue d'ensemble fonctionnelle, circulation,
   correspondance des quatorze fiches avec les pages HTML et recette cible.
 - [docs/Poc_n8n.pdf](docs/Poc_n8n.pdf) : référence fonctionnelle à lire avec la
@@ -52,12 +52,13 @@ métier. Aucun framework front ni nouveau service n'est nécessaire.
 À cette étape, `index.html` présente un résumé des quatorze pages dans l’ordre du
 menu, puis explique les cinq pastilles de développement.
 Les trois dépôts `pages/01a_upload_files.html`, `pages/00a_templates.html` et
-`pages/00b_upload_legacy_files.html` sont développés côté navigateur ; les onze
-autres écrans sont provisoires ou descriptifs, dont `00c_processed_legacy_files`.
-Les statuts courants sont définis dans `statuses.json`. Les chemins des sources
-et templates sont renseignés localement ; l’export n8n des sources est présent
-mais ne certifie pas l’état distant. Aucun workflow historique n’est implémenté ;
-ses chemins restent vides. Aucun succès n’est simulé sans réponse conforme.
+`pages/00b_upload_legacy_files.html` sont développés côté navigateur, ainsi que
+la liste de gestion `pages/00c_processed_legacy_files.html` ; les dix autres
+écrans sont provisoires.
+Les statuts courants sont définis dans `statuses.json`. Les chemins des trois
+dépôts sont renseignés localement et des exports n8n sont présents, sans certifier
+l’état distant. Les quatre chemins des historiques traités restent vides ; aucun
+workflow de rejeu n’est créé ici. Aucun succès n’est simulé sans réponse conforme.
 
 ## Gabarit et ajout d'une page
 
@@ -126,8 +127,8 @@ de contrôles automatiques ou des états d'exécution n8n.
 L'accueil affiche l'émoji 🏠 à la place d'une pastille dans le menu général et
 le bandeau ; il ne porte pas de statut de développement. Consulter
 `statuses.json` pour les statuts courants. Le dépôt historique
-`00b_upload_legacy_files` est initialisé en `development` et la page descriptive
-`00c_processed_legacy_files` en `not_started`.
+`00b_upload_legacy_files` a son statut courant dans ce fichier et la page
+`00c_processed_legacy_files` conserve son statut courant `development`.
 Un statut absent ou inconnu (notamment le modèle non enregistré) utilise
 `not_started`. Les libellés sont centralisés dans `statuses`, les couleurs dans
 `assets/km.css` et le rendu dans `statusBadge`. Les pastilles ont une infobulle
@@ -170,13 +171,14 @@ juste après l’accueil, avant `00b_upload_legacy_files`, `00c_processed_legacy
 `01a_upload_files` puis `01b_processed_files`, avec le titre « Templates ».
 Son statut courant est défini dans `statuses.json`. Elle reprend toutes les fonctions du dépôt des
 sources : liste, sélection multiformat, accord de remplacement, lot séquentiel,
-reprise manuelle, suppression et trois bascules test indépendantes.
+reprise manuelle, suppression, Voir et quatre bascules test indépendantes.
 
 Les styles `km-upload.css`, le contrôleur `km-upload.js` et le module API
 `km-upload-api.js` sont mutualisés. L'identifiant de page sélectionne explicitement
 le préfixe `KM_TEMPLATES`, `KM_LEGACY_FILES` ou `KM_FILES`. La fonction `endpoint` garde `KM_FILES`
-par défaut et accepte le préfixe en quatrième argument. Aucun repli entre les
-trois configurations n'est permis.
+par défaut et accepte le préfixe en quatrième argument, dont
+`KM_PROCESSED_LEGACY_FILES` pour le contrôleur dédié à `00c`. Aucun repli entre
+les quatre configurations n’est permis.
 
 La base `KM_WEBHOOK_BASE_URL` reste commune ; les trois nouvelles clés
 `KM_TEMPLATES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH` de `config.ini` sont renseignées
@@ -190,10 +192,24 @@ des webhooks ; consulter les résultats de son exécution pour l’état vérifi
 ## Préparation des fichiers historiques
 
 Le dépôt `00b_upload_legacy_files` reprend les fonctions du dépôt standard avec
-les clés dédiées `KM_LEGACY_FILES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH`, initialement
-vides, sans repli vers sources ou templates. `00c_processed_legacy_files` décrit
-la future consultation des sources historiques archivées et de leurs dérivés,
-sans données simulées ni action de traitement.
+les clés dédiées `KM_LEGACY_FILES_{LIST,UPLOAD,DELETE,VIEW}_WEBHOOK_PATH`, sans
+repli vers sources ou templates. `00c_processed_legacy_files` gère les historiques
+traités avec son contrôleur dédié `assets/km-processed-legacy.js`, le module API
+et les styles de fichiers partagés, et un seul panneau de liste sans upload.
+
+Quatre clés isolées `KM_PROCESSED_LEGACY_FILES_{LIST,VIEW,DELETE,REPLAY}_WEBHOOK_PATH`
+sont initialement vides. Liste GET avec noms uniques, taille et révision ; Voir
+GET avec `name` encodé en nouvel onglet ; suppression et rejeu POST JSON
+`{name, expected_revision}` avec confirmation `ok:true` et nom exact.
+Confirmer suppression et rejeu avec le nom ; le rejeu n’annonce que la prise en
+compte, jamais la réussite du traitement, et ne retire aucune entrée de lui-même.
+Le workflow dédié décidera des actions à réaliser, sans déplacement navigateur.
+Quatre bascules list/view/replay/delete indépendantes reviennent à OFF à chaque
+arrivée, y compris par l’historique ; seule list recharge la liste. Les lectures
+après action suivent son mode. Actions concurrentes bloquées ; clés absentes :
+actions désactivées, aucun repli. Délais liste/suppression/rejeu : 30 s sans
+relance automatique ; les retours invalides signalent un résultat incertain.
+La recette navigateur dédiée est `tests/processed-legacy-browser.mjs`.
 
 Extension décidée par l’utilisateur : historique hors templates → préparation et
 découpage selon les modèles → enregistrement de nouveaux documents → transfert
