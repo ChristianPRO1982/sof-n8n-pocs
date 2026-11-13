@@ -8,8 +8,8 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -48,
-        -240
+        -64,
+        -400
       ],
       "id": "ca59e7dd-3271-4708-a0f8-59468c09c26a",
       "name": "CMD $ls"
@@ -21,8 +21,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        176,
-        -240
+        160,
+        -400
       ],
       "id": "6effe683-d8a2-49db-84b1-acc4a8484bc6",
       "name": "CODE list"
@@ -34,8 +34,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        400,
-        -240
+        384,
+        -400
       ],
       "id": "1bb8fca5-886c-482c-ad91-869a86308069",
       "name": "Respond-list"
@@ -50,8 +50,8 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1.1,
       "position": [
-        -48,
-        80
+        -64,
+        -80
       ],
       "id": "71559e16-05f4-4d78-aa38-053ced959821",
       "name": "upload file",
@@ -66,8 +66,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        400,
-        -16
+        384,
+        -176
       ],
       "id": "cdc68fe8-7b66-4d6c-b0d4-f5ada3555acc",
       "name": "Respond upload OK"
@@ -81,8 +81,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        400,
-        176
+        384,
+        16
       ],
       "id": "939b104e-06a0-4f04-8c94-dd325f17096e",
       "name": "Respond upload KO"
@@ -116,8 +116,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        176,
-        -16
+        160,
+        -176
       ],
       "id": "3df26551-ae73-438a-a6b1-fb37e745b986",
       "name": "upload OK"
@@ -145,8 +145,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        176,
-        176
+        160,
+        16
       ],
       "id": "a51bcb5b-12b8-459d-a499-951436971eea",
       "name": "upload KO"
@@ -160,8 +160,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        400,
-        400
+        384,
+        240
       ],
       "id": "75fd566c-2efa-4aa0-8cb3-1c64e605955b",
       "name": "Respond delete"
@@ -173,8 +173,8 @@
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -48,
-        496
+        -64,
+        336
       ],
       "id": "bdb4b385-5614-4a2f-86ce-64199e3e3c59",
       "name": "Execute Command",
@@ -189,8 +189,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        400,
-        592
+        384,
+        432
       ],
       "id": "de701386-38ba-4fca-8b3f-7107c91fdda0",
       "name": "Respond delete KO"
@@ -218,8 +218,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        176,
-        400
+        160,
+        240
       ],
       "id": "c6169902-ac5b-4077-aceb-d2cb0b9dee9d",
       "name": "delete OK"
@@ -247,8 +247,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        176,
-        592
+        160,
+        432
       ],
       "id": "4c210d81-2144-42bd-b02f-030be27e5583",
       "name": "delete KO"
@@ -262,8 +262,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -272,
-        -240
+        -288,
+        -400
       ],
       "id": "27284f64-b18b-44d0-8a17-68e96674dd73",
       "name": "WH-list",
@@ -279,8 +279,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -272,
-        80
+        -288,
+        -80
       ],
       "id": "9d120751-95a9-4bd5-a50d-872b0bf37159",
       "name": "WH-upload",
@@ -296,8 +296,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -272,
-        496
+        -288,
+        336
       ],
       "id": "1a24aa6a-6421-4b78-ac45-6b14d1d75c0f",
       "name": "WH-delete",
@@ -312,8 +312,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -272,
-        816
+        -288,
+        656
       ],
       "id": "35c2a246-ae3d-487e-9012-40f48860860f",
       "name": "WH-download file",
@@ -327,8 +327,8 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1.1,
       "position": [
-        -48,
-        816
+        -64,
+        656
       ],
       "id": "aff2348b-07ad-4cfe-8f7b-5023af3f904a",
       "name": "Read file"
@@ -341,11 +341,751 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        176,
-        816
+        160,
+        656
       ],
       "id": "69b9d786-0d72-4f5e-9fda-25d8221af430",
       "name": "Respond file"
+    },
+    {
+      "parameters": {
+        "command": "=node <<'JS'\nconst fs = require('node:fs');\nconst path = require('node:path');\n\nconst directory = '/files/km/00_templates';\n\nconst files = fs.readdirSync(directory, { withFileTypes: true })\n  .filter(entry => entry.isFile())\n  .map(entry => {\n    const stat = fs.statSync(path.join(directory, entry.name), {\n      bigint: true\n    });\n\n    const size = Number(stat.size);\n\n    if (!Number.isSafeInteger(size)) {\n      throw new Error(`Taille non représentable : ${entry.name}`);\n    }\n\n    return {\n      name: entry.name,\n      size,\n      revision: [\n        stat.dev,\n        stat.ino,\n        stat.size,\n        stat.mtimeNs,\n        stat.ctimeNs\n      ].join(':')\n    };\n  })\n  .sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);\n\nprocess.stdout.write(JSON.stringify(files));\nJS"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        -816
+      ],
+      "id": "678e4f9f-a592-40b6-b03f-57eafb2e720a",
+      "name": "CMD $ls1"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst files = JSON.parse($input.first().json.stdout);\n\nconst existingFiles = new Set(\n  files.map(file => file.name.toLowerCase())\n);\n\nreturn files\n  .filter(file => {\n    if (!file.name.toLowerCase().endsWith('.pdf')) {\n      return false;\n    }\n\n    const pdfName = file.name.toLowerCase();\n    const mdName = pdfName.replace(/\\.pdf$/, '.md');\n\n    return !existingFiles.has(mdName)\n      && !existingFiles.has(pdfName + '.md');\n  })\n  .map(file => ({\n    json: {\n      fileName: file.name,\n      size: file.size\n    }\n  }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        -816
+      ],
+      "id": "0218effd-bd59-4270-8f92-52b49adec480",
+      "name": "CODE list1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        384,
+        -816
+      ],
+      "id": "a446212b-7cd2-46e3-9efd-1eb1d1faf32b",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('init').item.json.baseUrl }}{{ $('init').item.json.baseUrlAdd }}{{ $('init').item.json['auth/token'] }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1280,
+        -816
+      ],
+      "id": "724e8cdc-eaa9-41a7-a859-769e44108881",
+      "name": "token",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "2StZgGeiSKu4aGfE",
+          "name": "Docling Online — Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3c226f49-0215-4553-928b-b011b980d8bc",
+              "name": "baseUrl",
+              "value": "https://carthographie.fr",
+              "type": "string"
+            },
+            {
+              "id": "bb79f2b4-4c11-447b-887b-25e75d889116",
+              "name": "baseUrlAdd",
+              "value": "/docling-online",
+              "type": "string"
+            },
+            {
+              "id": "1fadc42f-da00-4614-a842-23c2a8f9deee",
+              "name": "auth/token",
+              "value": "/auth/token",
+              "type": "string"
+            },
+            {
+              "id": "9b9e7caa-9804-4312-8d9f-46c2f8d5a92a",
+              "name": "status",
+              "value": "/v1/status",
+              "type": "string"
+            },
+            {
+              "id": "82edcef8-d1e0-426d-a7ff-08003be356c9",
+              "name": "extractions",
+              "value": "/v1/extractions",
+              "type": "string"
+            },
+            {
+              "id": "dd495cf4-320a-4c00-ab98-39195c1a860b",
+              "name": "openapi.json",
+              "value": "/openapi.json",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1056,
+        -816
+      ],
+      "id": "ef7af460-7222-4191-a2da-a170f95630d1",
+      "name": "init"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "FixaEhBKpKdtJDH1",
+          "mode": "list",
+          "cachedResultName": "docling_jobs",
+          "cachedResultUrl": "/projects/i5ASDarJ8CkFcYlF/datatables/FixaEhBKpKdtJDH1"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "state",
+              "keyValue": "running"
+            },
+            {
+              "keyName": "file_name",
+              "keyValue": "={{ $json.fileName }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        608,
+        -816
+      ],
+      "id": "100ce203-4685-410a-831a-a4604628b684",
+      "name": "Get JOBs in running state",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "655db85f-9d8b-42fa-a84d-9dbcba9808c8",
+              "leftValue": "={{ $json.file_name }}",
+              "rightValue": "={{ $('Limit').item.json.fileName }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        832,
+        -816
+      ],
+      "id": "22dcad12-c759-4aa2-b27d-101b4e8ba07b",
+      "name": "If JOB still exist"
+    },
+    {
+      "parameters": {
+        "fileSelector": "=/files/km/00_templates/{{ $('CODE list1').item.json.fileName }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        1504,
+        -816
+      ],
+      "id": "82b1e790-fc58-40f4-aca6-bbf5569a02a9",
+      "name": "read file"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('init').item.json.baseUrl }}{{ $('init').item.json.baseUrlAdd }}{{ $('init').item.json.extractions }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('token').first().json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1728,
+        -816
+      ],
+      "id": "234fde5d-d1da-4713-91b7-2bfd89cf9926",
+      "name": "upload file PDF"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "FixaEhBKpKdtJDH1",
+          "mode": "list",
+          "cachedResultName": "docling_jobs",
+          "cachedResultUrl": "/projects/i5ASDarJ8CkFcYlF/datatables/FixaEhBKpKdtJDH1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "docling_id": "={{ $json.body.id }}",
+            "result_url": "={{ $json.body.result_url }}",
+            "status_url": "={{ $json.body.status_url }}",
+            "state": "={{ $json.body.state }}",
+            "source_path": "=/files/km/00_templates/{{ $('CODE list1').item.json.fileName }}",
+            "file_name": "={{ $('Limit').item.json.fileName }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "docling_id",
+              "displayName": "docling_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "source_path",
+              "displayName": "source_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status_url",
+              "displayName": "status_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "result_url",
+              "displayName": "result_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error1",
+              "displayName": "error1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "error2",
+              "displayName": "error2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1952,
+        -816
+      ],
+      "id": "6ef2942a-0375-4ab6-be4d-af6880e9a1e4",
+      "name": "Insert JOB"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "FixaEhBKpKdtJDH1",
+          "mode": "list",
+          "cachedResultName": "docling_jobs",
+          "cachedResultUrl": "/projects/i5ASDarJ8CkFcYlF/datatables/FixaEhBKpKdtJDH1"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "state",
+              "keyValue": "running"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        384,
+        -624
+      ],
+      "id": "d4f3cebb-d913-4b9a-b53a-f158a3161cb2",
+      "name": "Get JOBs"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('init1').item.json.baseUrl }}{{ $('init1').item.json.baseUrlAdd }}{{ $('init1').item.json['auth/token'] }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        160,
+        -624
+      ],
+      "id": "724ad2d1-7827-4643-97b5-68907b553833",
+      "name": "token1",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "2StZgGeiSKu4aGfE",
+          "name": "Docling Online — Production"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3c226f49-0215-4553-928b-b011b980d8bc",
+              "name": "baseUrl",
+              "value": "https://carthographie.fr",
+              "type": "string"
+            },
+            {
+              "id": "bb79f2b4-4c11-447b-887b-25e75d889116",
+              "name": "baseUrlAdd",
+              "value": "/docling-online",
+              "type": "string"
+            },
+            {
+              "id": "1fadc42f-da00-4614-a842-23c2a8f9deee",
+              "name": "auth/token",
+              "value": "/auth/token",
+              "type": "string"
+            },
+            {
+              "id": "9b9e7caa-9804-4312-8d9f-46c2f8d5a92a",
+              "name": "status",
+              "value": "/v1/status",
+              "type": "string"
+            },
+            {
+              "id": "82edcef8-d1e0-426d-a7ff-08003be356c9",
+              "name": "extractions",
+              "value": "/v1/extractions",
+              "type": "string"
+            },
+            {
+              "id": "dd495cf4-320a-4c00-ab98-39195c1a860b",
+              "name": "openapi.json",
+              "value": "/openapi.json",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -64,
+        -624
+      ],
+      "id": "ee58f681-c749-49e4-bc9f-e1208474a9cb",
+      "name": "init1"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('init1').item.json.baseUrl }}{{ $json.status_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('token1').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        608,
+        -624
+      ],
+      "id": "f45c7ead-3acf-440b-8a7f-217d5c3f8883",
+      "name": "Get Docling status"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "aefe19bb-8bb6-4f2a-93a2-baf97ef85596",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "8735183e-fae4-411f-b4f6-85237f7badff",
+              "leftValue": "={{ $json.body.state }}",
+              "rightValue": "succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        832,
+        -624
+      ],
+      "id": "a46ee009-c542-462f-8c71-2f41f65e572d",
+      "name": "Extraction succeeded"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('init1').item.json.baseUrl }}{{ $('Get JOBs').item.json.result_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('token1').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1056,
+        -624
+      ],
+      "id": "8cd7feff-31f6-416e-95ea-09c7e7fb339b",
+      "name": "Download Docling result"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "02ec2511-3054-4a2b-9e49-14ca946dc108",
+              "name": "markdown",
+              "value": "={{ $('Download Docling result').item.json.body.markdown }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1280,
+        -624
+      ],
+      "id": "46d46357-f3a5-44e1-8790-4264c2d7b92e",
+      "name": "Prepare Markdown"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "markdown",
+        "options": {
+          "encoding": "utf8"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1504,
+        -624
+      ],
+      "id": "47ca4fc7-03de-4bb3-9b10-ddf7aa9742d4",
+      "name": "Convert to md"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/files/km/00_templates/{{ $('Get JOBs').item.json.file_name }}.md",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        1728,
+        -624
+      ],
+      "id": "9a7cc4a4-fe53-447c-a733-73b9c949f01a",
+      "name": "Write md File"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "FixaEhBKpKdtJDH1",
+          "mode": "list",
+          "cachedResultName": "docling_jobs",
+          "cachedResultUrl": "/projects/i5ASDarJ8CkFcYlF/datatables/FixaEhBKpKdtJDH1"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $('Get JOBs').item.json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "state": "completed"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "docling_id",
+              "displayName": "docling_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "source_path",
+              "displayName": "source_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status_url",
+              "displayName": "status_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "result_url",
+              "displayName": "result_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "error1",
+              "displayName": "error1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "error2",
+              "displayName": "error2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1952,
+        -624
+      ],
+      "id": "4ae945b3-6cf3-4e64-8c1b-aa4a62ddef74",
+      "name": "Update JOB completed"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        -720
+      ],
+      "id": "68fbb0d9-3148-4de7-8f16-00121429b545",
+      "name": "transformer les tempaltes PDF en MD"
     }
   ],
   "pinData": {},
@@ -506,6 +1246,220 @@
           }
         ]
       ]
+    },
+    "CMD $ls1": {
+      "main": [
+        [
+          {
+            "node": "CODE list1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CODE list1": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Get JOBs in running state",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "init": {
+      "main": [
+        [
+          {
+            "node": "token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get JOBs in running state": {
+      "main": [
+        [
+          {
+            "node": "If JOB still exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If JOB still exist": {
+      "main": [
+        [
+          {
+            "node": "init",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "read file": {
+      "main": [
+        [
+          {
+            "node": "upload file PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "token": {
+      "main": [
+        [
+          {
+            "node": "read file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload file PDF": {
+      "main": [
+        [
+          {
+            "node": "Insert JOB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "token1": {
+      "main": [
+        [
+          {
+            "node": "Get JOBs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "init1": {
+      "main": [
+        [
+          {
+            "node": "token1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get JOBs": {
+      "main": [
+        [
+          {
+            "node": "Get Docling status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Docling status": {
+      "main": [
+        [
+          {
+            "node": "Extraction succeeded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraction succeeded": {
+      "main": [
+        [
+          {
+            "node": "Download Docling result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Docling result": {
+      "main": [
+        [
+          {
+            "node": "Prepare Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Markdown": {
+      "main": [
+        [
+          {
+            "node": "Convert to md",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to md": {
+      "main": [
+        [
+          {
+            "node": "Write md File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write md File": {
+      "main": [
+        [
+          {
+            "node": "Update JOB completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "transformer les tempaltes PDF en MD": {
+      "main": [
+        [
+          {
+            "node": "CMD $ls1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "init1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -514,7 +1468,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "6664c62f-c48b-431e-a16f-809931c3e9fd",
+  "versionId": "978f7655-c5cf-4911-899b-25edb250e1ba",
   "meta": {
     "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
   },
