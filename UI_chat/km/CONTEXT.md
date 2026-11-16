@@ -467,3 +467,14 @@ Les uploads et les accords de remplacement restent limités à
 `01_upload_raw_files/`. Cette évolution ne change pas les contrats des templates
 ou du dépôt historique. La sortie de liste est fournie par l’utilisateur ;
 aucun workflow distant n’a été appelé ou modifié pendant cette adaptation.
+
+### Bouton Autocut sur les sources historiques
+
+Sur `01a_upload_files`, les lignes de `01_upload_legacy_files` ont un fond bleu
+clair et un bouton Autocut. Clé dédiée `KM_FILES_AUTOCUT_WEBHOOK_PATH` (vide),
+base n8n commune, bascule test indépendante OFF au chargement. POST JSON
+`{folder, name, expected_revision}`, confirmation `ok:true` et nom exact,
+dossier vérifié s’il est renvoyé. Seule la prise en compte est annoncée.
+Liste rechargée selon son mode, aucun retrait local, aucun rejeu automatique,
+délai 30 s et blocage des opérations concurrentes. Aucun workflow créé.
+Voir la fiche `docs/01a_upload_files.md`.

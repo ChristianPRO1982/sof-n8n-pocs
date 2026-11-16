@@ -16,6 +16,8 @@ const deposit = deposits[pageId];
 const multiFolder = pageId === '01a_upload_files';
 const folderField = multiFolder ? { folder: '01_upload_raw_files' } : {};
 let listArray = false, listOverride;
+let autocutConfigured = true, autocutMode = 'ok';
+const autocuts = [];
 const webhookPath = (operation, test = false) => `/webhook${test ? '-test' : ''}/${deposit.path}${operation}`;
 const root = resolve(new URL('../../', import.meta.url).pathname);
 const files = new Map([['existing.pdf', { name: 'existing.pdf', size: 3, revision: 'v1' }]]);
@@ -36,10 +38,10 @@ const server = createServer(async (req, res) => {
     }
     if (path === '/km/config.ini') {
       res.end(`KM_VERSION=0.4.0\nKM_WEBHOOK_BASE_URL=http://127.0.0.1:${server.address().port}/webhook/\n` +
-        Object.values(deposits).flatMap(({ prefix, path: depositPath }) => ['LIST', 'UPLOAD', 'DELETE', 'VIEW'].map((op) => {
+        Object.values(deposits).flatMap(({ prefix, path: depositPath }) => ['LIST', 'UPLOAD', 'DELETE', 'VIEW', ...(prefix === 'KM_FILES' ? ['AUTOCUT'] : [])].map((op) => {
           const selected = prefix === deposit.prefix;
           const path = `${depositPath}${op.toLowerCase()}`;
-          return `${prefix}_${op}_WEBHOOK_PATH=${!selected || configured ? path : ''}`;
+          return `${prefix}_${op}_WEBHOOK_PATH=${(!selected || configured) && (op !== 'AUTOCUT' || autocutConfigured) ? path : ''}`;
         })).join('\n'));
       return;
     }
@@ -58,6 +60,14 @@ const server = createServer(async (req, res) => {
       const parts = [];
       for await (const chunk of req) parts.push(chunk);
       const body = Buffer.concat(parts).toString();
+      if (path.endsWith('/autocut')) {
+        const data = JSON.parse(body);
+        autocuts.push({ path, data });
+        await new Promise(done => setTimeout(done, 70));
+        if (autocutMode === 'error') send({ ok: false, message: 'refused' }, 409);
+        else send({ ok: true, name: autocutMode === 'invalid' ? 'wrong.pdf' : data.name, folder: data.folder });
+        return;
+      }
       if (path.endsWith('/delete')) {
         const data = JSON.parse(body);
         deletions.push({ method: req.method, contentType: req.headers['content-type'], data });
@@ -342,8 +352,38 @@ try {
     assert.equal(await evaluate(`document.querySelectorAll('#server-files li').length`), 2);
     assert.match(await text('server-files'), /01_upload_legacy_files/);
     await evaluate(`window.kmViewCalls = []; window.open = (...args) => window.kmViewCalls.push(args)`);
-    await evaluate(`document.querySelectorAll('#server-files li')[1].querySelector('button').click()`);
+    await evaluate(`document.querySelectorAll('#server-files li')[1].querySelectorAll('button')[1].click()`);
     assert.equal(new URL((await evaluate('window.kmViewCalls.at(-1)'))[0]).searchParams.get('folder'), legacy.folder);
+    const autocutButton = `document.querySelector('#server-files button[aria-label^="Autocut "]')`;
+    assert.equal(await evaluate(`document.querySelectorAll('#server-files button[aria-label^="Autocut "]').length`), 1);
+    assert.equal(await evaluate(`getComputedStyle(${autocutButton}.closest('li')).backgroundColor`), 'rgb(232, 243, 255)');
+    await evaluate(`window.confirm = () => false; ${autocutButton}.click()`);
+    assert.equal(autocuts.length, 0);
+    const beforeToggle = calls.length;
+    await click('webhook-autocut-toggle');
+    assert.equal(calls.length, beforeToggle);
+    for (const mode of ['ok', 'invalid', 'error']) {
+      autocutMode = mode;
+      await evaluate(`window.confirm = () => true; ${autocutButton}.click(); ${autocutButton}.click()`);
+      await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+      assert.deepEqual(autocuts.at(-1), { path: webhookPath('autocut', true), data: { folder: legacy.folder, name: legacy.name, expected_revision: legacy.revision } });
+      assert.equal(calls.at(-1), webhookPath('list'), 'Autocut preserves list mode');
+      assert.equal(await evaluate(`document.querySelectorAll('#server-files li').length`), 2);
+      assert.match(await text('upload-notice'), mode === 'ok' ? /prise en compte/ : /non confirmée/);
+    }
+    assert.equal(autocuts.length, 3, 'No concurrent or automatic retry');
+    await click('webhook-autocut-toggle');
+    autocutMode = 'ok';
+    await evaluate(`${autocutButton}.click()`);
+    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    assert.equal(autocuts.at(-1).path, webhookPath('autocut'));
+    autocutConfigured = false;
+    await call('Page.reload');
+    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    assert.equal(await evaluate(`${autocutButton}.disabled`), true);
+    autocutConfigured = true;
+    await call('Page.reload');
+    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
     wrongDeleteFolder = true;
     await evaluate(`window.confirm = () => true; document.querySelectorAll('#server-files li')[1].querySelector('.km-upload-danger').click()`);
     await wait(`!document.getElementById('webhook-list-toggle').disabled`);
@@ -400,7 +440,7 @@ try {
   assert.equal(await evaluate(`document.getElementById('send-files').disabled`), true);
   assert.equal(await evaluate(`document.getElementById('refresh-files').disabled`), true);
   assert.equal(calls.length, callsBeforeMissingConfig, 'Missing configuration must never fall back to the other deposit');
-  assert.ok(calls.every(path => ['list', 'upload', 'delete'].some(op => path === webhookPath(op) || path === webhookPath(op, true))), 'Requests must only use this deposit’s endpoints');
+  assert.ok(calls.every(path => ['list', 'upload', 'delete', ...(multiFolder ? ['autocut'] : [])].some(op => path === webhookPath(op) || path === webhookPath(op, true))), 'Requests must only use this deposit’s endpoints');
   assert.equal(browserErrors.length, 0, JSON.stringify(browserErrors));
   console.log(pageId + ' browser checks passed: sequential uploads, overwrite revisions, conflicts, retry, uncertain response, delete, toggle, icons, keyboard, configuration and five screen widths.');
 } finally {

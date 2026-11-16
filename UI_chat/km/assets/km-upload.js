@@ -12,16 +12,16 @@ const sourceFolders = [uploadFolder, '01_upload_legacy_files'];
 const fileKey = (file) => multiFolder ? JSON.stringify([file.folder, file.name]) : file.name;
 const fileLabel = (file) => multiFolder ? `${file.folder}/${file.name}` : file.name;
 const uploadFiles = () => state.files.filter((file) => !multiFolder || file.folder === uploadFolder);
-const operations = ['list', 'upload', 'delete', 'view'];
+const operations = ['list', 'upload', 'delete', 'view', ...(multiFolder ? ['autocut'] : [])];
 const serviceEndpoint = (operation) => endpoint(state.config, operation, state.test[operation], endpointPrefix);
 
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['webhook-list-toggle', 'webhook-list-toggle-image', 'webhook-upload-toggle', 'webhook-upload-toggle-image',
-  'webhook-delete-toggle', 'webhook-delete-toggle-image', 'webhook-view-toggle', 'webhook-view-toggle-image', 'upload-notice',
+const ui = Object.fromEntries(['upload-notice',
   'refresh-files', 'server-state', 'server-files', 'file-picker', 'choose-files', 'upload-drop',
   'selection-count', 'selected-files', 'agreement-summary', 'send-files', 'retry-files',
-  'new-batch', 'upload-progress', 'upload-result'].map((id) => [id, $(id)]));
-const state = { config: {}, test: { list: false, upload: false, delete: false, view: false }, busy: true, ready: false, files: [], items: [], completed: false };
+  'new-batch', 'upload-progress', 'upload-result',
+  ...operations.flatMap((op) => [`webhook-${op}-toggle`, `webhook-${op}-toggle-image`])].map((id) => [id, $(id)]));
+const state = { config: {}, test: Object.fromEntries(operations.map((op) => [op, false])), busy: true, ready: false, files: [], items: [], completed: false };
 const statusLabels = { pending: 'En attente', sending: 'En cours…', success: 'Réussi', failed: 'Échoué' };
 
 function node(tag, className = '', text = '') {
@@ -118,6 +118,12 @@ function render() {
     const { row, info } = fileRow(file);
     if (multiFolder && file.folder === '01_upload_legacy_files') row.classList.add('km-upload-row-legacy');
     if (multiFolder) info.append(node('span', 'km-upload-meta', `${file.folder}/`));
+    if (multiFolder && file.folder === '01_upload_legacy_files') {
+      const autocut = button('Autocut', () => autocutFile(file), fileLabel(file));
+      autocut.disabled = state.busy || !state.ready || !configured('autocut');
+      if (!configured('autocut')) autocut.title = 'Raccordement du processus Autocut à configurer.';
+      row.append(autocut);
+    }
     const view = button('Voir', () => viewFile(file), fileLabel(file));
     view.disabled = state.busy || !state.ready || !configured('view');
     row.append(view);
@@ -223,6 +229,32 @@ async function sendBatch() {
   } finally { state.busy = false; render(); }
 }
 
+async function autocutFile(file) {
+  if (!multiFolder || file.folder !== '01_upload_legacy_files' ||
+      state.busy || !state.ready || !configured('autocut')) return;
+  if (!window.confirm(`Envoyer le fichier « ${fileLabel(file)} » au processus Autocut ?`)) return;
+  state.busy = true;
+  message(`Envoi vers Autocut : ${fileLabel(file)}…`);
+  render();
+  let result;
+  let failed = false;
+  try {
+    await request(serviceEndpoint('autocut'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folder: file.folder, name: file.name, expected_revision: file.revision }),
+    }, (data) => data.name === file.name && (data.folder === undefined || data.folder === file.folder));
+    result = `Demande Autocut prise en compte : ${fileLabel(file)}. La réussite du traitement n’est pas encore confirmée.`;
+  } catch (error) {
+    failed = true;
+    result = `Demande Autocut non confirmée pour ${fileLabel(file)} : ${error.message}` +
+      (error.uncertain ? ' Résultat incertain, aucune relance automatique.' : '');
+  }
+  try {
+    const refreshed = await refresh();
+    message(result + (refreshed ? '' : ' Actualisation de la liste indisponible.'), failed || !refreshed);
+  } finally { state.busy = false; render(); }
+}
+
 async function deleteFile(file) {
   if (state.busy || !state.ready || !configured('delete')) return;
   if (!window.confirm(`Supprimer le fichier « ${fileLabel(file)} » du serveur ?`)) return;
@@ -297,8 +329,8 @@ for (const operation of operations) ui[`webhook-${operation}-toggle`].addEventLi
   if (state.busy) return;
   state.busy = true;
   state.test[operation] = !state.test[operation];
-  if (operation === 'view') {
-    message(`WH - view : ${state.test.view ? 'test' : 'production'}.`);
+  if (operation === 'view' || operation === 'autocut') {
+    message(`WH - ${operation} : ${state.test[operation] ? 'test' : 'production'}.`);
     state.busy = false;
     render();
     return;

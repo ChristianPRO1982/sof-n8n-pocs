@@ -431,3 +431,24 @@ d'échec de cette prise en charge. Ces inconnues ne remettent pas en question le
 règles d'accord global, de remplacement annoncé et d'envoi séquentiel ci-dessus.
 
 [Vue d'ensemble](README.md) · [Archive des sources](01b_processed_files.md) · [Contrôles](02_format_controls.md)
+
+## Envoi vers Autocut
+
+Sur cette page uniquement, chaque fichier de `01_upload_legacy_files` porte
+un encadré bleu clair et un bouton « Autocut ». Les fichiers raw n’ont pas ce
+bouton. Le webhook emploie la base commune `KM_WEBHOOK_BASE_URL` et la nouvelle
+clé `KM_FILES_AUTOCUT_WEBHOOK_PATH`, laissée vide pour configuration.
+
+Après confirmation nominative, la page envoie un POST JSON
+`{folder, name, expected_revision}`. Réponse attendue : HTTP 2xx et
+`{"ok":true,"name":"nom-exact"}` ; un `folder` renvoyé doit correspondre.
+Le serveur doit autoriser uniquement `01_upload_legacy_files` et vérifier
+la révision avant prise en charge. Une réponse conforme confirme la demande,
+jamais la réussite du découpage. Aucun fichier n’est retiré localement.
+
+La bascule « WH - autocut » est indépendante, initialement OFF et réinitialisée
+au retour par l’historique. Elle conserve lots/résultats sans appel réseau.
+Après action, la liste est actualisée dans son propre mode. Délai : 30 secondes,
+sans relance automatique ; résultat incertain signalé en cas de retour invalide.
+Le bouton est désactivé sans clé, sans liste valide ou pendant une opération.
+Aucun workflow ni traitement Autocut n’est créé par cette modification.

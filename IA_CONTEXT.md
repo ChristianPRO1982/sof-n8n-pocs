@@ -123,7 +123,10 @@ La page KM `01a_upload_files` reçoit désormais une liste n8n fusionnant
 `01_upload_raw_files` et `01_upload_legacy_files`, avec `folder` obligatoire par
 fichier et identité `(folder, name)`. Liste objet ou tableau à un élément ; Voir
 et Supprimer transmettent le dossier. Uploads et remplacements restent dans
-`01_upload_raw_files`. Voir la fiche KM pour les contrats détaillés.
+`01_upload_raw_files`. Le bouton Autocut réservé aux fichiers historiques
+utilise `KM_FILES_AUTOCUT_WEBHOOK_PATH` et une bascule test indépendante ;
+il envoie `{folder, name, expected_revision}` en POST JSON pour demander
+la prise en charge. Voir la fiche KM pour les contrats détaillés.
 
 ### Chatbot
 

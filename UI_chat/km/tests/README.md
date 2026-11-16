@@ -163,3 +163,8 @@ l'onglet. Le délai de production de 30 secondes est vérifié puis accéléré 
 Le test Docker monte une copie temporaire du fichier, vérifie `no-store` en
 accès direct et via proxy, l'absence d'ETag et de 304, puis modifie le JSON sans
 recréer le conteneur. Les services existants ne sont pas utilisés par ces tests.
+
+La suite upload couvre aussi Autocut sur les seules lignes historiques :
+clé absente, modes production/test, bascule sans réseau, confirmation/annulation,
+POST avec dossier et révision, refus/conflit, retour invalide, doubles clics,
+conservation de la ligne et actualisation selon le mode de liste.
