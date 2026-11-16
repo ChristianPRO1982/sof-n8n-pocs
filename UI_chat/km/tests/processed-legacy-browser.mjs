@@ -57,7 +57,7 @@ const server = createServer(async (req, res) => {
       actions.push({ op, path, method: req.method, contentType: req.headers['content-type'], data });
       if (hold) await new Promise((done) => { release = done; });
       const entry = [...files.entries()].find(([, file]) => file.name === data.name &&
-        (!multiFolder || (file.folder || folder) === data.folder));
+        (!multiFolder || (file.folder || folder) === (op === 'replay' ? data.actualFolder : data.folder)));
       const mode = modes[op];
       if (mode === 'timeout') return;
       if (mode === 'conflict' || entry?.[1].revision !== data.expected_revision) {
@@ -203,7 +203,11 @@ try {
   assert.match(await text('upload-notice'), /Demande de rejeu en cours/);
   assert.ok((await text('upload-notice')).includes(name));
   assert.equal(await evaluate(`Array.from(document.querySelectorAll('#server-files button, #refresh-files, .km-webhook-toggle')).every(b => b.disabled)`), true);
-  assert.deepEqual(actions.at(-1), { op: 'replay', path: webhookPath('replay'), method: 'POST', contentType: 'application/json', data: { name, expected_revision: 'v1', ...folderField } });
+  assert.deepEqual(actions.at(-1), { op: 'replay', path: webhookPath('replay'), method: 'POST', contentType: 'application/json', data: { name, expected_revision: 'v1', ...(multiFolder ? { actualFolder: folder, targetFolder: '01_upload_raw_files' } : {}) } });
+  if (multiFolder) {
+    assert.ok((await evaluate('window.kmConfirms.at(-1)')).includes('01_upload_raw_files'));
+    assert.ok((await evaluate('window.kmConfirms.at(-1)')).includes(folder));
+  }
   hold = false;
   release();
   await ready();
@@ -333,10 +337,11 @@ try {
     await action('Rejouer', legacyFolder);
     assert.equal(actions.length, before);
     assert.ok((await evaluate('window.kmConfirms.at(-1)')).includes(legacyFolder));
+    assert.ok((await evaluate('window.kmConfirms.at(-1)')).includes('01_upload_legacy_files'));
     await evaluate('window.kmAgree = true');
     await action('Rejouer', legacyFolder);
     await ready();
-    assert.deepEqual(actions.at(-1).data, { folder: legacyFolder, name, expected_revision: 'legacy-v1' });
+    assert.deepEqual(actions.at(-1).data, { actualFolder: legacyFolder, targetFolder: '01_upload_legacy_files', name, expected_revision: 'legacy-v1' });
     assert.equal(await evaluate(`document.querySelectorAll('#server-files li').length`), 2);
     // Failure to reload must preserve the other file with the same name.
     listMode = 'error';

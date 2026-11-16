@@ -7,6 +7,10 @@ const prefix = {
 if (!prefix) throw new Error('Page de fichiers traités inconnue.');
 const multiFolder = prefix === 'KM_PROCESSED_FILES';
 const folders = ['01_processed_files', '01_legacy_processed_files'];
+const replayTargets = new Map([
+  ['01_processed_files', '01_upload_raw_files'],
+  ['01_legacy_processed_files', '01_upload_legacy_files'],
+]);
 const fileKey = (file) => multiFolder ? JSON.stringify([file.folder, file.name]) : file.name;
 const fileLabel = (file) => multiFolder ? `${file.folder}/${file.name}` : file.name;
 const operations = ['list', 'view', 'replay', 'delete'];
@@ -98,7 +102,13 @@ async function refresh() {
 async function perform(op, file) {
   if (state.busy || !state.ready || !configured(op)) return;
   const replay = op === 'replay';
-  if (!window.confirm(replay ? `Demander le rejeu du fichier « ${fileLabel(file)} » ?` : `Supprimer le fichier « ${fileLabel(file)} » du serveur ?`)) return;
+  const targetFolder = multiFolder && replay ? replayTargets.get(file.folder) : undefined;
+  if (multiFolder && replay && !targetFolder) return;
+  const confirmation = replay ? (multiFolder ?
+    `Demander le rejeu du fichier « ${file.name} » depuis « ${file.folder} » vers « ${targetFolder} » ?` :
+    `Demander le rejeu du fichier « ${fileLabel(file)} » ?`) :
+    `Supprimer le fichier « ${fileLabel(file)} » du serveur ?`;
+  if (!window.confirm(confirmation)) return;
   state.busy = true;
   message(`${replay ? 'Demande de rejeu' : 'Suppression'} en cours : ${fileLabel(file)}…`);
   render();
@@ -107,7 +117,7 @@ async function perform(op, file) {
   try {
     await request(serviceEndpoint(op), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: file.name, expected_revision: file.revision, ...(multiFolder ? { folder: file.folder } : {}) }),
+      body: JSON.stringify({ name: file.name, expected_revision: file.revision, ...(multiFolder ? (replay ? { actualFolder: file.folder, targetFolder } : { folder: file.folder }) : {}) }),
     }, (data) => data.name === file.name && (!multiFolder || data.folder === undefined || data.folder === file.folder));
     confirmed = true;
     // Acceptance of a replay request never removes the source from the browser list.

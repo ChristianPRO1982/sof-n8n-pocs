@@ -231,6 +231,8 @@ Pour une demande courante, ce contexte et les fichiers de la fonctionnalité con
 La page KM `01b_processed_files` partage le contrôleur de 00c et dispose de clés
 `KM_PROCESSED_FILES_{LIST,VIEW,REPLAY,DELETE}_WEBHOOK_PATH` isolées. n8n fusionne
 `01_processed_files` et `01_legacy_processed_files` en un GET ; identité
-`(folder,name)`, legacy bleu clair. Voir transmet folder/name ; Rejouer et
-Supprimer transmettent folder/name/expected_revision, avec confirmation nominative.
+`(folder,name)`, legacy bleu clair. Voir transmet folder/name ; Supprimer transmet folder/name/expected_revision.
+Rejouer transmet actualFolder/targetFolder/name/expected_revision (sans folder) :
+`01_processed_files` → `01_upload_raw_files`, `01_legacy_processed_files` →
+`01_upload_legacy_files`, avec confirmation nominative du départ et de la destination.
 Délais 30 s, quatre bascules test indépendantes, aucun workflow créé.

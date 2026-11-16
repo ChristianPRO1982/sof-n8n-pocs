@@ -90,17 +90,29 @@ relance automatique ; retours invalides signalés comme incertains.
 | --- | --- | --- |
 | Liste | GET sans paramètres | `{"ok":true,"files":[{"folder":"01_processed_files","name":"document.pdf","size":1234,"revision":"opaque"}]}` |
 | Voir | GET avec `folder` et `name` encodés | Fichier ouvert en nouvel onglet, `noopener,noreferrer` |
-| Rejouer/Supprimer | POST JSON `{folder,name,expected_revision}` | `{"ok":true,"name":"document.pdf"}` ; dossier exact s’il est présent |
+| Rejouer | POST JSON `{actualFolder,targetFolder,name,expected_revision}` | `{"ok":true,"name":"document.pdf"}` ; `folder` exact s’il est présent |
+| Supprimer | POST JSON `{folder,name,expected_revision}` | `{"ok":true,"name":"document.pdf"}` ; dossier exact s’il est présent |
 
 La réponse de liste accepte l’objet seul ou un tableau contenant exactement
 cet objet. Taille entière en octets et révision non vide restent obligatoires.
-Confirmer rejeu/suppression avec dossier et nom. Le serveur doit contrôler le
+Confirmer le rejeu avec le nom, le dossier actuel et la destination ; confirmer
+la suppression avec le dossier et le nom. Le serveur doit contrôler le
 dossier autorisé et la révision dans ce dossier avant l’opération. Une confirmation
 de rejeu annonce uniquement la prise en compte ; aucun retrait local. La liste
 est rechargée après chaque tentative d’action. La suppression ne retire
 localement que l’identité confirmée, même en présence d’un homonyme.
 
-Le workflow décide du traitement à rejouer selon `folder`. Aucun Autocut en
+Pour Rejouer uniquement, `folder` est remplacé par `actualFolder` et `targetFolder` :
+
+| actualFolder | targetFolder |
+| --- | --- |
+| `01_processed_files` | `01_upload_raw_files` |
+| `01_legacy_processed_files` | `01_upload_legacy_files` |
+
+Le navigateur applique cette correspondance fixe ; n8n valide les dossiers et
+réalise le traitement. La confirmation reste `ok:true`, nom exact et contrôle du
+champ `folder` s’il est fourni. Le rejeu 00c conserve son contrat existant.
+ Aucun Autocut en
 deux étapes, déplacement, stockage ou workflow n’est créé par cette interface.
 La recette locale utilise `tests/processed-legacy-browser.mjs` avec l’argument
 `01b_processed_files` et des réponses n8n simulées uniquement.

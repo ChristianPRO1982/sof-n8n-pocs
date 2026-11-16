@@ -191,3 +191,7 @@ annulation/rejeu/suppression du legacy et conservation de l’homonyme après
 suppression même si la lecture suivante échoue. Captures sous
 `/tmp/km-01b_processed_files-<largeur>.png` (00c sous son identifiant également).
 Aucun webhook distant n’est appelé.
+
+Le rejeu 01b vérifie actualFolder/targetFolder pour les deux correspondances,
+l’absence de folder dans le POST et l’affichage de la destination dans la
+confirmation. Voir/Supprimer et le rejeu 00c conservent leurs paramètres.

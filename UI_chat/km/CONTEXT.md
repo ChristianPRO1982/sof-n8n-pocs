@@ -504,8 +504,12 @@ La liste GET fusionne via n8n `01_processed_files` et `01_legacy_processed_files
 Entrées `{folder,name,size,revision}`, identité unique `(folder,name)`, dossier
 limité à ces deux valeurs ; objet ou tableau à un élément accepté. Le dossier
 est affiché, fond bleu clair pour legacy. Voir transmet folder/name en GET ;
-rejeu et suppression POST `{folder,name,expected_revision}`, confirmation ok:true
-et nom exact, dossier exact s’il est présent. Rejeu simple avec confirmation,
+suppression POST `{folder,name,expected_revision}` ; rejeu POST
+`{actualFolder,targetFolder,name,expected_revision}` sans champ folder.
+Correspondances fixes : `01_processed_files` → `01_upload_raw_files`,
+`01_legacy_processed_files` → `01_upload_legacy_files`. La confirmation utilisateur
+indique départ, destination et fichier. Réponse ok:true et nom exact, contrôle de
+folder s’il est présent. Rejeu simple avec confirmation,
 aucun retrait local ni garantie de réussite du traitement. Quatre bascules test
 indépendantes OFF au chargement, délais 30 s, actualisation selon list, aucune
 relance automatique. Contrat 00c inchangé ; aucun workflow ou archivage créé.
