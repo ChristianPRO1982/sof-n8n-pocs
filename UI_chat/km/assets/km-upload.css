@@ -13,6 +13,7 @@
 .km-upload-drop.is-dragging { background: var(--primary-soft); border-color: var(--primary); }
 .km-upload-list { list-style: none; padding: 0; margin: 12px 0 18px; display: grid; gap: 10px; }
 .km-upload-row { display: flex; align-items: flex-start; gap: 12px; background: white; border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+.km-upload-row-legacy { background: #e8f3ff; }
 .km-upload-file-icon { width: 32px; height: 36px; object-fit: contain; flex: 0 0 32px; }
 .km-upload-file-info { min-width: 0; flex: 1; }
 .km-upload-name { display: block; overflow-wrap: anywhere; }

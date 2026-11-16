@@ -33,6 +33,9 @@ inexploitable, suppression annulée/refusée/confirmée, corps POST JSON et conf
 de suppression avec nom incorrect (résultat incertain), quatre bascules indépendantes
 liste/upload/view/delete, ouverture de « Voir » dans un nouvel onglet en test et
 production avec configuration propre à chaque dépôt, suppression test avec liste production et inversement,
+pour les sources : deux dossiers, identité `(folder, name)`, homonymes,
+liste objet ou tableau à un élément, transmission du dossier pour Voir/Supprimer,
+refus des dossiers absents/inconnus et remplacement limité au dépôt raw ;
 configuration absente, icônes de repli, clavier et largeurs 1 920, 1 366, 1 100,
 768 et 390 px. Les captures sont écrites sous `/tmp/km-upload-<largeur>.png`.
 La même suite couvre les trois pages avec des chemins distincts et vérifie

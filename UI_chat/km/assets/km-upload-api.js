@@ -38,14 +38,14 @@ export function validFile(file) {
     typeof file.revision === 'string' && file.revision.length > 0;
 }
 
-export async function request(url, options = {}, validate = () => true, timeout = 30000) {
+export async function request(url, options = {}, validate = () => true, timeout = 30000, normalize = (data) => data) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
     const response = await fetch(url, { ...options, cache: 'no-store',
       headers: { Accept: 'application/json', ...options.headers }, signal: controller.signal });
     let payload;
-    try { payload = await response.json(); } catch {
+    try { payload = normalize(await response.json()); } catch {
       throw new ServiceError(`Réponse inexploitable (HTTP ${response.status}). Vérifiez l’état serveur.`, true);
     }
     if (!response.ok || payload?.ok !== true) {

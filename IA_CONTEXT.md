@@ -119,6 +119,12 @@ Des URLs de repli sont aussi codées dans certaines pages. Pour modifier une des
 KM charge séparément `/km/config.ini`, monté en lecture seule et servi sans cache.
 Les images et le logo sont embarqués dans son image Docker, sans accès GitHub.
 
+La page KM `01a_upload_files` reçoit désormais une liste n8n fusionnant
+`01_upload_raw_files` et `01_upload_legacy_files`, avec `folder` obligatoire par
+fichier et identité `(folder, name)`. Liste objet ou tableau à un élément ; Voir
+et Supprimer transmettent le dossier. Uploads et remplacements restent dans
+`01_upload_raw_files`. Voir la fiche KM pour les contrats détaillés.
+
 ### Chatbot
 
 Requête HTTP `POST`, corps JSON :

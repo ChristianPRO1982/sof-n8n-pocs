@@ -6,6 +6,12 @@ const endpointPrefix = {
   '00b_upload_legacy_files': 'KM_LEGACY_FILES',
 }[document.body.dataset.kmPage];
 if (!endpointPrefix) throw new Error('Page de dépôt inconnue.');
+const multiFolder = endpointPrefix === 'KM_FILES';
+const uploadFolder = '01_upload_raw_files';
+const sourceFolders = [uploadFolder, '01_upload_legacy_files'];
+const fileKey = (file) => multiFolder ? JSON.stringify([file.folder, file.name]) : file.name;
+const fileLabel = (file) => multiFolder ? `${file.folder}/${file.name}` : file.name;
+const uploadFiles = () => state.files.filter((file) => !multiFolder || file.folder === uploadFolder);
 const operations = ['list', 'upload', 'delete', 'view'];
 const serviceEndpoint = (operation) => endpoint(state.config, operation, state.test[operation], endpointPrefix);
 
@@ -63,6 +69,7 @@ function viewFile(file) {
   try {
     const url = new URL(serviceEndpoint('view'));
     url.searchParams.set('name', file.name);
+    if (multiFolder) url.searchParams.set('folder', file.folder);
     window.open(url.href, '_blank', 'noopener,noreferrer');
   } catch (error) {
     message(error.message, true);
@@ -79,7 +86,7 @@ function duplicates() {
 }
 function render() {
   const repeated = duplicates();
-  const existing = new Map(state.files.map((file) => [file.name, file]));
+  const existing = new Map(uploadFiles().map((file) => [file.name, file]));
   for (const operation of operations) {
     ui[`webhook-${operation}-toggle`].disabled = state.busy;
     ui[`webhook-${operation}-toggle`].setAttribute('aria-checked', String(state.test[operation]));
@@ -108,11 +115,13 @@ function render() {
 
   ui['server-files'].replaceChildren();
   for (const file of state.files) {
-    const { row } = fileRow(file);
-    const view = button('Voir', () => viewFile(file), file.name);
+    const { row, info } = fileRow(file);
+    if (multiFolder && file.folder === '01_upload_legacy_files') row.classList.add('km-upload-row-legacy');
+    if (multiFolder) info.append(node('span', 'km-upload-meta', `${file.folder}/`));
+    const view = button('Voir', () => viewFile(file), fileLabel(file));
     view.disabled = state.busy || !state.ready || !configured('view');
     row.append(view);
-    const remove = button('Supprimer', () => deleteFile(file), file.name, true);
+    const remove = button('Supprimer', () => deleteFile(file), fileLabel(file), true);
     remove.disabled = state.busy || !state.ready || !configured('delete');
     row.append(remove);
     ui['server-files'].append(row);
@@ -146,7 +155,10 @@ async function refresh() {
   render();
   try {
     const payload = await request(serviceEndpoint('list'), {}, (data) =>
-      Array.isArray(data.files) && data.files.every(validFile) && new Set(data.files.map((file) => file.name)).size === data.files.length);
+      Array.isArray(data.files) && data.files.every((file) => validFile(file) &&
+        (!multiFolder || sourceFolders.includes(file.folder))) &&
+      new Set(data.files.map(fileKey)).size === data.files.length, 30000,
+      (data) => multiFolder && Array.isArray(data) && data.length === 1 ? data[0] : data);
     state.files = payload.files;
     state.ready = true;
     ui['server-state'].textContent = state.files.length ? `${state.files.length} fichier(s) sur le serveur.` : 'Aucun fichier sur le serveur.';
@@ -174,7 +186,7 @@ function addFiles(files) {
 async function sendBatch() {
   if (ui['send-files'].disabled) return;
   // Snapshot the revisions whose replacement was actually announced at agreement.
-  const approved = new Map(state.files.map((file) => [file.name, file.revision]));
+  const approved = new Map(uploadFiles().map((file) => [file.name, file.revision]));
   state.busy = true;
   ui['upload-progress'].hidden = false;
   ui['upload-progress'].max = state.items.length;
@@ -213,26 +225,27 @@ async function sendBatch() {
 
 async function deleteFile(file) {
   if (state.busy || !state.ready || !configured('delete')) return;
-  if (!window.confirm(`Supprimer le fichier « ${file.name} » du serveur ?`)) return;
+  if (!window.confirm(`Supprimer le fichier « ${fileLabel(file)} » du serveur ?`)) return;
   state.busy = true;
-  message(`Suppression en cours : ${file.name}…`);
+  message(`Suppression en cours : ${fileLabel(file)}…`);
   render();
   let confirmed = false;
   let errorMessage = '';
   try {
     await request(serviceEndpoint('delete'), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: file.name, expected_revision: file.revision }),
-    }, (data) => data.name === file.name);
+      body: JSON.stringify({ name: file.name, expected_revision: file.revision, ...(multiFolder ? { folder: file.folder } : {}) }),
+    }, (data) => data.name === file.name &&
+      (!multiFolder || data.folder === undefined || data.folder === file.folder));
     confirmed = true;
-    state.files = state.files.filter((entry) => entry.name !== file.name);
+    state.files = state.files.filter((entry) => fileKey(entry) !== fileKey(file));
   } catch (error) {
     errorMessage = error.message + (error.uncertain ? ' Résultat incertain, aucune relance automatique.' : '');
   }
   try {
     const refreshed = await refresh();
-    message(confirmed ? `Suppression confirmée : ${file.name}.${refreshed ? '' : ' Actualisation de la liste indisponible.'}` :
-      `Suppression non confirmée pour ${file.name} : ${errorMessage}${refreshed ? '' : ' Actualisation de la liste indisponible.'}`, !confirmed || !refreshed);
+    message(confirmed ? `Suppression confirmée : ${fileLabel(file)}.${refreshed ? '' : ' Actualisation de la liste indisponible.'}` :
+      `Suppression non confirmée pour ${fileLabel(file)} : ${errorMessage}${refreshed ? '' : ' Actualisation de la liste indisponible.'}`, !confirmed || !refreshed);
   } finally {
     state.busy = false;
     render();

@@ -452,3 +452,18 @@ récupération DNS avec changement d'IP sans redémarrage du proxy. Les tests
 navigateur simulés couvrent les cinq largeurs et l'absence de requêtes externes.
 Aucun workflow distant ni déploiement EC2 n'a été exécuté. Maintenir ce contexte
 lors de l'ajout de points d'entrée ou de contrats d'échange.
+
+## Liste des sources sur deux dossiers — novembre 2026
+
+`01a_upload_files` reçoit en un seul appel n8n la fusion de
+`01_upload_raw_files/` et `01_upload_legacy_files/` (noms confirmés par
+l’utilisateur). Le front ne scanne aucun dossier. Chaque entrée porte `folder`,
+`name`, `size`, `revision` ; le couple `(folder, name)` est unique. Le dossier
+est affiché et transmis dans Voir (GET) et Supprimer (POST JSON avec révision).
+Une confirmation de suppression avec dossier doit correspondre ; son absence
+reste acceptée. La liste accepte l’objet `{ok:true, files:[…]}` ou un tableau
+contenant exactement cet objet. Dossier absent ou inconnu : liste invalide.
+Les uploads et les accords de remplacement restent limités à
+`01_upload_raw_files/`. Cette évolution ne change pas les contrats des templates
+ou du dépôt historique. La sortie de liste est fournie par l’utilisateur ;
+aucun workflow distant n’a été appelé ou modifié pendant cette adaptation.

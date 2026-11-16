@@ -3,7 +3,7 @@
 ## Consultation des fichiers
 
 Le bouton « Voir », à gauche de « Supprimer », ouvre un GET vers
-`KM_FILES_VIEW_WEBHOOK_PATH` avec le nom encodé en paramètre `name`, dans un
+`KM_FILES_VIEW_WEBHOOK_PATH` avec les paramètres encodés `name` et `folder`, dans un
 nouvel onglet sans confirmation (`noopener,noreferrer`). Le toggle indépendant
 « WH - view », initialement OFF, sélectionne production ou test ; sa bascule
 conserve les lots et résultats sans lancer d'appel réseau. Le bouton est
@@ -89,8 +89,8 @@ nécessitent des workflows conformes aux contrats ci-dessous.
 
 - Sur PC, deux panneaux côte à côte : fichiers serveur à gauche, upload à droite.
 - Sous 768 px, deux panneaux empilés : fichiers serveur en haut, upload en bas.
-- La liste serveur porte uniquement sur `01_upload_raw_files/`, sans inclure
-  les archives ni les autres étapes. Elle charge à l'ouverture, peut être
+- n8n scanne `01_upload_raw_files/` et `01_upload_legacy_files/` et renvoie
+  une liste fusionnée en un seul appel. Chaque ligne affiche son dossier. Elle charge à l'ouverture, peut être
   actualisée manuellement et est actualisée après les envois et suppressions.
 - Distinguer les états chargement, liste vide et erreur. Une erreur de lecture
   ne signifie pas qu'aucun fichier n'existe ; ne pas présenter les collisions
@@ -204,18 +204,19 @@ Le corps envoyé par le front est :
 
 ```json
 {
+  "folder": "01_upload_raw_files",
   "name": "sources_rag_augmente.csv",
   "expected_revision": "revision-recue-dans-la-liste"
 }
 ```
 
 Dans le node suivant le Webhook, récupérer le nom avec `$json.body.name`
-et la révision avec `$json.body.expected_revision`. La suppression de l'exigence
+le dossier avec `$json.body.folder` et la révision avec `$json.body.expected_revision`. La suppression de l'exigence
 de révision dans la confirmation d'upload ne retire pas cette protection des
 requêtes de suppression.
 
 Le traitement serveur doit valider un nom de fichier simple (aucun `/`, `\\`,
-octet nul, `.` ou `..`), cibler uniquement `/files/km/01_upload_raw_files/`
+octet nul, `.` ou `..`), cibler le dossier autorisé indiqué par `$json.body.folder` sous `/files/km/`
 dans l'environnement n8n montré par l'utilisateur, puis comparer la révision
 actuelle avec `expected_revision`. Utiliser la même méthode de calcul que la
 liste. Ne pas interpoler directement le nom reçu dans une commande shell.
@@ -304,18 +305,23 @@ mais les opérations non raccordées sont désactivées.
 ### Requêtes et confirmations
 
 Ces contrats sont **attendus par le front**, pas implémentés dans n8n.
-Les fichiers concernent exclusivement le dossier de dépôt KM.
+La liste couvre les deux dossiers ci-dessus ; les uploads restent dans
+`01_upload_raw_files/`. Seuls les fichiers de ce dossier sont pris en compte
+pour les avertissements de remplacement et les révisions d’upload.
 
 | Opération | Requête | Confirmation JSON attendue |
 | --- | --- | --- |
-| Liste | `GET`, sans cache | `{"ok":true,"files":[{"name":"document.pdf","size":1234,"revision":"opaque"}]}` |
+| Liste | `GET`, sans cache | `{"ok":true,"files":[{"folder":"01_upload_raw_files","name":"document.pdf","size":1234,"revision":"opaque"}]}` |
 | Upload | `POST multipart/form-data` : champ binaire `file`, `overwrite` chaîne `true` ou `false`, `expected_revision` si remplacement | `{"ok":true,"file":{"name":"document.pdf"}}` |
-| Suppression | `POST application/json` : `{"name":"document.pdf","expected_revision":"opaque"}` | `{"ok":true,"name":"document.pdf"}` |
+| Suppression | `POST application/json` : `{"folder":"01_upload_raw_files","name":"document.pdf","expected_revision":"opaque"}` | `{"ok":true,"name":"document.pdf"}` |
 
 Une entrée de la liste porte un nom non vide, une taille entière positive ou nulle
 en octets et une révision non vide. Les noms sont comparés exactement, avec
-casse, sans normalisation implicite. Les doublons dans une réponse de liste
-rendent cette réponse invalide.
+casse, sans normalisation implicite. L’identité est le couple `(folder, name)` : un même nom dans deux dossiers
+est accepté, un couple répété invalide la liste. `folder` est obligatoire et
+doit valoir exactement `01_upload_raw_files` ou `01_upload_legacy_files`.
+La réponse de liste accepte un objet seul ou un tableau contenant exactement
+cet objet, comme dans la sortie n8n fournie par l’utilisateur.
 
 La révision est un identifiant opaque que le serveur renouvelle après chaque
 modification. n8n doit contrôler la révision et la collision au moment de
@@ -332,7 +338,10 @@ uniquement que le nom confirmé correspond au fichier envoyé.
 Par décision utilisateur, la taille et la révision de la confirmation d'upload
 ne sont pas contrôlées et peuvent être absentes. La liste conserve ses exigences
 de taille et de révision, et les requêtes de remplacement et de suppression
-conservent `expected_revision`. La suppression vérifie le nom confirmé.
+conservent `expected_revision`. La suppression transmet `folder`, `name` et `expected_revision`. Elle vérifie
+le nom confirmé et, si la réponse porte `folder`, sa correspondance exacte.
+n8n doit limiter le dossier aux deux valeurs autorisées et contrôler la révision
+dans ce dossier. Une confirmation sans `folder` reste acceptée pour compatibilité.
 Une réponse générique « workflow lancé »
 ne confirme pas le stockage.
 

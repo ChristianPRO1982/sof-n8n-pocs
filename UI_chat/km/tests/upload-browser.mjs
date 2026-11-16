@@ -13,12 +13,15 @@ const deposits = {
 };
 assert.ok(Object.hasOwn(deposits, pageId));
 const deposit = deposits[pageId];
+const multiFolder = pageId === '01a_upload_files';
+const folderField = multiFolder ? { folder: '01_upload_raw_files' } : {};
+let listArray = false, listOverride;
 const webhookPath = (operation, test = false) => `/webhook${test ? '-test' : ''}/${deposit.path}${operation}`;
 const root = resolve(new URL('../../', import.meta.url).pathname);
 const files = new Map([['existing.pdf', { name: 'existing.pdf', size: 3, revision: 'v1' }]]);
 let pageStatus = 'development', statusError = false, statusReads = 0;
 let listError = false, malformed = false, configured = true, active = 0, maxActive = 0;
-let invalidDelete = false;
+let invalidDelete = false, wrongDeleteFolder = false;
 const uploads = [], deletions = [], calls = [], browserErrors = [];
 const server = createServer(async (req, res) => {
   try {
@@ -46,7 +49,10 @@ const server = createServer(async (req, res) => {
       const send = (value, code = 200) => { res.statusCode = code; res.end(JSON.stringify(value)); };
       if (path.endsWith('/list')) {
         if (listError) send({ ok: false, message: 'unavailable' }, 503);
-        else send({ ok: true, files: [...files.values()] });
+        else {
+          const data = { ok: true, files: listOverride || [...files.values()].map(file => ({ ...folderField, ...file })) };
+          send(listArray ? [data] : data);
+        }
         return;
       }
       const parts = [];
@@ -56,6 +62,13 @@ const server = createServer(async (req, res) => {
         const data = JSON.parse(body);
         deletions.push({ method: req.method, contentType: req.headers['content-type'], data });
         if (invalidDelete) { send({ ok: true, name: 'wrong-name.pdf' }); return; }
+        if (wrongDeleteFolder) { send({ ok: true, name: data.name, folder: '01_upload_raw_files' }); return; }
+        if (multiFolder && listOverride) {
+          const index = listOverride.findIndex(file => file.folder === data.folder && file.name === data.name && file.revision === data.expected_revision);
+          if (index < 0) send({ ok: false, message: 'changed' }, 409);
+          else { listOverride.splice(index, 1); send({ ok: true, name: data.name, folder: data.folder }); }
+          return;
+        }
         if (files.get(data.name)?.revision !== data.expected_revision) send({ ok: false, message: 'changed' }, 409);
         else { files.delete(data.name); send({ ok: true, name: data.name }); }
         return;
@@ -155,7 +168,7 @@ try {
   // Capture the new-tab navigation without making a file request.
   await evaluate(`window.kmOriginalOpen = window.open; window.kmViewCalls = [];
     window.open = (...args) => window.kmViewCalls.push(args)`);
-  const view = `document.querySelector('#server-files button[aria-label="Voir existing.pdf"]')`;
+  const view = `document.querySelector('#server-files button[aria-label="Voir ${multiFolder ? '01_upload_raw_files/' : ''}existing.pdf"]')`;
   assert.equal(await evaluate(`${view}.nextElementSibling.textContent`), 'Supprimer');
   assert.equal(await evaluate(`document.getElementById('webhook-view-toggle').getAttribute('aria-checked')`), 'false');
   const beforeView = calls.length;
@@ -166,6 +179,7 @@ try {
     const url = new URL(href);
     assert.equal(url.pathname, webhookPath('view', test));
     assert.equal(url.searchParams.get('name'), 'existing.pdf');
+    assert.equal(url.searchParams.get('folder'), multiFolder ? '01_upload_raw_files' : null);
     assert.equal(target, '_blank');
     assert.equal(features, 'noopener,noreferrer');
   }
@@ -238,18 +252,18 @@ try {
   assert.match(await text('server-files'), /existing.pdf/);
   assert.deepEqual(deletions.at(-1), {
     method: 'POST', contentType: 'application/json',
-    data: { name: 'existing.pdf', expected_revision: 'v2' },
+    data: { name: 'existing.pdf', expected_revision: 'v2', ...folderField },
   });
   invalidDelete = true;
   await evaluate(`document.querySelector('#server-files button.km-upload-danger').click()`);
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
-  assert.match(await text('upload-notice'), /non confirmée pour existing\.pdf.*Résultat incertain/);
+  assert.match(await text('upload-notice'), /non confirmée pour .*existing\.pdf.*Résultat incertain/);
   assert.match(await text('server-files'), /existing.pdf/);
   invalidDelete = false;
   await evaluate(`document.querySelector('#server-files button.km-upload-danger').click()`);
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
   assert.match(await text('upload-notice'), /Suppression confirmée/);
-  assert.deepEqual(deletions.at(-1).data, { name: 'existing.pdf', expected_revision: 'v3' });
+  assert.deepEqual(deletions.at(-1).data, { name: 'existing.pdf', expected_revision: 'v3', ...folderField });
   assert.doesNotMatch(await text('server-files'), /existing.pdf/);
   await click('webhook-list-toggle');
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
@@ -317,6 +331,51 @@ try {
   assert.equal(await evaluate(`document.getElementById('send-files').disabled`), true);
   assert.match(await text('server-state'), /indisponible/);
   listError = false;
+  if (multiFolder) {
+    // Same names in different folders are valid; only raw sources can be replaced.
+    const raw = { folder: '01_upload_raw_files', name: 'same.pdf', size: 3, revision: 'raw-v1' };
+    const legacy = { folder: '01_upload_legacy_files', name: 'same.pdf', size: 4, revision: 'legacy-v1' };
+    listArray = true;
+    listOverride = [raw, legacy];
+    await click('refresh-files');
+    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    assert.equal(await evaluate(`document.querySelectorAll('#server-files li').length`), 2);
+    assert.match(await text('server-files'), /01_upload_legacy_files/);
+    await evaluate(`window.kmViewCalls = []; window.open = (...args) => window.kmViewCalls.push(args)`);
+    await evaluate(`document.querySelectorAll('#server-files li')[1].querySelector('button').click()`);
+    assert.equal(new URL((await evaluate('window.kmViewCalls.at(-1)'))[0]).searchParams.get('folder'), legacy.folder);
+    wrongDeleteFolder = true;
+    await evaluate(`window.confirm = () => true; document.querySelectorAll('#server-files li')[1].querySelector('.km-upload-danger').click()`);
+    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    assert.match(await text('upload-notice'), /non confirmée/);
+    wrongDeleteFolder = false;
+    await evaluate(`document.querySelectorAll('#server-files li')[1].querySelector('.km-upload-danger').click()`);
+    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    assert.deepEqual(deletions.at(-1).data, { name: legacy.name, folder: legacy.folder, expected_revision: legacy.revision });
+    assert.equal(await evaluate(`document.querySelectorAll('#server-files li').length`), 1);
+    assert.match(await text('server-files'), /01_upload_raw_files/);
+    await click('new-batch');
+    await add(['same.pdf']);
+    assert.match(await text('selected-files'), /sera écrasé/);
+    listOverride = [legacy];
+    await click('refresh-files');
+    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    assert.doesNotMatch(await text('selected-files'), /sera écrasé/);
+    const before = uploads.length;
+    await click('send-files');
+    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    assert.equal(uploads.length, before + 1);
+    assert.match(uploads.at(-1).body, /name="overwrite"\r\n\r\nfalse/);
+    // Duplicate identities and unknown/missing folders must disable server actions.
+    for (const entries of [[raw, raw], [{ ...raw, folder: '../other' }], [{ name: 'missing.pdf', size: 1, revision: 'v1' }]]) {
+      listOverride = entries;
+      await click('refresh-files');
+      await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+      assert.match(await text('server-state'), /indisponible/);
+    }
+    listOverride = undefined;
+    listArray = false;
+  }
   files.clear();
   await click('refresh-files');
   await wait(`!document.getElementById('webhook-list-toggle').disabled`);
