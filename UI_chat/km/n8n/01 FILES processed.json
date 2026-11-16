@@ -1,0 +1,709 @@
+{
+  "name": "01 FILES processed",
+  "nodes": [
+    {
+      "parameters": {
+        "command": "=node <<'JS'\nconst fs = require('node:fs');\nconst path = require('node:path');\n\nconst baseDirectory = '/files/km';\nconst folders = [\n  '01_processed_files',\n  '01_legacy_processed_files'\n];\n\nconst files = folders.flatMap(folder => {\n  const directory = path.join(baseDirectory, folder);\n\n  return fs.readdirSync(directory, { withFileTypes: true })\n    .filter(entry => entry.isFile())\n    .map(entry => {\n      const stat = fs.statSync(path.join(directory, entry.name), {\n        bigint: true\n      });\n\n      const size = Number(stat.size);\n\n      if (!Number.isSafeInteger(size) || size < 0) {\n        throw new Error(\n          `Taille non représentable : ${folder}/${entry.name}`\n        );\n      }\n\n      return {\n        folder,\n        name: entry.name,\n        size,\n        revision: [\n          stat.dev,\n          stat.ino,\n          stat.size,\n          stat.mtimeNs,\n          stat.ctimeNs\n        ].join(':')\n      };\n    });\n});\n\nfiles.sort((a, b) => {\n  if (a.folder !== b.folder) {\n    return a.folder < b.folder ? -1 : 1;\n  }\n\n  return a.name < b.name ? -1 : a.name > b.name ? 1 : 0;\n});\n\nprocess.stdout.write(JSON.stringify(files));\nJS"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        -448
+      ],
+      "id": "5a763d8a-c059-48f0-aaf4-82b9e6fb1d76",
+      "name": "CMD $ls"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { exitCode, stderr, stdout } = $input.first().json;\n\nconst allowedFolders = new Set([\n  '01_processed_files',\n  '01_legacy_processed_files'\n]);\n\ntry {\n  if (exitCode !== 0) {\n    throw new Error(\n      stderr?.trim() || 'Impossible de lire les dossiers.'\n    );\n  }\n\n  const files = JSON.parse(stdout);\n\n  if (!Array.isArray(files)) {\n    throw new Error(\n      'La réponse doit contenir une liste de fichiers.'\n    );\n  }\n\n  const identities = new Set();\n\n  for (const file of files) {\n    if (\n      !file ||\n      !allowedFolders.has(file.folder) ||\n      typeof file.name !== 'string' ||\n      file.name.length === 0 ||\n      !Number.isSafeInteger(file.size) ||\n      file.size < 0 ||\n      typeof file.revision !== 'string' ||\n      file.revision.length === 0\n    ) {\n      throw new Error('Liste de fichiers invalide.');\n    }\n\n    const identity = JSON.stringify([file.folder, file.name]);\n\n    if (identities.has(identity)) {\n      throw new Error(\n        `Fichier en double : ${file.folder}/${file.name}`\n      );\n    }\n\n    identities.add(identity);\n  }\n\n  return [{ json: { ok: true, files } }];\n} catch (error) {\n  return [{\n    json: {\n      ok: false,\n      message: error.message\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -896,
+        -448
+      ],
+      "id": "a4dfcd13-b17a-4ec4-aa14-11969cae3da4",
+      "name": "CODE list"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -672,
+        -448
+      ],
+      "id": "b37e67e0-122c-4e2e-bce8-4f61faac327a",
+      "name": "Respond-list"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -672,
+        192
+      ],
+      "id": "9aae2085-5253-4d6f-846c-35914509ba9e",
+      "name": "Respond delete"
+    },
+    {
+      "parameters": {
+        "command": "=rm -- \"/files/km/{{ $json.body.folder }}/{{ $json.body.name }}\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        288
+      ],
+      "id": "1c7aa998-72d7-4f8f-ba38-8820978e2d01",
+      "name": "Execute Command",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -672,
+        384
+      ],
+      "id": "e7e85853-4e08-4c98-a8f3-c58651eadb4d",
+      "name": "Respond delete KO"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
+              "name": "name",
+              "value": "={{ $('WH-delete').item.json.body.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -896,
+        192
+      ],
+      "id": "bab759cc-0435-4e70-9a0f-886e87970fd2",
+      "name": "delete OK"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -896,
+        384
+      ],
+      "id": "0e4b62eb-f5c2-4838-9853-0239197fee69",
+      "name": "delete KO"
+    },
+    {
+      "parameters": {
+        "fileSelector": "=/files/km/{{ $('WH-download file').item.json.query.folder }}/{{ $('WH-download file').item.json.query.name }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        -224,
+        704
+      ],
+      "id": "9441d0e9-3e58-4f03-8047-71bddd524bd8",
+      "name": "Read file"
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "={{ $('file params').item.json['Content-Type'] }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        704
+      ],
+      "id": "f49f61b7-b10b-49d4-b713-b4cfc4102a2e",
+      "name": "Respond file"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
+              "name": "name",
+              "value": "={{ $('WH-replay').item.json.body.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -896,
+        -224
+      ],
+      "id": "62363963-fa14-4d63-9ba7-9131a3078f37",
+      "name": "replay OK"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -672,
+        -224
+      ],
+      "id": "f27ef60f-ec00-46ca-957c-1899efd2b537",
+      "name": "Respond replay OK"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "3b2cbc1f-ac9a-44a7-ac9a-7e4a2982e2c8",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -896,
+        -32
+      ],
+      "id": "8c37cb28-3753-47ff-8b76-3771ebe3aebd",
+      "name": "replay KO"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -672,
+        -32
+      ],
+      "id": "85801775-180b-409c-a3f8-20e39e905fea",
+      "name": "Respond replay KO"
+    },
+    {
+      "parameters": {
+        "command": "=mv /files/km/{{ $json.body.actualFolder }}/{{ $json.body.name }} /files/km/{{ $json.body.targetFolder }}/{{ $json.body.name }}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        -128
+      ],
+      "id": "f967b937-861d-4c55-9ea1-1f31b84152a2",
+      "name": "CMD replay",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "path": "8904e1ed-859d-4bd0-9c88-49812019b040",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1344,
+        -448
+      ],
+      "id": "30951b6c-f7b1-41d0-a149-5e289282b001",
+      "name": "WH-list",
+      "webhookId": "8904e1ed-859d-4bd0-9c88-49812019b040"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "4a18382e-90f7-40b9-a406-b9a727176847",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1344,
+        -128
+      ],
+      "id": "763c16cb-1938-4602-8a88-0bb2601dd80d",
+      "name": "WH-replay",
+      "webhookId": "4a18382e-90f7-40b9-a406-b9a727176847"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "4118622f-4590-4143-af79-fde9ef04bd21",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1344,
+        288
+      ],
+      "id": "f0185177-b016-4dd7-8dce-8d8a97938d89",
+      "name": "WH-delete",
+      "webhookId": "4118622f-4590-4143-af79-fde9ef04bd21"
+    },
+    {
+      "parameters": {
+        "path": "77fba60a-161a-4967-80b1-6e6f5489506a",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1344,
+        704
+      ],
+      "id": "9a3eda4f-18ed-47ce-a727-b230c1e0e80a",
+      "name": "WH-download file",
+      "webhookId": "77fba60a-161a-4967-80b1-6e6f5489506a"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9c69a4d6-11cb-4dbf-9184-020d7c7d8c25",
+              "leftValue": "={{ $('WH-download file').item.json.query.name.endsWith('.md') }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -896,
+        704
+      ],
+      "id": "4e2c948f-4b26-4dd1-b98e-4c0f0b73b0c5",
+      "name": "If name.endsWith \".md\""
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1120,
+        704
+      ],
+      "id": "42d37fdd-23dd-455d-aa8a-7fe09fa78195",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6a0c2924-e0d0-41b0-947e-70c55c722c87",
+              "name": "Content-Type",
+              "value": "text/markdown; charset=utf-8",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -672,
+        608
+      ],
+      "id": "cdc57761-dc8f-49b1-9066-8adcdf00e552",
+      "name": "markdown file params"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "579e0fd0-81bb-4cf5-8b1b-ac8f0dabbd69",
+              "name": "Content-Type",
+              "value": "={{ $json['Content-Type'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -448,
+        704
+      ],
+      "id": "99b14e4f-f22f-435c-b3a5-d088e713f30a",
+      "name": "file params"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "58df6032-d5dc-4612-bf89-c34bc7ae5a8c",
+              "name": "Content-Type",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -672,
+        800
+      ],
+      "id": "2b8501ab-b0ae-425f-bd54-ec30450341eb",
+      "name": "other file params"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "CMD $ls": {
+      "main": [
+        [
+          {
+            "node": "CODE list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CODE list": {
+      "main": [
+        [
+          {
+            "node": "Respond-list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Command": {
+      "main": [
+        [
+          {
+            "node": "delete OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "delete KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete OK": {
+      "main": [
+        [
+          {
+            "node": "Respond delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete KO": {
+      "main": [
+        [
+          {
+            "node": "Respond delete KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read file": {
+      "main": [
+        [
+          {
+            "node": "Respond file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "replay OK": {
+      "main": [
+        [
+          {
+            "node": "Respond replay OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "replay KO": {
+      "main": [
+        [
+          {
+            "node": "Respond replay KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CMD replay": {
+      "main": [
+        [
+          {
+            "node": "replay OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "replay KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-list": {
+      "main": [
+        [
+          {
+            "node": "CMD $ls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-replay": {
+      "main": [
+        [
+          {
+            "node": "CMD replay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-delete": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-download file": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If name.endsWith \".md\"": {
+      "main": [
+        [
+          {
+            "node": "markdown file params",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "other file params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If name.endsWith \".md\"",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "markdown file params": {
+      "main": [
+        [
+          {
+            "node": "file params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "file params": {
+      "main": [
+        [
+          {
+            "node": "Read file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "other file params": {
+      "main": [
+        [
+          {
+            "node": "file params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c98ed171-ec71-41d3-af68-a294c0a91ff8",
+  "meta": {
+    "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
+  },
+  "nodeGroups": [],
+  "id": "mF1U6weThrwMH95i",
+  "tags": [
+    {
+      "updatedAt": "2026-10-23T07:45:52.085Z",
+      "createdAt": "2026-10-23T07:45:52.085Z",
+      "id": "aTY4iOvJFOjQpknu",
+      "name": "KM"
+    }
+  ]
+}
