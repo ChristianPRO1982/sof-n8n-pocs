@@ -91,12 +91,16 @@
   <dialog id="autocut-dialog" class="km-autocut-dialog" aria-labelledby="autocut-title">
     <h2 id="autocut-title">Proposition de templates pour Autocut</h2>
     <p id="autocut-file" class="km-upload-name"></p>
+    <div id="autocut-proposal" hidden>
     <p class="km-autocut-ai">Proposition générée par une IA</p>
     <ul id="autocut-templates" class="km-autocut-templates"></ul>
     <p id="autocut-comment"></p>
     <p id="autocut-question">Continuer avec ces templates ?</p>
+    </div>
+    <span id="autocut-spinner" class="km-autocut-spinner" aria-hidden="true" hidden></span>
     <p id="autocut-status" role="status" aria-live="polite"></p>
     <div class="km-upload-actions">
+      <button type="button" id="autocut-close" class="km-upload-button" hidden>Fermer</button>
       <button type="button" id="autocut-no" class="km-upload-button" autofocus>Non</button>
       <button type="button" id="autocut-yes" class="km-upload-button km-upload-primary">Oui</button>
     </div>

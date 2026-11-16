@@ -43,3 +43,8 @@
 .km-autocut-templates li { margin: 16px 0; }
 .km-autocut-templates p { margin: 6px 0; }
 .km-autocut-dialog .km-upload-actions { display: flex; gap: 12px; justify-content: flex-end; }
+
+.km-autocut-spinner { display: block; width: 32px; height: 32px; border: 4px solid #d7e7f7; border-top-color: var(--primary); border-radius: 50%; animation: km-autocut-spin .8s linear infinite; }
+.km-autocut-spinner[hidden] { display: none; }
+@keyframes km-autocut-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .km-autocut-spinner { animation: none; } }

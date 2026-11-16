@@ -172,3 +172,7 @@ conservation de la ligne et actualisation selon le mode de liste.
 Autocut en deux étapes : réponse simplifiée, popup IA (noms/raisons/commentaire),
 Non/Échap sans nouvel appel, Oui avec liste des noms, refus d’une proposition
 invalide, liste vide, rendu texte, focus restauré, doubles clics et refus step2.
+
+Le test Autocut vérifie aussi l’ouverture avant POST, le statut initial,
+le cercle et les contenus masqués, le blocage d’Échap pendant l’attente,
+puis les résultats ou l’erreur step1 avec Fermer (y compris le délai simulé).

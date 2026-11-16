@@ -439,23 +439,31 @@ un encadré bleu clair et un bouton « Autocut ». Les fichiers raw n’ont pas 
 bouton. Le webhook emploie la base commune `KM_WEBHOOK_BASE_URL` et la nouvelle
 clé `KM_FILES_AUTOCUT_WEBHOOK_PATH`, laissée vide pour configuration.
 
-Le clic lance directement un POST JSON `{step:"step1",folder,name,expected_revision}`.
+Le clic ouvre immédiatement la popup avec un cercle animé et « lancement de la requête ».
+Après affichage initial, l’appel part et le texte devient « en attente de la réponse ».
+Les résultats et Oui/Non sont masqués ; Échap est bloqué pendant step1.
+Le cercle est statique si les animations réduites sont demandées.
+Le clic déclenche un POST JSON `{step:"step1",name,expected_revision}`.
 La réponse simplifiée attendue est `{ok:true,selected_templates:[{name,reason}],comment}`.
-La liste et le commentaire sont obligatoires ; noms non vides et uniques,
-raisons et commentaire de type chaîne. La sortie brute du LLM n’est pas attendue.
+La réponse peut être un objet seul ou un tableau contenant exactement cet objet.
+`response_by:"IA"` est accepté ; la mention IA reste affichée explicitement.
+Le commentaire est facultatif et masqué s’il est absent ou vide. La liste est
+obligatoire ; noms non vides et uniques, raisons et commentaire présent de type chaîne. La sortie brute du LLM n’est pas attendue.
 
-Une popup modale affiche le fichier, « Proposition générée par une IA »,
+À réception d’une réponse valide, le cercle et le texte d’attente disparaissent.
+La popup déjà ouverte affiche le fichier, « Proposition générée par une IA »,
 les noms, les raisons et le commentaire, rendus comme texte. Non ou Échap ferme
 la popup sans appel supplémentaire. Une liste vide interdit Oui. Les propositions
 ne sont pas modifiables. Oui envoie au même webhook
-`{step:"step2",folder,name,expected_revision,templates:["nom",…]}`.
+`{step:"step2",name,expected_revision,templates:["nom",…]}`.
 Fichier, révision et mode test/production sont figés pendant les deux étapes.
 La popup reste bloquée pendant l’envoi puis ferme pour afficher le résultat.
 La confirmation reste HTTP 2xx, `ok:true`, nom exact et dossier exact si renvoyé.
 Elle confirme uniquement la prise en compte, jamais la réussite du traitement.
 
 Le délai de chaque appel est 120 secondes sans relance automatique.
-Une erreur de step1 interdit toute poursuite ; une erreur de step2 est signalée
+Une erreur de step1 retire l’attente et affiche l’erreur dans la popup avec
+un bouton Fermer, sans autoriser la poursuite ; une erreur de step2 est signalée
 sans répétition automatique. Après step2 uniquement, la liste est actualisée
 dans son propre mode. Aucun fichier n’est retiré localement. Les opérations
 concurrentes sont bloquées jusqu’à la fin de l’échange ou son abandon.
@@ -464,3 +472,6 @@ La bascule WH - autocut reste indépendante, OFF au chargement, et ne déclenche
 aucun appel. Sans clé ou liste valide, le bouton reste désactivé.
 Le serveur doit limiter le dossier et contrôler la révision avant traitement.
 Aucun workflow ni traitement Autocut n’est créé par cette modification.
+
+Les requêtes Autocut step1 et step2 ne transmettent pas de champ `folder`.
+Le dossier reste utilisé localement pour réserver le bouton aux historiques.

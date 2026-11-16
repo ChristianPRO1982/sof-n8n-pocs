@@ -230,10 +230,33 @@ async function sendBatch() {
 }
 
 function validAutocutProposal(data) {
-  return typeof data.comment === 'string' && Array.isArray(data.selected_templates) &&
+  return (data.comment === undefined || typeof data.comment === 'string') && Array.isArray(data.selected_templates) &&
     data.selected_templates.every((template) => template && typeof template.name === 'string' &&
       template.name.trim().length > 0 && typeof template.reason === 'string') &&
     new Set(data.selected_templates.map((template) => template.name)).size === data.selected_templates.length;
+}
+
+function autocutPhase(dialog, phase) {
+  dialog.dataset.phase = phase;
+  dialog.setAttribute('aria-busy', String(phase === 'loading'));
+  $('autocut-spinner').hidden = phase !== 'loading';
+  $('autocut-proposal').hidden = phase !== 'results';
+  $('autocut-no').hidden = phase !== 'results';
+  $('autocut-yes').hidden = phase !== 'results';
+  $('autocut-close').hidden = phase !== 'error';
+}
+
+function closeAutocutError(dialog) {
+  return new Promise((resolve) => {
+    const close = () => dialog.close();
+    const done = () => {
+      $('autocut-close').removeEventListener('click', close);
+      resolve();
+    };
+    $('autocut-close').addEventListener('click', close);
+    dialog.addEventListener('close', done, { once: true });
+    $('autocut-close').focus();
+  });
 }
 
 function approveAutocut(file, proposal, dialog) {
@@ -244,10 +267,12 @@ function approveAutocut(file, proposal, dialog) {
     entry.append(node('strong', '', template.name), node('p', '', template.reason));
     $('autocut-templates').append(entry);
   }
-  $('autocut-comment').textContent = proposal.comment;
+  $('autocut-comment').textContent = proposal.comment || '';
+  $('autocut-comment').hidden = !proposal.comment;
   $('autocut-question').textContent = proposal.selected_templates.length ?
     'Continuer avec ces templates ?' : 'Aucun template proposé.';
   $('autocut-status').textContent = '';
+  autocutPhase(dialog, 'results');
   $('autocut-no').disabled = false;
   $('autocut-yes').disabled = !proposal.selected_templates.length;
   return new Promise((resolve) => {
@@ -265,7 +290,7 @@ function approveAutocut(file, proposal, dialog) {
     $('autocut-yes').addEventListener('click', yes);
     dialog.addEventListener('cancel', cancel);
     dialog.addEventListener('close', no);
-    dialog.showModal();
+    $('autocut-no').focus();
   });
 }
 
@@ -273,20 +298,32 @@ async function autocutFile(file) {
   if (!multiFolder || file.folder !== '01_upload_legacy_files' ||
       state.busy || !state.ready || !configured('autocut')) return;
   const url = serviceEndpoint('autocut');
-  const identity = { folder: file.folder, name: file.name, expected_revision: file.revision };
+  const identity = { name: file.name, expected_revision: file.revision };
   const dialog = $('autocut-dialog');
   const preventCancel = (event) => event.preventDefault();
   const post = (body, validate) => request(url, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-  }, validate, 120000);
+  }, validate, 120000, (data) => Array.isArray(data) && data.length === 1 ? data[0] : data);
   state.busy = true;
   message(`Analyse IA en cours : ${fileLabel(file)}…`);
   render();
+  $('autocut-file').textContent = fileLabel(file);
+  $('autocut-templates').replaceChildren();
+  $('autocut-comment').textContent = '';
+  autocutPhase(dialog, 'loading');
+  $('autocut-status').textContent = 'lancement de la requête';
+  dialog.addEventListener('cancel', preventCancel);
+  dialog.showModal();
   let step2 = false;
   let result;
   let failed = false;
   try {
-    const proposal = await post({ ...identity, step: 'step1' }, validAutocutProposal);
+    // Two frames allow the initial status to paint before the request starts.
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const pending = post({ ...identity, step: 'step1' }, validAutocutProposal);
+    $('autocut-status').textContent = 'en attente de la réponse';
+    const proposal = await pending;
+    dialog.removeEventListener('cancel', preventCancel);
     if (!await approveAutocut(file, proposal, dialog)) {
       message('Demande Autocut abandonnée.');
       return;
@@ -303,6 +340,12 @@ async function autocutFile(file) {
     failed = true;
     result = `${step2 ? 'Demande Autocut' : 'Analyse IA'} non confirmée pour ${fileLabel(file)} : ${error.message}` +
       (error.uncertain ? ' Résultat incertain, aucune relance automatique.' : '');
+    if (!step2) {
+      autocutPhase(dialog, 'error');
+      $('autocut-status').textContent = result;
+      dialog.removeEventListener('cancel', preventCancel);
+      await closeAutocutError(dialog);
+    }
   } finally {
     dialog.close();
     dialog.removeEventListener('cancel', preventCancel);
