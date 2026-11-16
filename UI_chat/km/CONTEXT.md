@@ -472,9 +472,13 @@ aucun workflow distant n’a été appelé ou modifié pendant cette adaptation.
 
 Sur `01a_upload_files`, les lignes de `01_upload_legacy_files` ont un fond bleu
 clair et un bouton Autocut. Clé dédiée `KM_FILES_AUTOCUT_WEBHOOK_PATH` (vide),
-base n8n commune, bascule test indépendante OFF au chargement. POST JSON
-`{folder, name, expected_revision}`, confirmation `ok:true` et nom exact,
-dossier vérifié s’il est renvoyé. Seule la prise en compte est annoncée.
-Liste rechargée selon son mode, aucun retrait local, aucun rejeu automatique,
-délai 30 s et blocage des opérations concurrentes. Aucun workflow créé.
+base n8n commune, bascule test indépendante OFF au chargement. Deux POST JSON au même webhook : step1 avec `{step:"step1",folder,name,expected_revision}`
+pour obtenir `{ok:true,selected_templates:[{name,reason}],comment}`, puis popup
+« Proposition générée par une IA ». Non/Échap abandonne sans réseau ; Oui envoie
+`{step:"step2",folder,name,expected_revision,templates:["nom",…]}`.
+Confirmation step2 : ok:true et nom exact, dossier exact si fourni.
+Délai 120 s par appel, sans répétition automatique. Identité et URL figées,
+blocage des opérations concurrentes ; liste rechargée après step2 uniquement.
+La prise en compte ne prouve pas la réussite ; aucun retrait local.
+Noms proposés non vides et uniques ; liste vide : Oui désactivé. Aucun workflow créé.
 Voir la fiche `docs/01a_upload_files.md`.

@@ -168,3 +168,7 @@ La suite upload couvre aussi Autocut sur les seules lignes historiques :
 clé absente, modes production/test, bascule sans réseau, confirmation/annulation,
 POST avec dossier et révision, refus/conflit, retour invalide, doubles clics,
 conservation de la ligne et actualisation selon le mode de liste.
+
+Autocut en deux étapes : réponse simplifiée, popup IA (noms/raisons/commentaire),
+Non/Échap sans nouvel appel, Oui avec liste des noms, refus d’une proposition
+invalide, liste vide, rendu texte, focus restauré, doubles clics et refus step2.

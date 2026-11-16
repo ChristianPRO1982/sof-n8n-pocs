@@ -229,30 +229,98 @@ async function sendBatch() {
   } finally { state.busy = false; render(); }
 }
 
+function validAutocutProposal(data) {
+  return typeof data.comment === 'string' && Array.isArray(data.selected_templates) &&
+    data.selected_templates.every((template) => template && typeof template.name === 'string' &&
+      template.name.trim().length > 0 && typeof template.reason === 'string') &&
+    new Set(data.selected_templates.map((template) => template.name)).size === data.selected_templates.length;
+}
+
+function approveAutocut(file, proposal, dialog) {
+  $('autocut-file').textContent = fileLabel(file);
+  $('autocut-templates').replaceChildren();
+  for (const template of proposal.selected_templates) {
+    const entry = node('li');
+    entry.append(node('strong', '', template.name), node('p', '', template.reason));
+    $('autocut-templates').append(entry);
+  }
+  $('autocut-comment').textContent = proposal.comment;
+  $('autocut-question').textContent = proposal.selected_templates.length ?
+    'Continuer avec ces templates ?' : 'Aucun template proposé.';
+  $('autocut-status').textContent = '';
+  $('autocut-no').disabled = false;
+  $('autocut-yes').disabled = !proposal.selected_templates.length;
+  return new Promise((resolve) => {
+    const finish = (approved) => {
+      $('autocut-no').removeEventListener('click', no);
+      $('autocut-yes').removeEventListener('click', yes);
+      dialog.removeEventListener('cancel', cancel);
+      dialog.removeEventListener('close', no);
+      resolve(approved);
+    };
+    const no = () => finish(false);
+    const yes = () => { if (proposal.selected_templates.length) finish(true); };
+    const cancel = (event) => { event.preventDefault(); finish(false); };
+    $('autocut-no').addEventListener('click', no);
+    $('autocut-yes').addEventListener('click', yes);
+    dialog.addEventListener('cancel', cancel);
+    dialog.addEventListener('close', no);
+    dialog.showModal();
+  });
+}
+
 async function autocutFile(file) {
   if (!multiFolder || file.folder !== '01_upload_legacy_files' ||
       state.busy || !state.ready || !configured('autocut')) return;
-  if (!window.confirm(`Envoyer le fichier « ${fileLabel(file)} » au processus Autocut ?`)) return;
+  const url = serviceEndpoint('autocut');
+  const identity = { folder: file.folder, name: file.name, expected_revision: file.revision };
+  const dialog = $('autocut-dialog');
+  const preventCancel = (event) => event.preventDefault();
+  const post = (body, validate) => request(url, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  }, validate, 120000);
   state.busy = true;
-  message(`Envoi vers Autocut : ${fileLabel(file)}…`);
+  message(`Analyse IA en cours : ${fileLabel(file)}…`);
   render();
+  let step2 = false;
   let result;
   let failed = false;
   try {
-    await request(serviceEndpoint('autocut'), {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ folder: file.folder, name: file.name, expected_revision: file.revision }),
-    }, (data) => data.name === file.name && (data.folder === undefined || data.folder === file.folder));
+    const proposal = await post({ ...identity, step: 'step1' }, validAutocutProposal);
+    if (!await approveAutocut(file, proposal, dialog)) {
+      message('Demande Autocut abandonnée.');
+      return;
+    }
+    step2 = true;
+    dialog.addEventListener('cancel', preventCancel);
+    $('autocut-no').disabled = true;
+    $('autocut-yes').disabled = true;
+    $('autocut-status').textContent = 'Envoi vers Autocut en cours…';
+    await post({ ...identity, step: 'step2', templates: proposal.selected_templates.map((template) => template.name) },
+      (data) => data.name === file.name && (data.folder === undefined || data.folder === file.folder));
     result = `Demande Autocut prise en compte : ${fileLabel(file)}. La réussite du traitement n’est pas encore confirmée.`;
   } catch (error) {
     failed = true;
-    result = `Demande Autocut non confirmée pour ${fileLabel(file)} : ${error.message}` +
+    result = `${step2 ? 'Demande Autocut' : 'Analyse IA'} non confirmée pour ${fileLabel(file)} : ${error.message}` +
       (error.uncertain ? ' Résultat incertain, aucune relance automatique.' : '');
+  } finally {
+    dialog.close();
+    dialog.removeEventListener('cancel', preventCancel);
+    try {
+      if (step2) {
+        const refreshed = await refresh();
+        result += refreshed ? '' : ' Actualisation de la liste indisponible.';
+        failed ||= !refreshed;
+      }
+      if (result) message(result, failed);
+    } finally {
+      state.busy = false;
+      render();
+      const trigger = [...ui['server-files'].querySelectorAll('button')]
+        .find((button) => button.getAttribute('aria-label') === `Autocut ${fileLabel(file)}`);
+      (trigger && !trigger.disabled ? trigger : ui['refresh-files']).focus();
+    }
   }
-  try {
-    const refreshed = await refresh();
-    message(result + (refreshed ? '' : ' Actualisation de la liste indisponible.'), failed || !refreshed);
-  } finally { state.busy = false; render(); }
 }
 
 async function deleteFile(file) {

@@ -88,5 +88,18 @@
     </div>
   </div>
   <div class="km-backdrop" aria-hidden="true" hidden></div>
+  <dialog id="autocut-dialog" class="km-autocut-dialog" aria-labelledby="autocut-title">
+    <h2 id="autocut-title">Proposition de templates pour Autocut</h2>
+    <p id="autocut-file" class="km-upload-name"></p>
+    <p class="km-autocut-ai">Proposition générée par une IA</p>
+    <ul id="autocut-templates" class="km-autocut-templates"></ul>
+    <p id="autocut-comment"></p>
+    <p id="autocut-question">Continuer avec ces templates ?</p>
+    <p id="autocut-status" role="status" aria-live="polite"></p>
+    <div class="km-upload-actions">
+      <button type="button" id="autocut-no" class="km-upload-button" autofocus>Non</button>
+      <button type="button" id="autocut-yes" class="km-upload-button km-upload-primary">Oui</button>
+    </div>
+  </dialog>
 </body>
 </html>

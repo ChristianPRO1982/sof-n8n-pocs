@@ -65,7 +65,10 @@ const server = createServer(async (req, res) => {
         autocuts.push({ path, data });
         await new Promise(done => setTimeout(done, 70));
         if (autocutMode === 'error') send({ ok: false, message: 'refused' }, 409);
-        else send({ ok: true, name: autocutMode === 'invalid' ? 'wrong.pdf' : data.name, folder: data.folder });
+        else if (data.step === 'step1') send({ ok: true,
+          selected_templates: autocutMode === 'invalid' ? [{ name: '', reason: '' }] : autocutMode === 'empty' ? [] :
+            [{ name: 'template.md', reason: 'Raison IA <img src=x onerror=alert(1)>' }], comment: 'Commentaire IA' });
+        else send({ ok: true, name: autocutMode === 'invalid-confirmation' ? 'wrong.pdf' : data.name, folder: data.folder });
         return;
       }
       if (path.endsWith('/delete')) {
@@ -164,6 +167,12 @@ try {
   await call('Network.setBlockedURLs', { urls: ['http://15.236.66.128/*'] });
   await call('Network.setBlockedURLs', { urls: ['http://15.236.66.128/*', 'https://*'] });
   await call('Page.addScriptToEvaluateOnNewDocument', {source: `
+    const originalTimeout = window.setTimeout;
+    window.kmAutocutTimeouts = [];
+    window.setTimeout = (fn, delay, ...args) => {
+      if (delay === 120000) window.kmAutocutTimeouts.push(delay);
+      return originalTimeout(fn, delay === 120000 && window.kmFastTimeout ? 10 : delay, ...args);
+    };
     const originalInterval = window.setInterval;
     window.setInterval = (fn, delay, ...args) => {
       if (delay === 30000) window.kmStatusRefreshInterval = delay;
@@ -357,26 +366,83 @@ try {
     const autocutButton = `document.querySelector('#server-files button[aria-label^="Autocut "]')`;
     assert.equal(await evaluate(`document.querySelectorAll('#server-files button[aria-label^="Autocut "]').length`), 1);
     assert.equal(await evaluate(`getComputedStyle(${autocutButton}.closest('li')).backgroundColor`), 'rgb(232, 243, 255)');
-    await evaluate(`window.confirm = () => false; ${autocutButton}.click()`);
-    assert.equal(autocuts.length, 0);
+    const identity = { folder: legacy.folder, name: legacy.name, expected_revision: legacy.revision };
+    const openProposal = async () => {
+      await evaluate(`${autocutButton}.click(); ${autocutButton}.click()`);
+      await wait(`document.getElementById('autocut-dialog').open`);
+    };
     const beforeToggle = calls.length;
     await click('webhook-autocut-toggle');
     assert.equal(calls.length, beforeToggle);
-    for (const mode of ['ok', 'invalid', 'error']) {
+    await openProposal();
+    assert.match(await text('autocut-dialog'), /Proposition générée par une IA/);
+    assert.match(await text('autocut-dialog'), /Raison IA/);
+    assert.match(await text('autocut-dialog'), /Commentaire IA/);
+    assert.equal(await evaluate(`document.querySelector('#autocut-dialog img')`), null);
+    assert.deepEqual(autocuts.at(-1), { path: webhookPath('autocut', true), data: { ...identity, step: 'step1' } });
+    await call('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+    assert.equal(await evaluate(`document.getElementById('autocut-dialog').getBoundingClientRect().width <= innerWidth`), true);
+    assert.equal(await evaluate(`document.getElementById('autocut-dialog').scrollWidth <= document.getElementById('autocut-dialog').clientWidth`), true);
+    await call('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false });
+    const beforeNo = calls.length;
+    await click('autocut-no');
+    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    assert.equal(calls.length, beforeNo, 'Non makes no request, including list');
+    assert.equal(await evaluate('document.activeElement.getAttribute("aria-label")'), 'Autocut ' + legacy.folder + '/' + legacy.name);
+    await openProposal();
+    await call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+    await call('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    assert.equal(await evaluate(`document.getElementById('autocut-dialog').open`), false);
+    for (const mode of ['empty', 'invalid', 'error']) {
       autocutMode = mode;
-      await evaluate(`window.confirm = () => true; ${autocutButton}.click(); ${autocutButton}.click()`);
+      if (mode === 'empty') {
+        await openProposal();
+        assert.equal(await evaluate(`document.getElementById('autocut-yes').disabled`), true);
+        await click('autocut-no');
+      } else await evaluate(`${autocutButton}.click()`);
       await wait(`!document.getElementById('webhook-list-toggle').disabled`);
-      assert.deepEqual(autocuts.at(-1), { path: webhookPath('autocut', true), data: { folder: legacy.folder, name: legacy.name, expected_revision: legacy.revision } });
-      assert.equal(calls.at(-1), webhookPath('list'), 'Autocut preserves list mode');
-      assert.equal(await evaluate(`document.querySelectorAll('#server-files li').length`), 2);
-      assert.match(await text('upload-notice'), mode === 'ok' ? /prise en compte/ : /non confirmée/);
     }
-    assert.equal(autocuts.length, 3, 'No concurrent or automatic retry');
-    await click('webhook-autocut-toggle');
+    for (const test of [true, false]) {
+      if (!test) await click('webhook-autocut-toggle');
+      autocutMode = 'ok';
+      await openProposal();
+      const beforeYes = autocuts.length;
+      await evaluate(`document.getElementById('autocut-yes').click(); document.getElementById('autocut-yes').click()`);
+      await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+      assert.equal(autocuts.length, beforeYes + 1);
+      assert.deepEqual(autocuts.at(-1), { path: webhookPath('autocut', test), data: { ...identity, step: 'step2', templates: ['template.md'] } });
+      assert.match(await text('upload-notice'), /prise en compte/);
+      assert.equal(calls.at(-1), webhookPath('list'));
+      assert.equal(await evaluate(`document.querySelectorAll('#server-files li').length`), 2);
+    }
     autocutMode = 'ok';
+    await openProposal();
+    autocutMode = 'error';
+    await click('autocut-yes');
+    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    assert.match(await text('upload-notice'), /non confirmée/);
+    autocutMode = 'ok';
+    await openProposal();
+    autocutMode = 'invalid-confirmation';
+    await click('autocut-yes');
+    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    assert.match(await text('upload-notice'), /incertain/);
+    autocutMode = 'ok';
+    await evaluate('window.kmFastTimeout = true');
+    const beforeTimeout = autocuts.length;
     await evaluate(`${autocutButton}.click()`);
     await wait(`!document.getElementById('webhook-list-toggle').disabled`);
-    assert.equal(autocuts.at(-1).path, webhookPath('autocut'));
+    assert.equal(autocuts.length, beforeTimeout + 1);
+    assert.match(await text('upload-notice'), /Délai dépassé/);
+    await evaluate('window.kmFastTimeout = false');
+    await openProposal();
+    await evaluate('window.kmFastTimeout = true');
+    await click('autocut-yes');
+    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    assert.match(await text('upload-notice'), /Délai dépassé/);
+    assert.ok((await evaluate('window.kmAutocutTimeouts')).every(value => value === 120000));
+    await evaluate('window.kmFastTimeout = false');
     autocutConfigured = false;
     await call('Page.reload');
     await wait(`!document.getElementById('webhook-list-toggle').disabled`);

@@ -439,16 +439,28 @@ un encadré bleu clair et un bouton « Autocut ». Les fichiers raw n’ont pas 
 bouton. Le webhook emploie la base commune `KM_WEBHOOK_BASE_URL` et la nouvelle
 clé `KM_FILES_AUTOCUT_WEBHOOK_PATH`, laissée vide pour configuration.
 
-Après confirmation nominative, la page envoie un POST JSON
-`{folder, name, expected_revision}`. Réponse attendue : HTTP 2xx et
-`{"ok":true,"name":"nom-exact"}` ; un `folder` renvoyé doit correspondre.
-Le serveur doit autoriser uniquement `01_upload_legacy_files` et vérifier
-la révision avant prise en charge. Une réponse conforme confirme la demande,
-jamais la réussite du découpage. Aucun fichier n’est retiré localement.
+Le clic lance directement un POST JSON `{step:"step1",folder,name,expected_revision}`.
+La réponse simplifiée attendue est `{ok:true,selected_templates:[{name,reason}],comment}`.
+La liste et le commentaire sont obligatoires ; noms non vides et uniques,
+raisons et commentaire de type chaîne. La sortie brute du LLM n’est pas attendue.
 
-La bascule « WH - autocut » est indépendante, initialement OFF et réinitialisée
-au retour par l’historique. Elle conserve lots/résultats sans appel réseau.
-Après action, la liste est actualisée dans son propre mode. Délai : 30 secondes,
-sans relance automatique ; résultat incertain signalé en cas de retour invalide.
-Le bouton est désactivé sans clé, sans liste valide ou pendant une opération.
+Une popup modale affiche le fichier, « Proposition générée par une IA »,
+les noms, les raisons et le commentaire, rendus comme texte. Non ou Échap ferme
+la popup sans appel supplémentaire. Une liste vide interdit Oui. Les propositions
+ne sont pas modifiables. Oui envoie au même webhook
+`{step:"step2",folder,name,expected_revision,templates:["nom",…]}`.
+Fichier, révision et mode test/production sont figés pendant les deux étapes.
+La popup reste bloquée pendant l’envoi puis ferme pour afficher le résultat.
+La confirmation reste HTTP 2xx, `ok:true`, nom exact et dossier exact si renvoyé.
+Elle confirme uniquement la prise en compte, jamais la réussite du traitement.
+
+Le délai de chaque appel est 120 secondes sans relance automatique.
+Une erreur de step1 interdit toute poursuite ; une erreur de step2 est signalée
+sans répétition automatique. Après step2 uniquement, la liste est actualisée
+dans son propre mode. Aucun fichier n’est retiré localement. Les opérations
+concurrentes sont bloquées jusqu’à la fin de l’échange ou son abandon.
+La popup est défilante, accessible au clavier et restaure le focus à sa fermeture.
+La bascule WH - autocut reste indépendante, OFF au chargement, et ne déclenche
+aucun appel. Sans clé ou liste valide, le bouton reste désactivé.
+Le serveur doit limiter le dossier et contrôler la révision avant traitement.
 Aucun workflow ni traitement Autocut n’est créé par cette modification.

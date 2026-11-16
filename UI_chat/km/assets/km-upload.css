@@ -34,3 +34,12 @@
   .km-upload-row { flex-wrap: wrap; }
   .km-upload-row > button { margin-left: 44px; }
 }
+
+.km-autocut-dialog { box-sizing: border-box; width: min(680px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; border: 1px solid var(--border); border-radius: 16px; padding: 24px; color: var(--text); background: white; overflow-wrap: anywhere; }
+.km-autocut-dialog::backdrop { background: rgb(15 35 60 / 55%); }
+.km-autocut-dialog h2 { margin-top: 0; }
+.km-autocut-ai { padding: 12px; border-radius: 10px; background: #e8f3ff; font-weight: 600; }
+.km-autocut-templates { padding-left: 22px; }
+.km-autocut-templates li { margin: 16px 0; }
+.km-autocut-templates p { margin: 6px 0; }
+.km-autocut-dialog .km-upload-actions { display: flex; gap: 12px; justify-content: flex-end; }
