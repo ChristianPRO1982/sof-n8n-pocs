@@ -4,9 +4,13 @@ import { createServer } from 'node:http';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve, extname } from 'node:path';
 
-const pageId = '00c_processed_legacy_files';
+const pageId = process.argv[3] || '00c_processed_legacy_files';
+assert.ok(['00c_processed_legacy_files', '01b_processed_files'].includes(pageId));
+const multiFolder = pageId === '01b_processed_files';
+const folderField = multiFolder ? { folder: '01_processed_files' } : {};
+const folder = '01_processed_files';
 const operations = ['list', 'view', 'replay', 'delete'];
-const prefix = 'KM_PROCESSED_LEGACY_FILES';
+const prefix = multiFolder ? 'KM_PROCESSED_FILES' : 'KM_PROCESSED_LEGACY_FILES';
 const webhookPath = (op, test = false) => `/webhook${test ? '-test' : ''}/processed-legacy/${op}`;
 const root = resolve(new URL('../../', import.meta.url).pathname);
 const name = 'Dossier été & frais + #1.PDF';
@@ -26,7 +30,7 @@ const server = createServer(async (req, res) => {
     if (path === '/km/config.ini') {
       if (configError) { res.writeHead(503).end(); return; }
       res.end(`KM_VERSION=0.5.1\nKM_WEBHOOK_BASE_URL=http://127.0.0.1:${server.address().port}/webhook/\n` +
-        ['KM_FILES', 'KM_TEMPLATES', 'KM_LEGACY_FILES', prefix].flatMap((key) =>
+        ['KM_FILES', 'KM_TEMPLATES', 'KM_LEGACY_FILES', 'KM_PROCESSED_FILES', 'KM_PROCESSED_LEGACY_FILES'].flatMap((key) =>
           (key === prefix ? operations : ['list', 'upload', 'view', 'delete']).map((op) =>
             `${key}_${op.toUpperCase()}_WEBHOOK_PATH=${key === prefix ? (missing.has(op) ? '' : `processed-legacy/${op}`) : `other/${key}/${op}`}`)).join('\n'));
       return;
@@ -38,9 +42,12 @@ const server = createServer(async (req, res) => {
       if (path.endsWith('/list')) {
         if (listMode === 'timeout') return;
         if (listMode === 'error') send({ ok: false, message: 'Liste indisponible' }, 503);
-        else if (listMode === 'duplicate') send({ ok: true, files: [files.get(name), files.get(name)] });
+        else if (listMode === 'duplicate') send({ ok: true, files: [{ ...folderField, ...files.get(name) }, { ...folderField, ...files.get(name) }] });
         else if (listMode === 'invalid') send({ ok: true, files: [{ name, size: -1, revision: '' }] });
-        else send({ ok: true, files: listMode === 'empty' ? [] : [...files.values()] });
+        else if (listMode === 'unknownFolder') send({ ok: true, files: [{ ...files.get(name), folder: '../other' }] });
+        else if (listMode === 'missingFolder') send({ ok: true, files: [{ name, size: 1, revision: 'v1' }] });
+        else { const data = { ok: true, files: listMode === 'empty' ? [] : [...files.values()].map(file => ({ ...folderField, ...file })) };
+          send(listMode === 'array' ? [data] : data); }
         return;
       }
       const op = path.endsWith('/replay') ? 'replay' : 'delete';
@@ -49,16 +56,19 @@ const server = createServer(async (req, res) => {
       const data = JSON.parse(Buffer.concat(parts).toString());
       actions.push({ op, path, method: req.method, contentType: req.headers['content-type'], data });
       if (hold) await new Promise((done) => { release = done; });
+      const entry = [...files.entries()].find(([, file]) => file.name === data.name &&
+        (!multiFolder || (file.folder || folder) === data.folder));
       const mode = modes[op];
       if (mode === 'timeout') return;
-      if (mode === 'conflict' || files.get(data.name)?.revision !== data.expected_revision) {
+      if (mode === 'conflict' || entry?.[1].revision !== data.expected_revision) {
         send({ ok: false, code: 'conflict', message: 'Révision modifiée' }, 409);
       } else if (mode === 'invalidName') send({ ok: true, name: 'autre.pdf' });
+      else if (mode === 'invalidFolder') send({ ok: true, name: data.name, folder: 'wrong' });
       else if (mode === 'notOk') send({ ok: false, message: 'Action refusée' });
       else if (mode === 'malformed') res.end('Workflow launched');
       else if (mode === 'serverError') send({ ok: false, message: 'Erreur serveur' }, 500);
       else {
-        if (op === 'delete') files.delete(data.name);
+        if (op === 'delete') files.delete(entry[0]);
         send({ ok: true, name: data.name });
       }
       return;
@@ -112,8 +122,8 @@ async function wait(expression) {
 }
 const click = (id) => evaluate(`document.getElementById(${JSON.stringify(id)}).click()`);
 const text = (id) => evaluate(`document.getElementById(${JSON.stringify(id)}).textContent`);
-const rowAction = (label) => `document.querySelector('#server-files button[aria-label=${JSON.stringify(`${label} ${name}`)}]')`;
-const action = (label) => evaluate(`${rowAction(label)}.click()`);
+const rowAction = (label, targetFolder = folder) => `document.querySelector('#server-files button[aria-label=${JSON.stringify(`${label} ${multiFolder ? targetFolder + "/" : ""}${name}`)}]')`;
+const action = (label, targetFolder = folder) => evaluate(`${rowAction(label, targetFolder)}.click()`);
 const ready = () => wait(`document.getElementById('webhook-list-toggle') && !document.getElementById('webhook-list-toggle').disabled`);
 async function until(check) {
   for (let i = 0; i < 100; i++) {
@@ -165,6 +175,7 @@ try {
     const url = new URL(href);
     assert.equal(url.pathname, webhookPath('view', test));
     assert.equal(url.searchParams.get('name'), name);
+    assert.equal(url.searchParams.get('folder'), multiFolder ? folder : null);
     assert.equal(target, '_blank');
     assert.equal(features, 'noopener,noreferrer');
     assert.ok(!href.includes(' '));
@@ -192,7 +203,7 @@ try {
   assert.match(await text('upload-notice'), /Demande de rejeu en cours/);
   assert.ok((await text('upload-notice')).includes(name));
   assert.equal(await evaluate(`Array.from(document.querySelectorAll('#server-files button, #refresh-files, .km-webhook-toggle')).every(b => b.disabled)`), true);
-  assert.deepEqual(actions.at(-1), { op: 'replay', path: webhookPath('replay'), method: 'POST', contentType: 'application/json', data: { name, expected_revision: 'v1' } });
+  assert.deepEqual(actions.at(-1), { op: 'replay', path: webhookPath('replay'), method: 'POST', contentType: 'application/json', data: { name, expected_revision: 'v1', ...folderField } });
   hold = false;
   release();
   await ready();
@@ -229,7 +240,7 @@ try {
 
   for (const op of ['replay', 'delete']) {
     const label = op === 'replay' ? 'Rejouer' : 'Supprimer';
-    for (const mode of ['conflict', 'invalidName', 'notOk', 'malformed', 'serverError', 'timeout']) {
+    for (const mode of ['conflict', 'invalidName', ...(multiFolder ? ['invalidFolder'] : []), 'notOk', 'malformed', 'serverError', 'timeout']) {
       modes[op] = mode;
       const before = actions.length;
       await action(label);
@@ -246,7 +257,7 @@ try {
   }
   assert.ok((await evaluate('window.kmTimeouts')).every(ms => ms === 30000));
 
-  for (const mode of ['error', 'duplicate', 'invalid', 'timeout']) {
+  for (const mode of ['error', 'duplicate', 'invalid', 'timeout', ...(multiFolder ? ['unknownFolder', 'missingFolder'] : [])]) {
     listMode = mode;
     await refreshList();
     assert.match(await text('server-state'), /Liste indisponible/);
@@ -272,7 +283,7 @@ try {
     await evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
     assert.equal(await evaluate(`document.documentElement.scrollWidth > innerWidth || document.querySelector('main').scrollWidth > document.querySelector('main').clientWidth`), false, `Overflow at ${width}`);
     const shot = await call('Page.captureScreenshot', { format: 'png' });
-    await writeFile(`/tmp/km-processed-legacy-${width}.png`, Buffer.from(shot.data, 'base64'));
+    await writeFile(`/tmp/km-${pageId}-${width}.png`, Buffer.from(shot.data, 'base64'));
   }
   await evaluate(`document.getElementById('refresh-files').focus()`);
   for (const label of ['Voir', 'Rejouer', 'Supprimer']) {
@@ -308,6 +319,36 @@ try {
   for (const op of operations) assert.equal(await evaluate(`document.getElementById('webhook-${op}-toggle').getAttribute('aria-checked')`), 'false');
   assert.equal(calls.at(-1), webhookPath('list'));
 
+  if (multiFolder) {
+    const legacyFolder = '01_legacy_processed_files';
+    files.set('legacy-copy', { folder: legacyFolder, name, size: 42, revision: 'legacy-v1' });
+    listMode = 'array';
+    await refreshList();
+    assert.equal(await evaluate(`document.querySelectorAll('#server-files li').length`), 2);
+    assert.equal(await evaluate(`getComputedStyle(${rowAction('Voir', legacyFolder)}.closest('li')).backgroundColor`), 'rgb(232, 243, 255)');
+    await action('Voir', legacyFolder);
+    assert.equal(new URL((await evaluate('window.kmViews.at(-1)'))[0]).searchParams.get('folder'), legacyFolder);
+    await evaluate('window.kmAgree = false');
+    const before = actions.length;
+    await action('Rejouer', legacyFolder);
+    assert.equal(actions.length, before);
+    assert.ok((await evaluate('window.kmConfirms.at(-1)')).includes(legacyFolder));
+    await evaluate('window.kmAgree = true');
+    await action('Rejouer', legacyFolder);
+    await ready();
+    assert.deepEqual(actions.at(-1).data, { folder: legacyFolder, name, expected_revision: 'legacy-v1' });
+    assert.equal(await evaluate(`document.querySelectorAll('#server-files li').length`), 2);
+    // Failure to reload must preserve the other file with the same name.
+    listMode = 'error';
+    await action('Supprimer', legacyFolder);
+    await ready();
+    assert.deepEqual(actions.at(-1).data, { folder: legacyFolder, name, expected_revision: 'legacy-v1' });
+    assert.equal(await evaluate(`document.querySelectorAll('#server-files li').length`), 1);
+    assert.ok(await evaluate(`${rowAction('Voir')} !== null`));
+    listMode = 'ok';
+    await refreshList();
+  }
+
   // Each key independently controls its action; other stores remain fully configured.
   for (const [op, label] of [['view', 'Voir'], ['replay', 'Rejouer'], ['delete', 'Supprimer']]) {
     missing.add(op);
@@ -329,7 +370,7 @@ try {
   assert.match(await text('upload-notice'), /Configuration indisponible/);
   assert.ok(calls.every(path => operations.some(op => path === webhookPath(op) || path === webhookPath(op, true))), 'Only this screen’s endpoints may be used');
   assert.equal(browserErrors.length, 0, JSON.stringify(browserErrors));
-  console.log('Processed legacy browser checks passed: list validation, view encoding, replay/delete confirmations and failures, timeout, concurrency, isolated modes, configuration, history, icons, keyboard and five widths.');
+  console.log(pageId + ' browser checks passed: list validation, view encoding, replay/delete confirmations and failures, timeout, concurrency, isolated modes, configuration, history, icons, keyboard and five widths.');
 } finally {
   if (release) release();
   await cdp('Target.closeTarget', { targetId });

@@ -2,11 +2,11 @@
 
 Cette documentation décrit le fonctionnement cible du POC et ses quatorze pages.
 Les interfaces de dépôt des sources, des templates et des historiques sont
-développées, ainsi que la gestion des historiques traités (`00c`) ; les dix
-autres pages sont provisoires. Les contrats des trois dépôts et de la liste
-`00c` sont définis côté front. Les clés sources, templates et dépôt historique
+développées, ainsi que la gestion des fichiers traités (`00c` et `01b`) ; les neuf
+autres pages sont provisoires. Les contrats des trois dépôts et des listes
+`00c` et `01b` sont définis côté front. Les clés sources, templates et dépôt historique
 sont renseignées localement, sans certification des workflows distants. Les
-quatre clés propres aux historiques traités restent vides. La préparation,
+quatre nouvelles clés propres aux fichiers traités `01b` restent vides. La préparation,
 le découpage, le transfert et l’archivage des historiques restent à développer.
 
 ## Référence et périmètre
@@ -151,7 +151,7 @@ le dépôt et `01_processed_files` pour les sources prises en charge.
 | Aucun dossier défini (`00b_upload_legacy_files`) | [Dépôt historique](00b_upload_legacy_files.md) | [00b_upload_legacy_files](../pages/00b_upload_legacy_files.html) |
 | Aucun dossier défini (`00c_processed_legacy_files`) | [Historiques traités](00c_processed_legacy_files.md) | [00c_processed_legacy_files](../pages/00c_processed_legacy_files.html) |
 | `01_upload_raw_files` | [Dépôt des sources](01a_upload_files.md) | [01a_upload_files](../pages/01a_upload_files.html) |
-| `01_processed_files` | [Sources prises en charge](01b_processed_files.md) | [01b_processed_files](../pages/01b_processed_files.html) |
+| `01_processed_files` et `01_legacy_processed_files` | [Sources prises en charge](01b_processed_files.md) | [01b_processed_files](../pages/01b_processed_files.html) |
 | `02_format_controls` | [Contrôles de format](02_format_controls.md) | [02_format_controls](../pages/02_format_controls.html) |
 | `03_deltas` | [Vérification des écarts](03_deltas.md) | [03_deltas](../pages/03_deltas.html) |
 | `04_reports` | [Rapport consolidé](04_reports.md) | [04_reports](../pages/04_reports.html) |

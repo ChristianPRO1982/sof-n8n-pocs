@@ -11,8 +11,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -64,
-        80
+        -272,
+        -64
       ],
       "id": "0dfd0641-34d5-4052-825d-3f720b8b3376",
       "name": "WH-upload",
@@ -27,8 +27,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -64,
-        -240
+        -272,
+        -384
       ],
       "id": "1402eb5d-0541-45f7-9e2e-b440f3ba6bf1",
       "name": "WH-list",
@@ -36,26 +36,26 @@
     },
     {
       "parameters": {
-        "command": "=node <<'JS'\nconst fs = require('node:fs');\nconst path = require('node:path');\n\nconst directory = '/files/km/01_upload_raw_files';\n\nconst files = fs.readdirSync(directory, { withFileTypes: true })\n  .filter(entry => entry.isFile())\n  .map(entry => {\n    const stat = fs.statSync(path.join(directory, entry.name), {\n      bigint: true\n    });\n\n    const size = Number(stat.size);\n\n    if (!Number.isSafeInteger(size)) {\n      throw new Error(`Taille non représentable : ${entry.name}`);\n    }\n\n    return {\n      name: entry.name,\n      size,\n      revision: [\n        stat.dev,\n        stat.ino,\n        stat.size,\n        stat.mtimeNs,\n        stat.ctimeNs\n      ].join(':')\n    };\n  })\n  .sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);\n\nprocess.stdout.write(JSON.stringify(files));\nJS"
+        "command": "=\nnode <<'JS'\nconst fs = require('node:fs');\nconst path = require('node:path');\n\nconst root = '/files/km';\n\nconst folders = [\n  '01_upload_raw_files',\n  '01_upload_legacy_files'\n];\n\nconst files = folders.flatMap(folder => {\n  const directory = path.join(root, folder);\n\n  return fs.readdirSync(directory, { withFileTypes: true })\n    .filter(entry => entry.isFile())\n    .map(entry => {\n      const stat = fs.statSync(path.join(directory, entry.name), {\n        bigint: true\n      });\n\n      const size = Number(stat.size);\n\n      if (!Number.isSafeInteger(size)) {\n        throw new Error(`Invalid file size: ${entry.name}`);\n      }\n\n      return {\n        folder,\n        name: entry.name,\n        size,\n        revision: [\n          stat.dev,\n          stat.ino,\n          stat.size,\n          stat.mtimeNs,\n          stat.ctimeNs\n        ].join(':')\n      };\n    });\n});\n\nfiles.sort((a, b) =>\n  a.folder.localeCompare(b.folder) ||\n  a.name.localeCompare(b.name)\n);\n\nprocess.stdout.write(JSON.stringify(files));\nJS\n"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        160,
-        -240
+        -48,
+        -384
       ],
       "id": "fa7b7791-c244-4b9f-9b87-e1b3f207a2ac",
       "name": "CMD $ls"
     },
     {
       "parameters": {
-        "jsCode": "const { exitCode, stderr, stdout } = $input.first().json;\n\ntry {\n  if (exitCode !== 0) {\n    throw new Error(stderr?.trim() || 'Impossible de lire le dossier.');\n  }\n\n  const files = JSON.parse(stdout);\n  const names = new Set();\n\n  if (!Array.isArray(files)) {\n    throw new Error('La réponse doit contenir une liste de fichiers.');\n  }\n\n  for (const file of files) {\n    if (\n      !file ||\n      typeof file.name !== 'string' ||\n      file.name.length === 0 ||\n      !Number.isSafeInteger(file.size) ||\n      file.size < 0 ||\n      typeof file.revision !== 'string' ||\n      file.revision.length === 0 ||\n      names.has(file.name)\n    ) {\n      throw new Error('Liste de fichiers invalide.');\n    }\n\n    names.add(file.name);\n  }\n\n  return [{ json: { ok: true, files } }];\n} catch (error) {\n  return [{\n    json: {\n      ok: false,\n      message: error.message\n    }\n  }];\n}"
+        "jsCode": "\nconst { exitCode, stderr, stdout } = $input.first().json;\n\nconst allowedFolders = new Set([\n  '01_upload_raw_files',\n  '01_upload_legacy_files'\n]);\n\ntry {\n  if (exitCode !== 0) {\n    throw new Error(stderr?.trim() || 'Impossible de lire les dossiers.');\n  }\n\n  const files = JSON.parse(stdout);\n  const uniqueFiles = new Set();\n\n  if (!Array.isArray(files)) {\n    throw new Error('La réponse doit contenir une liste de fichiers.');\n  }\n\n  for (const file of files) {\n    if (\n      !file ||\n      typeof file.folder !== 'string' ||\n      !allowedFolders.has(file.folder) ||\n      typeof file.name !== 'string' ||\n      file.name.length === 0 ||\n      !Number.isSafeInteger(file.size) ||\n      file.size < 0 ||\n      typeof file.revision !== 'string' ||\n      file.revision.length === 0\n    ) {\n      throw new Error('Liste de fichiers invalide.');\n    }\n\n    const uniqueKey = JSON.stringify([file.folder, file.name]);\n\n    if (uniqueFiles.has(uniqueKey)) {\n      throw new Error(`Fichier en doublon : ${file.folder}/${file.name}`);\n    }\n\n    uniqueFiles.add(uniqueKey);\n  }\n\n  return [\n    {\n      json: {\n        ok: true,\n        files\n      }\n    }\n  ];\n\n} catch (error) {\n  return [\n    {\n      json: {\n        ok: false,\n        message: error.message\n      }\n    }\n  ];\n}\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        384,
-        -240
+        176,
+        -384
       ],
       "id": "eb4d1d43-283f-476e-abc4-3139a01d3d68",
       "name": "CODE list"
@@ -67,8 +67,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        608,
-        -240
+        400,
+        -384
       ],
       "id": "37aed559-55f5-44c2-aaee-7a6a81279f27",
       "name": "Respond-list"
@@ -83,8 +83,8 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1.1,
       "position": [
-        160,
-        80
+        -48,
+        -64
       ],
       "id": "2ccfc275-542d-4d60-b408-319856956f5d",
       "name": "upload file",
@@ -99,8 +99,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        608,
-        -16
+        400,
+        -160
       ],
       "id": "7af203aa-b12f-483b-928f-39b6b2958b18",
       "name": "Respond upload OK"
@@ -114,8 +114,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        608,
-        176
+        400,
+        32
       ],
       "id": "e6a89b77-5297-4a34-bf66-0c2d6a2a422d",
       "name": "Respond upload KO"
@@ -149,8 +149,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        384,
-        -16
+        176,
+        -160
       ],
       "id": "b7025bf0-fbfb-41e8-9fed-ec9625c0da5d",
       "name": "upload OK"
@@ -178,8 +178,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        384,
-        176
+        176,
+        32
       ],
       "id": "389fdd95-c1b1-4fd9-97d1-e573188a4030",
       "name": "upload KO"
@@ -194,8 +194,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -64,
-        496
+        -272,
+        352
       ],
       "id": "35349ec0-036a-4a1e-a4c1-ac07fd4289e9",
       "name": "WH-delete",
@@ -210,21 +210,21 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        608,
-        400
+        400,
+        256
       ],
       "id": "68004511-3278-405b-aaa1-c3398e4c6013",
       "name": "Respond delete"
     },
     {
       "parameters": {
-        "command": "=rm /files/km/01_upload_raw_files/{{ $json.body.name }}"
+        "command": "=rm /files/km/{{ $json.body.folder }}/{{ $json.body.name }}"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        160,
-        496
+        -48,
+        352
       ],
       "id": "b63568df-ee09-49ff-af46-dcfef791f21d",
       "name": "Execute Command",
@@ -239,8 +239,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        608,
-        592
+        400,
+        448
       ],
       "id": "9f4ef1cc-f3b9-45e3-8d67-2811a038b8b7",
       "name": "Respond delete KO"
@@ -268,8 +268,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        384,
-        400
+        176,
+        256
       ],
       "id": "4c4dc75b-0c3f-45b6-8a9f-b4c5ef05f558",
       "name": "delete OK"
@@ -297,8 +297,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        384,
-        592
+        176,
+        448
       ],
       "id": "8c8deae7-851b-4eb5-a206-c09301e3655d",
       "name": "delete KO"
@@ -312,8 +312,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -64,
-        816
+        -272,
+        768
       ],
       "id": "8385a79b-2c54-431a-aa69-7fcf6ba7f4c5",
       "name": "WH-download file",
@@ -321,14 +321,14 @@
     },
     {
       "parameters": {
-        "fileSelector": "=/files/km/01_upload_raw_files/{{ $json.query.name }}",
+        "fileSelector": "=/files/km/{{ $('folder').item.json.name }}/{{ $('WH-download file').item.json.query.name }}",
         "options": {}
       },
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1.1,
       "position": [
-        160,
-        816
+        848,
+        768
       ],
       "id": "44e251ad-0770-4f55-89d3-214f20fad153",
       "name": "Read file"
@@ -336,16 +336,151 @@
     {
       "parameters": {
         "respondWith": "binary",
-        "options": {}
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "={{ $('file params').item.json['Content-Type'] }}"
+              }
+            ]
+          }
+        }
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        384,
-        816
+        1072,
+        768
       ],
       "id": "3ac5217c-e207-4c04-8d4d-f4498bc8c411",
       "name": "Respond file"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "07b2584b-4b35-4bbf-bd3a-58026eb46b2d",
+              "name": "Content-Type",
+              "value": "text/markdown; charset=utf-8",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        400,
+        672
+      ],
+      "id": "1648fec7-1b5f-4d00-833f-55e3885db76a",
+      "name": "markdown file params"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "07b2584b-4b35-4bbf-bd3a-58026eb46b2d",
+              "name": "Content-Type",
+              "value": "={{ $json['Content-Type'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        624,
+        768
+      ],
+      "id": "cd3b0bbd-a174-4740-8a92-87cd9649a5aa",
+      "name": "file params"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a84cf590-5b39-4b2d-8ee0-5d8a2c3e8fa3",
+              "leftValue": "={{ $('WH-download file').item.json.query.name.endsWith('.md') }}",
+              "rightValue": ".md",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        176,
+        768
+      ],
+      "id": "2637a949-e50c-4fbb-a5e3-26d960a10ee5",
+      "name": "If name.endsWith \".md\""
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2747a19d-2255-486b-a999-28b431ceabfc",
+              "name": "name",
+              "value": "={{ $('WH-download file').item.json.query.folder }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -48,
+        768
+      ],
+      "id": "2ea203ba-4da1-49e6-ae36-bf787fab0ce3",
+      "name": "folder"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "07b2584b-4b35-4bbf-bd3a-58026eb46b2d",
+              "name": "Content-Type",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        400,
+        864
+      ],
+      "id": "b7b6af65-b4a4-4256-ac3d-69a473e2bda8",
+      "name": "other file params"
     }
   ],
   "pinData": {},
@@ -489,7 +624,7 @@
       "main": [
         [
           {
-            "node": "Read file",
+            "node": "folder",
             "type": "main",
             "index": 0
           }
@@ -506,6 +641,68 @@
           }
         ]
       ]
+    },
+    "markdown file params": {
+      "main": [
+        [
+          {
+            "node": "file params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "file params": {
+      "main": [
+        [
+          {
+            "node": "Read file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If name.endsWith \".md\"": {
+      "main": [
+        [
+          {
+            "node": "markdown file params",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "other file params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "folder": {
+      "main": [
+        [
+          {
+            "node": "If name.endsWith \".md\"",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "other file params": {
+      "main": [
+        [
+          {
+            "node": "file params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -514,7 +711,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "c2e3e5cb-54a7-487e-8508-870fd6b30685",
+  "versionId": "edb138db-22b4-4da4-8175-150992e5e349",
   "meta": {
     "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
   },

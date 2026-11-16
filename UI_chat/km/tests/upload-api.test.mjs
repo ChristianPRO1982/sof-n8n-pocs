@@ -39,19 +39,20 @@ test('strict confirmations, conflicts, HTTP failures and timeouts', async () => 
   } finally { globalThis.fetch = original; }
 });
 
-test('all four file screens use dedicated keys without fallback for every operation', () => {
+test('all five file screens use dedicated keys without fallback for every operation', () => {
   const deposits = {
     KM_FILES: 'sources',
     KM_TEMPLATES: 'templates',
     KM_LEGACY_FILES: 'legacy',
     KM_PROCESSED_LEGACY_FILES: 'processed-legacy',
+    KM_PROCESSED_FILES: 'processed',
   };
   for (const operation of ['list', 'upload', 'delete', 'view', 'replay']) {
     const key = operation.toUpperCase();
     const settings = {
       KM_WEBHOOK_BASE_URL: 'http://localhost/n8n/webhook/',
       ...Object.fromEntries(Object.entries(deposits).filter(([prefix]) =>
-        prefix === 'KM_PROCESSED_LEGACY_FILES' ? operation !== 'upload' : operation !== 'replay').map(([prefix, path]) =>
+        prefix.startsWith('KM_PROCESSED') ? operation !== 'upload' : operation !== 'replay').map(([prefix, path]) =>
         [`${prefix}_${key}_WEBHOOK_PATH`, `${path}/${operation}`])),
     };
     for (const mode of [false, true]) {

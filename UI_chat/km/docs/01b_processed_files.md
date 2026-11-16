@@ -1,8 +1,9 @@
 # 01b_processed_files — Sources prises en charge
 
 **Page associée :** [01b_processed_files](../pages/01b_processed_files.html).
-**Stockage cible EC2 :** `/n8n/n8n_files/km/01_processed_files/`.
-**État :** spécification cible ; écran provisoire sans archivage fonctionnel.
+**Dossiers gérés :** `01_processed_files/` et `01_legacy_processed_files/`.
+**État :** interface de gestion développée ; archivage et rejeu métier portés par n8n.
+Le statut déclaratif courant est défini dans `statuses.json`.
 
 ## Objectif et provenance
 
@@ -61,3 +62,45 @@ gestion de son échec ; résolution des liens après déplacement ; doublons,
 versions sources et reprise ; durée de conservation et droits d'accès.
 
 [Vue d'ensemble](README.md) · [Dépôt initial](01a_upload_files.md) · [Journal](10_tracking_journal.md)
+
+## Gestion de la liste et webhooks
+
+La page reprend 00c : liste serveur, Actualiser, Voir, Rejouer, Supprimer,
+sans upload. n8n scanne les deux dossiers et renvoie leur fusion en un seul GET.
+Les lignes affichent nom, taille, icône locale et dossier ; le legacy est bleu clair.
+Chaque identité `(folder, name)` doit être unique ; un même nom dans les deux
+dossiers est accepté. Dossier obligatoire, limité aux deux valeurs ci-dessus.
+
+Base commune `KM_WEBHOOK_BASE_URL` et clés dédiées, initialement vides :
+
+```ini
+KM_PROCESSED_FILES_LIST_WEBHOOK_PATH=
+KM_PROCESSED_FILES_VIEW_WEBHOOK_PATH=
+KM_PROCESSED_FILES_REPLAY_WEBHOOK_PATH=
+KM_PROCESSED_FILES_DELETE_WEBHOOK_PATH=
+```
+
+Aucun repli vers les autres dépôts ; chaque clé absente désactive sa fonction.
+Quatre bascules indépendantes list/view/replay/delete, OFF au chargement et au
+retour par l’historique. Seule list recharge la liste. Après action, la lecture
+suit le mode de list. Opérations concurrentes bloquées, délais de 30 s sans
+relance automatique ; retours invalides signalés comme incertains.
+
+| Action | Requête | Réponse attendue |
+| --- | --- | --- |
+| Liste | GET sans paramètres | `{"ok":true,"files":[{"folder":"01_processed_files","name":"document.pdf","size":1234,"revision":"opaque"}]}` |
+| Voir | GET avec `folder` et `name` encodés | Fichier ouvert en nouvel onglet, `noopener,noreferrer` |
+| Rejouer/Supprimer | POST JSON `{folder,name,expected_revision}` | `{"ok":true,"name":"document.pdf"}` ; dossier exact s’il est présent |
+
+La réponse de liste accepte l’objet seul ou un tableau contenant exactement
+cet objet. Taille entière en octets et révision non vide restent obligatoires.
+Confirmer rejeu/suppression avec dossier et nom. Le serveur doit contrôler le
+dossier autorisé et la révision dans ce dossier avant l’opération. Une confirmation
+de rejeu annonce uniquement la prise en compte ; aucun retrait local. La liste
+est rechargée après chaque tentative d’action. La suppression ne retire
+localement que l’identité confirmée, même en présence d’un homonyme.
+
+Le workflow décide du traitement à rejouer selon `folder`. Aucun Autocut en
+deux étapes, déplacement, stockage ou workflow n’est créé par cette interface.
+La recette locale utilise `tests/processed-legacy-browser.mjs` avec l’argument
+`01b_processed_files` et des réponses n8n simulées uniquement.

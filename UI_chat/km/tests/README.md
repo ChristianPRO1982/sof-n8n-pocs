@@ -43,8 +43,8 @@ l’absence de repli vers les webhooks des deux autres dépôts, même lorsque c
 configurés. Le test vérifie l’ordre des quinze liens du menu (accueil et quatorze
 pages). Les captures templates sont sous `/tmp/km-templates-<largeur>.png` et les
 captures historiques sous `/tmp/km-legacy-<largeur>.png`.
-Les tests du module API couvrent les quatre préfixes (`KM_FILES`, `KM_TEMPLATES`,
-`KM_LEGACY_FILES`, `KM_PROCESSED_LEGACY_FILES`), leurs opérations (dont `replay`
+Les tests du module API couvrent les cinq préfixes (`KM_FILES`, `KM_TEMPLATES`,
+`KM_LEGACY_FILES`, `KM_PROCESSED_LEGACY_FILES`, `KM_PROCESSED_FILES`), leurs opérations (dont `replay`
 pour les historiques traités), test/production et les chemins absents, vides ou
 invalides, en présence des configurations des autres écrans.
 Aucun test ne doit annoncer un découpage, transfert ou archivage métier déjà réalisé.
@@ -176,3 +176,18 @@ invalide, liste vide, rendu texte, focus restauré, doubles clics et refus step2
 Le test Autocut vérifie aussi l’ouverture avant POST, le statut initial,
 le cercle et les contenus masqués, le blocage d’Échap pendant l’attente,
 puis les résultats ou l’erreur step1 avec Fermer (y compris le délai simulé).
+
+## Fichiers traités 01b : deux dossiers
+
+```sh
+node UI_chat/km/tests/processed-legacy-browser.mjs 'ws://127.0.0.1:PORT/devtools/browser/IDENTIFIANT' 01b_processed_files
+```
+
+La même recette couvre 00c par défaut et 01b avec cet argument : validations,
+actions, erreurs, délais, bascules et cinq largeurs. Pour 01b : homonymes dans
+les deux dossiers, bleu clair legacy, dossiers absents/inconnus refusés, liste
+en tableau, paramètres folder/name/révision, erreur de dossier confirmé,
+annulation/rejeu/suppression du legacy et conservation de l’homonyme après
+suppression même si la lecture suivante échoue. Captures sous
+`/tmp/km-01b_processed_files-<largeur>.png` (00c sous son identifiant également).
+Aucun webhook distant n’est appelé.

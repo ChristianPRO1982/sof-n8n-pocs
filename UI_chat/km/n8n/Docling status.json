@@ -1,0 +1,189 @@
+{
+  "name": "Docling status",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "aa24377f-3834-45a7-9fcf-275626c05c44",
+              "name": "baseUrl",
+              "value": "https://carthographie.fr/docling-online",
+              "type": "string"
+            },
+            {
+              "id": "1b82b993-6911-40ba-bce3-7ca4756e7230",
+              "name": "auth/token",
+              "value": "/auth/token",
+              "type": "string"
+            },
+            {
+              "id": "fd79b4fe-ad81-4be7-85ce-9690a583d493",
+              "name": "status",
+              "value": "/v1/status",
+              "type": "string"
+            },
+            {
+              "id": "ee558f3d-29cb-42e5-a469-10e198a7de64",
+              "name": "monitoring",
+              "value": "/v1/monitoring",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        144,
+        -144
+      ],
+      "id": "0e2d8ffc-dda3-4acf-a9fd-e9c7ccc19d63",
+      "name": "Configuration Docling"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuration Docling').item.json.baseUrl }}{{ $('Configuration Docling').item.json['auth/token'] }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        368,
+        -144
+      ],
+      "id": "7e2557f5-4129-467d-99bd-fd47a2ed689c",
+      "name": "token",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "2StZgGeiSKu4aGfE",
+          "name": "Docling Online — Production"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -144
+      ],
+      "id": "35aa5f02-b883-44d5-a935-0e41e0dd4728",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Configuration Docling').item.json.baseUrl }}{{ $('Configuration Docling').item.json['monitoring'] }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('token').last().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        592,
+        -144
+      ],
+      "id": "ce526045-5f26-44c0-a2f7-f8c49b20ef3e",
+      "name": "Monitoring Docling"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        -144
+      ],
+      "id": "2714d562-6568-4220-b3d7-a00ed211f708",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Configuration Docling": {
+      "main": [
+        [
+          {
+            "node": "token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "token": {
+      "main": [
+        [
+          {
+            "node": "Monitoring Docling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Configuration Docling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monitoring Docling": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b2aa52da-3b9c-40b6-b7ae-e2f07a546a5c",
+  "meta": {
+    "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
+  },
+  "nodeGroups": [],
+  "id": "eFUb1njqWIQqaUUU",
+  "tags": [
+    {
+      "updatedAt": "2026-10-23T07:45:52.085Z",
+      "createdAt": "2026-10-23T07:45:52.085Z",
+      "id": "aTY4iOvJFOjQpknu",
+      "name": "KM"
+    }
+  ]
+}

@@ -53,7 +53,8 @@ métier. Aucun framework front ni nouveau service n'est nécessaire.
 menu, puis explique les cinq pastilles de développement.
 Les trois dépôts `pages/01a_upload_files.html`, `pages/00a_templates.html` et
 `pages/00b_upload_legacy_files.html` sont développés côté navigateur, ainsi que
-la liste de gestion `pages/00c_processed_legacy_files.html` ; les dix autres
+les listes de gestion `pages/00c_processed_legacy_files.html` et
+`pages/01b_processed_files.html` ; les neuf autres
 écrans sont provisoires.
 Les statuts courants sont définis dans `statuses.json`. Les chemins des trois
 dépôts sont renseignés localement et des exports n8n sont présents, sans certifier
@@ -492,3 +493,20 @@ Réinitialisation à chaque ouverture, aria-busy et réduction des animations re
 
 Les requêtes Autocut step1 et step2 ne transmettent pas de champ `folder`.
 Le dossier reste utilisé localement pour réserver le bouton aux historiques.
+
+## Gestion des fichiers traités 01b
+
+`01b_processed_files` est développée ; son statut courant est dans `statuses.json`. Elle partage
+`assets/km-processed-legacy.js` avec 00c ; le préfixe est choisi explicitement
+par l’identifiant de page. Nouvelles clés isolées
+`KM_PROCESSED_FILES_{LIST,VIEW,REPLAY,DELETE}_WEBHOOK_PATH`, initialement vides.
+La liste GET fusionne via n8n `01_processed_files` et `01_legacy_processed_files`.
+Entrées `{folder,name,size,revision}`, identité unique `(folder,name)`, dossier
+limité à ces deux valeurs ; objet ou tableau à un élément accepté. Le dossier
+est affiché, fond bleu clair pour legacy. Voir transmet folder/name en GET ;
+rejeu et suppression POST `{folder,name,expected_revision}`, confirmation ok:true
+et nom exact, dossier exact s’il est présent. Rejeu simple avec confirmation,
+aucun retrait local ni garantie de réussite du traitement. Quatre bascules test
+indépendantes OFF au chargement, délais 30 s, actualisation selon list, aucune
+relance automatique. Contrat 00c inchangé ; aucun workflow ou archivage créé.
+Voir docs/01b_processed_files.md pour le contrat et tests/README.md pour la recette.

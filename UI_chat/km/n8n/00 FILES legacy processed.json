@@ -248,14 +248,8 @@
             },
             {
               "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
-              "name": "file.name",
-              "value": "={{ $binary.file.fileName }}",
-              "type": "string"
-            },
-            {
-              "id": "c8ebf587-0503-4ea1-abda-08d51b25ad87",
-              "name": "file.size",
-              "value": "={{ $binary.file.fileSize }}",
+              "name": "name",
+              "value": "={{ $('WH-replay').item.json.body.name }}",
               "type": "string"
             }
           ]
@@ -511,7 +505,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "2c9044dc-41d7-461b-b0d8-b2d8534ed271",
+  "versionId": "95d286d5-4043-465b-b5a9-ca0bba86cb04",
   "meta": {
     "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
   },
