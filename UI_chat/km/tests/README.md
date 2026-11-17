@@ -169,13 +169,13 @@ clé absente, modes production/test, bascule sans réseau, confirmation/annulati
 POST avec dossier et révision, refus/conflit, retour invalide, doubles clics,
 conservation de la ligne et actualisation selon le mode de liste.
 
-Autocut en deux étapes : réponse simplifiée, popup IA (noms/raisons/commentaire),
+Autocut en trois étapes (confirmation locale puis deux appels) : réponse simplifiée, popup IA (noms/raisons/commentaire),
 Non/Échap sans nouvel appel, Oui avec liste des noms, refus d’une proposition
-invalide, liste vide, rendu texte, focus restauré, doubles clics et refus step2.
+invalide, liste vide, rendu texte, focus restauré, doubles clics et refus step3.
 
 Le test Autocut vérifie aussi l’ouverture avant POST, le statut initial,
 le cercle et les contenus masqués, le blocage d’Échap pendant l’attente,
-puis les résultats ou l’erreur step1 avec Fermer (y compris le délai simulé).
+puis les résultats ou l’erreur step2 avec Fermer (y compris le délai simulé).
 
 ## Fichiers traités 01b : deux dossiers
 
@@ -195,3 +195,11 @@ Aucun webhook distant n’est appelé.
 Le rejeu 01b vérifie actualFolder/targetFolder pour les deux correspondances,
 l’absence de folder dans le POST et l’affichage de la destination dans la
 confirmation. Voir/Supprimer et le rejeu 00c conservent leurs paramètres.
+
+Le test Autocut step3 contrôle le cercle, aria-busy, les templates visibles,
+les boutons désactivés et Échap bloqué pendant l’appel, puis l’arrêt de l’attente
+en OK, KO, confirmation invalide et timeout.
+
+Le premier écran Autocut demande l’accord IA/coût en tokens avec serpentin,
+sans aucun appel. Les tests vérifient Non/Échap sans réseau, l’accord avant
+step2 et la validation distincte des templates avant step3, sans appel step1.

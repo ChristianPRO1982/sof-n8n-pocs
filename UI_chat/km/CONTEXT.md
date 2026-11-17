@@ -473,25 +473,25 @@ aucun workflow distant n’a été appelé ou modifié pendant cette adaptation.
 
 Sur `01a_upload_files`, les lignes de `01_upload_legacy_files` ont un fond bleu
 clair et un bouton Autocut. Clé dédiée `KM_FILES_AUTOCUT_WEBHOOK_PATH` (vide),
-base n8n commune, bascule test indépendante OFF au chargement. Deux POST JSON au même webhook : step1 avec `{step:"step1",name,expected_revision}`
+base n8n commune, bascule test indépendante OFF au chargement. Trois étapes : confirmation locale avant tout réseau, puis deux POST JSON au même webhook : step2 avec `{step:"step2",name,expected_revision}`
 pour obtenir `{ok:true,selected_templates:[{name,reason}],response_by:"IA"}`
 (objet ou tableau à un élément ; `comment` facultatif), puis popup
 « Proposition générée par une IA ». Non/Échap abandonne sans réseau ; Oui envoie
-`{step:"step2",name,expected_revision,templates:["nom",…]}`.
-Confirmation step2 : ok:true et nom exact, dossier exact si fourni.
+`{step:"step3",name,expected_revision,templates:["nom",…]}`.
+Confirmation step3 : ok:true et nom exact, dossier exact si fourni.
 Délai 120 s par appel, sans répétition automatique. Identité et URL figées,
-blocage des opérations concurrentes ; liste rechargée après step2 uniquement.
+blocage des opérations concurrentes ; liste rechargée après step3 uniquement.
 La prise en compte ne prouve pas la réussite ; aucun retrait local.
 Noms proposés non vides et uniques ; liste vide : Oui désactivé. Aucun workflow créé.
 Voir la fiche `docs/01a_upload_files.md`.
 
-La popup Autocut ouvre avant le POST step1 : cercle animé et « lancement de la
+La popup Autocut ouvre avant le POST step2 : cercle animé et « lancement de la
 requête », puis « en attente de la réponse » dès l’appel. Résultats et Oui/Non
 masqués et Échap bloqué pendant l’attente ; à réception, attente remplacée
-par les propositions. Erreur step1/délai : erreur dans la popup et bouton Fermer.
+par les propositions. Erreur step2/délai : erreur dans la popup et bouton Fermer.
 Réinitialisation à chaque ouverture, aria-busy et réduction des animations respectés.
 
-Les requêtes Autocut step1 et step2 ne transmettent pas de champ `folder`.
+Les requêtes Autocut step2 et step3 ne transmettent pas de champ `folder`.
 Le dossier reste utilisé localement pour réserver le bouton aux historiques.
 
 ## Gestion des fichiers traités 01b
@@ -514,3 +514,17 @@ aucun retrait local ni garantie de réussite du traitement. Quatre bascules test
 indépendantes OFF au chargement, délais 30 s, actualisation selon list, aucune
 relance automatique. Contrat 00c inchangé ; aucun workflow ou archivage créé.
 Voir docs/01b_processed_files.md pour le contrat et tests/README.md pour la recette.
+
+Pendant Autocut step3, le même cercle d’attente reste animé avec le message
+« Envoi vers Autocut en cours… ». Templates visibles, Oui/Non désactivés et
+Échap bloqué jusqu’au retour. Indicateur arrêté et aria-busy réinitialisé à
+la fin (OK, KO ou délai), avant fermeture et actualisation. La préférence
+de réduction des animations reste respectée.
+
+Autocut commence désormais par une confirmation locale Oui/Non avec serpentin
+et avertissement de consommation/coût en tokens. Aucun webhook avant accord ;
+Non/Échap abandonne sans réseau. Après Oui : step2 = analyse IA (ancien step1),
+puis nouvelle validation des templates ; step3 = exécution (ancien step2).
+Le workflow n8n doit router ces nouvelles valeurs ; aucun appel step1 n’est émis.
+Les deux appels restent sans folder, avec name/expected_revision, et templates
+uniquement pour step3. Deux accords distincts ; erreur IA : Fermer, aucun step3.

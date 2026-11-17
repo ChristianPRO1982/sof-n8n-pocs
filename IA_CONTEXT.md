@@ -125,9 +125,10 @@ fichier et identité `(folder, name)`. Liste objet ou tableau à un élément ; 
 et Supprimer transmettent le dossier. Uploads et remplacements restent dans
 `01_upload_raw_files`. Le bouton Autocut réservé aux fichiers historiques
 utilise `KM_FILES_AUTOCUT_WEBHOOK_PATH` et une bascule test indépendante ;
-il envoie un POST step1 avec nom et révision (sans dossier) pour proposer les templates
-par IA, puis un POST step2 avec les noms approuvés dans une popup Oui/Non.
-Chaque appel dispose de 120 s ; seuls les retours step2 actualisent la liste. Voir la fiche KM pour les contrats détaillés.
+après accord local explicite sur l’utilisation de l’IA et le coût en tokens,
+il envoie un POST step2 avec nom et révision (sans dossier) pour proposer les templates
+par IA, puis un POST step3 avec les noms approuvés dans une popup Oui/Non.
+Chaque appel dispose de 120 s ; seuls les retours step3 actualisent la liste. Voir la fiche KM pour les contrats détaillés.
 
 ### Chatbot
 

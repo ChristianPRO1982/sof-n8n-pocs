@@ -439,11 +439,18 @@ un encadré bleu clair et un bouton « Autocut ». Les fichiers raw n’ont pas 
 bouton. Le webhook emploie la base commune `KM_WEBHOOK_BASE_URL` et la nouvelle
 clé `KM_FILES_AUTOCUT_WEBHOOK_PATH`, laissée vide pour configuration.
 
-Le clic ouvre immédiatement la popup avec un cercle animé et « lancement de la requête ».
-Après affichage initial, l’appel part et le texte devient « en attente de la réponse ».
-Les résultats et Oui/Non sont masqués ; Échap est bloqué pendant step1.
+Le clic ouvre la première étape locale : popup avec serpentin, question
+« Souhaitez-vous lancer le processus avec une IA ? » et avertissement que
+l’analyse consomme des tokens et peut entraîner un coût. Aucun montant n’est
+inventé. Aucun appel webhook, y compris de liste, n’est envoyé avant Oui.
+Non ou Échap abandonne sans réseau. Le serpentin indique ici l’attente du choix
+utilisateur, pas un appel en cours ; aria-busy reste false.
+
+Oui lance step2 : cercle animé et « lancement de la requête », puis
+« en attente de la réponse » dès l’appel. Pendant cet appel, les résultats,
+la demande d’accord IA et Oui/Non sont masqués ; Échap est bloqué.
 Le cercle est statique si les animations réduites sont demandées.
-Le clic déclenche un POST JSON `{step:"step1",name,expected_revision}`.
+Le clic déclenche un POST JSON `{step:"step2",name,expected_revision}`.
 La réponse simplifiée attendue est `{ok:true,selected_templates:[{name,reason}],comment}`.
 La réponse peut être un objet seul ou un tableau contenant exactement cet objet.
 `response_by:"IA"` est accepté ; la mention IA reste affichée explicitement.
@@ -455,16 +462,16 @@ La popup déjà ouverte affiche le fichier, « Proposition générée par une IA
 les noms, les raisons et le commentaire, rendus comme texte. Non ou Échap ferme
 la popup sans appel supplémentaire. Une liste vide interdit Oui. Les propositions
 ne sont pas modifiables. Oui envoie au même webhook
-`{step:"step2",name,expected_revision,templates:["nom",…]}`.
-Fichier, révision et mode test/production sont figés pendant les deux étapes.
+`{step:"step3",name,expected_revision,templates:["nom",…]}`.
+Fichier, révision et mode test/production sont figés pendant les trois étapes.
 La popup reste bloquée pendant l’envoi puis ferme pour afficher le résultat.
 La confirmation reste HTTP 2xx, `ok:true`, nom exact et dossier exact si renvoyé.
 Elle confirme uniquement la prise en compte, jamais la réussite du traitement.
 
 Le délai de chaque appel est 120 secondes sans relance automatique.
-Une erreur de step1 retire l’attente et affiche l’erreur dans la popup avec
-un bouton Fermer, sans autoriser la poursuite ; une erreur de step2 est signalée
-sans répétition automatique. Après step2 uniquement, la liste est actualisée
+Une erreur de step2 retire l’attente et affiche l’erreur dans la popup avec
+un bouton Fermer, sans autoriser la poursuite ; une erreur de step3 est signalée
+sans répétition automatique. Après step3 uniquement, la liste est actualisée
 dans son propre mode. Aucun fichier n’est retiré localement. Les opérations
 concurrentes sont bloquées jusqu’à la fin de l’échange ou son abandon.
 La popup est défilante, accessible au clavier et restaure le focus à sa fermeture.
@@ -473,5 +480,11 @@ aucun appel. Sans clé ou liste valide, le bouton reste désactivé.
 Le serveur doit limiter le dossier et contrôler la révision avant traitement.
 Aucun workflow ni traitement Autocut n’est créé par cette modification.
 
-Les requêtes Autocut step1 et step2 ne transmettent pas de champ `folder`.
+Les requêtes Autocut step2 et step3 ne transmettent pas de champ `folder`.
 Le dossier reste utilisé localement pour réserver le bouton aux historiques.
+
+Pendant Autocut step3, le même cercle d’attente reste animé avec le message
+« Envoi vers Autocut en cours… ». Templates visibles, Oui/Non désactivés et
+Échap bloqué jusqu’au retour. Indicateur arrêté et aria-busy réinitialisé à
+la fin (OK, KO ou délai), avant fermeture et actualisation. La préférence
+de réduction des animations reste respectée.

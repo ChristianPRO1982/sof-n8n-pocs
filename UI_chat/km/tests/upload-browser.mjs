@@ -65,7 +65,7 @@ const server = createServer(async (req, res) => {
         autocuts.push({ path, data });
         await new Promise(done => setTimeout(done, 70));
         if (autocutMode === 'error') send({ ok: false, message: 'refused' }, 409);
-        else if (data.step === 'step1') { const proposal = { ok: true,
+        else if (data.step === 'step2') { const proposal = { ok: true,
           selected_templates: autocutMode === 'invalid' ? [{ name: '', reason: '' }] : autocutMode === 'empty' ? [] :
             [{ name: 'template.md', reason: 'Raison IA <img src=x onerror=alert(1)>' }], ...(autocutArray ? { response_by: 'IA' } : { comment: 'Commentaire IA' }) };
           send(autocutArray ? [proposal] : proposal); }
@@ -172,7 +172,7 @@ try {
     window.kmAutocutLaunchStates = [];
     window.kmAutocutWaitStates = [];
     window.fetch = (url, options) => {
-      if (String(url).includes('/autocut') && JSON.parse(options.body).step === 'step1') {
+      if (String(url).includes('/autocut') && JSON.parse(options.body).step === 'step2') {
         window.kmAutocutLaunchStates.push({ open: document.getElementById('autocut-dialog').open,
           status: document.getElementById('autocut-status').textContent });
         queueMicrotask(() => window.kmAutocutWaitStates.push({
@@ -383,9 +383,21 @@ try {
     assert.equal(await evaluate(`document.querySelectorAll('#server-files button[aria-label^="Autocut "]').length`), 1);
     assert.equal(await evaluate(`getComputedStyle(${autocutButton}.closest('li')).backgroundColor`), 'rgb(232, 243, 255)');
     const identity = { name: legacy.name, expected_revision: legacy.revision };
-    const openProposal = async () => {
-      const initial = await evaluate(`(() => {
-        ${autocutButton}.click(); ${autocutButton}.click();
+    const openConfirmation = async () => {
+      const before = calls.length;
+      await evaluate(`${autocutButton}.click(); ${autocutButton}.click()`);
+      assert.equal(await evaluate(`document.getElementById('autocut-dialog').dataset.phase`), 'confirmation');
+      assert.equal(await evaluate(`document.getElementById('autocut-spinner').hidden`), false);
+      assert.equal(await evaluate(`document.getElementById('autocut-yes').disabled`), false);
+      assert.equal(await evaluate(`document.getElementById('autocut-proposal').hidden`), true);
+      assert.match(await text('autocut-ai-confirmation'), /tokens.*coût/);
+      await evaluate('new Promise(resolve => setTimeout(resolve, 80))');
+      assert.equal(calls.length, before, 'Confirmation must never call a webhook');
+    };
+    const startAnalysis = async () => {
+      const initial = await evaluate(`(async () => {
+        document.getElementById('autocut-yes').click(); document.getElementById('autocut-yes').click();
+        await Promise.resolve();
         const dialog = document.getElementById('autocut-dialog');
         const blocked = !dialog.dispatchEvent(new Event('cancel', {cancelable:true}));
         return { open: dialog.open, status: document.getElementById('autocut-status').textContent,
@@ -393,10 +405,27 @@ try {
           hidden: document.getElementById('autocut-proposal').hidden, blocked };
       })()`);
       assert.deepEqual(initial, { open: true, status: 'lancement de la requête', spinner: true, hidden: true, blocked: true });
+    };
+    const openProposal = async () => {
+      await openConfirmation();
+      await startAnalysis();
       await wait(`document.getElementById('autocut-dialog').dataset.phase === 'results'`);
       assert.equal(await evaluate(`document.getElementById('autocut-spinner').hidden`), true);
       assert.equal(await text('autocut-status'), '');
+      assert.equal(await evaluate(`document.getElementById('autocut-ai-confirmation').hidden`), true);
     };
+    // Initial refusal or Escape must not spend tokens or refresh the list.
+    const beforeConfirmation = calls.length;
+    for (const cancel of ['no', 'escape']) {
+      await openConfirmation();
+      if (cancel === 'no') await click('autocut-no');
+      else {
+        await call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+        await call('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+      }
+      await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+      assert.equal(calls.length, beforeConfirmation);
+    }
     const beforeToggle = calls.length;
     await click('webhook-autocut-toggle');
     assert.equal(calls.length, beforeToggle);
@@ -405,7 +434,7 @@ try {
     assert.match(await text('autocut-dialog'), /Raison IA/);
     assert.match(await text('autocut-dialog'), /Commentaire IA/);
     assert.equal(await evaluate(`document.querySelector('#autocut-dialog img')`), null);
-    assert.deepEqual(autocuts.at(-1), { path: webhookPath('autocut', true), data: { ...identity, step: 'step1' } });
+    assert.deepEqual(autocuts.at(-1), { path: webhookPath('autocut', true), data: { ...identity, step: 'step2' } });
     await call('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
     assert.equal(await evaluate(`document.getElementById('autocut-dialog').getBoundingClientRect().width <= innerWidth`), true);
     assert.equal(await evaluate(`document.getElementById('autocut-dialog').scrollWidth <= document.getElementById('autocut-dialog').clientWidth`), true);
@@ -433,13 +462,31 @@ try {
         assert.equal(await evaluate(`document.getElementById('autocut-yes').disabled`), true);
         await click('autocut-no');
       } else {
-        await evaluate(`${autocutButton}.click()`);
+        await openConfirmation();
+        await startAnalysis();
         await wait(`document.getElementById('autocut-dialog').dataset.phase === 'error'`);
         assert.equal(await evaluate(`document.getElementById('autocut-spinner').hidden`), true);
         await click('autocut-close');
       }
       await wait(`!document.getElementById('webhook-list-toggle').disabled`);
     }
+    const submitAutocut = async () => {
+      const pending = await evaluate(`(async () => {
+        document.getElementById('autocut-yes').click();
+        document.getElementById('autocut-yes').click();
+        await Promise.resolve();
+        const dialog = document.getElementById('autocut-dialog');
+        return { open: dialog.open, spinner: !document.getElementById('autocut-spinner').hidden,
+          busy: dialog.getAttribute('aria-busy'), proposal: !document.getElementById('autocut-proposal').hidden,
+          disabled: ['autocut-no','autocut-yes'].every(id => document.getElementById(id).disabled),
+          blocked: !dialog.dispatchEvent(new Event('cancel', {cancelable:true})) };
+      })()`);
+      assert.deepEqual(pending, { open: true, spinner: true, busy: 'true', proposal: true, disabled: true, blocked: true });
+    };
+    const finishedAutocut = async () => {
+      await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+      assert.equal(await evaluate(`document.getElementById('autocut-spinner').hidden && !document.getElementById('autocut-dialog').open && document.getElementById('autocut-dialog').getAttribute('aria-busy') === 'false'`), true);
+    };
     for (const test of [true, false]) {
       autocutArray = !test;
       if (!test) await click('webhook-autocut-toggle');
@@ -450,10 +497,10 @@ try {
         assert.match(await text('autocut-dialog'), /Proposition générée par une IA/);
       }
       const beforeYes = autocuts.length;
-      await evaluate(`document.getElementById('autocut-yes').click(); document.getElementById('autocut-yes').click()`);
-      await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+      await submitAutocut();
+      await finishedAutocut();
       assert.equal(autocuts.length, beforeYes + 1);
-      assert.deepEqual(autocuts.at(-1), { path: webhookPath('autocut', test), data: { ...identity, step: 'step2', templates: ['template.md'] } });
+      assert.deepEqual(autocuts.at(-1), { path: webhookPath('autocut', test), data: { ...identity, step: 'step3', templates: ['template.md'] } });
       assert.match(await text('upload-notice'), /prise en compte/);
       assert.equal(calls.at(-1), webhookPath('list'));
       assert.equal(await evaluate(`document.querySelectorAll('#server-files li').length`), 2);
@@ -461,30 +508,31 @@ try {
     autocutMode = 'ok';
     await openProposal();
     autocutMode = 'error';
-    await click('autocut-yes');
-    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    await submitAutocut();
+    await finishedAutocut();
     assert.match(await text('upload-notice'), /non confirmée/);
     autocutMode = 'ok';
     await openProposal();
     autocutMode = 'invalid-confirmation';
-    await click('autocut-yes');
-    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    await submitAutocut();
+    await finishedAutocut();
     assert.match(await text('upload-notice'), /incertain/);
     autocutMode = 'ok';
     await evaluate('window.kmFastTimeout = true');
     const beforeTimeout = autocuts.length;
-    await evaluate(`${autocutButton}.click()`);
+    await openConfirmation();
+    await startAnalysis();
     await wait(`document.getElementById('autocut-dialog').dataset.phase === 'error'`);
     assert.match(await text('autocut-status'), /Délai dépassé/);
     await click('autocut-close');
-    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    await finishedAutocut();
     assert.equal(autocuts.length, beforeTimeout + 1);
     assert.match(await text('upload-notice'), /Délai dépassé/);
     await evaluate('window.kmFastTimeout = false');
     await openProposal();
     await evaluate('window.kmFastTimeout = true');
-    await click('autocut-yes');
-    await wait(`!document.getElementById('webhook-list-toggle').disabled`);
+    await submitAutocut();
+    await finishedAutocut();
     assert.match(await text('upload-notice'), /Délai dépassé/);
     assert.ok((await evaluate('window.kmAutocutTimeouts')).every(value => value === 120000));
     await evaluate('window.kmFastTimeout = false');
