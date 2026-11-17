@@ -352,7 +352,7 @@
                 "conditions": [
                   {
                     "leftValue": "={{ $('params').item.json.body.step }}",
-                    "rightValue": "step1",
+                    "rightValue": "step2",
                     "operator": {
                       "type": "string",
                       "operation": "equals"
@@ -375,7 +375,7 @@
                   {
                     "id": "f1a4f3e2-d3db-4bf1-9562-dc658d019dbb",
                     "leftValue": "={{ $('params').item.json.body.step }}",
-                    "rightValue": "step2",
+                    "rightValue": "step3",
                     "operator": {
                       "type": "string",
                       "operation": "equals"
@@ -1496,7 +1496,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "63defdc6-acb7-4179-953c-d5d6e71d9cab",
+  "versionId": "9ce77d12-c0c0-466e-8e6f-1bd3cf7e4962",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
