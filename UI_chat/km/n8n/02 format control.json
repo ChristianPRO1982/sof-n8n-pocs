@@ -373,7 +373,7 @@
       "typeVersion": 3.4,
       "position": [
         -1536,
-        528
+        624
       ],
       "id": "5eb8867c-21a7-439e-b97c-9aac802e76d6",
       "name": "init"
@@ -386,7 +386,7 @@
       "typeVersion": 1,
       "position": [
         -1312,
-        528
+        624
       ],
       "id": "50ecbc83-d719-4780-a448-ed75c5f882b0",
       "name": "$ls"
@@ -409,7 +409,7 @@
       "typeVersion": 3.4,
       "position": [
         -1088,
-        528
+        560
       ],
       "id": "f50dd557-3c52-4f8e-b2be-4f1080281b63",
       "name": "files"
@@ -423,7 +423,7 @@
       "typeVersion": 1,
       "position": [
         -864,
-        528
+        560
       ],
       "id": "b1198047-e3f4-4ac4-981e-f904fdce9f71",
       "name": "Split files"
@@ -434,7 +434,7 @@
       "typeVersion": 1,
       "position": [
         -640,
-        528
+        560
       ],
       "id": "a5086e79-4fc7-4f83-b4f6-1579b4ff14c9",
       "name": "Limit"
@@ -457,7 +457,7 @@
       "typeVersion": 3.4,
       "position": [
         32,
-        528
+        560
       ],
       "id": "c505a534-985a-4df6-a743-fc9d985655c6",
       "name": "template"
@@ -471,7 +471,7 @@
       "typeVersion": 1.1,
       "position": [
         256,
-        528
+        560
       ],
       "id": "c77a3876-3fc1-4b38-9fdd-2f4502bcfafd",
       "name": "Read template"
@@ -485,7 +485,7 @@
       "typeVersion": 1.1,
       "position": [
         -416,
-        528
+        560
       ],
       "id": "1125f95b-0dcc-406b-b401-366821c99ac2",
       "name": "Read doc"
@@ -502,7 +502,7 @@
       "typeVersion": 1.1,
       "position": [
         -192,
-        528
+        560
       ],
       "id": "d11e8da8-673d-490a-8bc0-fc07af85047a",
       "name": "Extract doc"
@@ -519,7 +519,7 @@
       "typeVersion": 1.1,
       "position": [
         480,
-        528
+        560
       ],
       "id": "040bbd84-1498-44a0-971e-d2642db6de75",
       "name": "Extract template"
@@ -532,7 +532,7 @@
       "typeVersion": 2,
       "position": [
         928,
-        528
+        560
       ],
       "id": "38f62e1e-f39f-4398-abb4-7947154ee78e",
       "name": "deterministic control"
@@ -548,7 +548,7 @@
       "typeVersion": 1.1,
       "position": [
         1152,
-        528
+        560
       ],
       "id": "c85e5904-9ddf-4641-a9a4-5d80ac1f987e",
       "name": "Convert to json"
@@ -563,7 +563,7 @@
       "typeVersion": 1.1,
       "position": [
         1376,
-        528
+        560
       ],
       "id": "09b0d81b-f40f-4ada-b806-d46546060e0a",
       "name": "write json"
@@ -592,7 +592,7 @@
       "typeVersion": 3.4,
       "position": [
         704,
-        528
+        560
       ],
       "id": "e483688e-5bb6-4bce-987c-24ebb78545a3",
       "name": "format control rapport"
@@ -605,7 +605,7 @@
       "typeVersion": 1,
       "position": [
         1600,
-        528
+        624
       ],
       "id": "92e67e9f-36c4-4d7b-90fc-b829d77c5b00",
       "name": "$mv"
@@ -620,6 +620,26 @@
       ],
       "id": "e75ab69f-1d95-4f68-a840-87df52dd3164",
       "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1760,
+        720
+      ],
+      "id": "b075f20c-71cf-4890-94dc-369541f39e81",
+      "name": "Schedule Trigger"
     }
   ],
   "pinData": {},
@@ -945,6 +965,28 @@
           }
         ]
       ]
+    },
+    "$mv": {
+      "main": [
+        [
+          {
+            "node": "$ls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "init",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -953,7 +995,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "611670c7-fc87-4a69-a433-44b1fed543ae",
+  "versionId": "fa73dc20-f1c6-40fb-96b6-062d22045698",
   "meta": {
     "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
   },
