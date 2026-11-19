@@ -9,7 +9,7 @@ export function parseConfig(text) {
 }
 
 export function endpoint(config, operation, test = false, prefix = 'KM_FILES') {
-  if (!['KM_FILES', 'KM_TEMPLATES', 'KM_LEGACY_FILES', 'KM_PROCESSED_LEGACY_FILES', 'KM_PROCESSED_FILES'].includes(prefix)) throw new Error('Configuration de dépôt inconnue.');
+  if (!['KM_FILES', 'KM_TEMPLATES', 'KM_LEGACY_FILES', 'KM_PROCESSED_LEGACY_FILES', 'KM_PROCESSED_FILES', 'KM_FORMAT_CONTROLS'].includes(prefix)) throw new Error('Configuration de dépôt inconnue.');
   const base = new URL(config.KM_WEBHOOK_BASE_URL);
   if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password ||
       base.search || base.hash || !base.pathname.endsWith('/webhook/')) {

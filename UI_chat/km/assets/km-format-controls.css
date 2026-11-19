@@ -1,0 +1,13 @@
+.km-report-detail { margin-top: 20px; overflow-wrap: anywhere; }
+.km-report-summary { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0; }
+.km-report-summary p { flex: 1 1 200px; margin: 0; padding: 16px; background: white; border: 1px solid var(--border); border-radius: 12px; }
+.km-report-summary strong { display: block; font-size: 1.5rem; }
+.km-report-detail pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .9rem; padding: 12px; background: white; border-radius: 8px; }
+.km-report-detail details { margin-top: 16px; }
+.km-report-detail summary { cursor: pointer; padding: 10px 0; }
+
+/* Only format-report rows use this disclosure layout. */
+.km-report-row { flex-wrap: wrap; }
+.km-report-row.is-selected { border: 3px dashed var(--primary); background: #e8f3ff; }
+.km-report-disclosure { flex: 0 0 100%; min-width: 0; }
+.km-report-detail { margin-top: 4px; }

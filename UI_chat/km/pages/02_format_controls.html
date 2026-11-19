@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Contrôles de format — Knowledge Manager</title>
   <link rel="stylesheet" href="../assets/km.css">
+  <link rel="stylesheet" href="../assets/km-upload.css">
+  <link rel="stylesheet" href="../assets/km-format-controls.css">
   <script type="module" src="../assets/km.js"></script>
+  <script type="module" src="../assets/km-format-controls.js"></script>
 </head>
 <body data-km-page="02_format_controls">
   <a class="km-skip-link" href="#km-content">Aller au contenu</a>
@@ -18,10 +21,45 @@
       <header class="km-header" data-km-header>
         <!-- Ajouter ici les actions propres à la page, après les liens communs. -->
         <nav class="km-context" data-km-context></nav>
+        <div class="km-webhook-controls" role="group" aria-label="Mode test des webhooks n8n">
+          <span>N8N - test :</span>
+          <button type="button" class="km-upload-button km-webhook-toggle" id="webhook-list-toggle" role="switch" aria-checked="false" disabled>
+            <span>WH - list</span><img src="../assets/icons/toggle_blue_off.png" alt="" id="webhook-list-toggle-image">
+          </button>
+          <button type="button" class="km-upload-button km-webhook-toggle" id="webhook-view-toggle" role="switch" aria-checked="false" disabled>
+            <span>WH - view</span><img src="../assets/icons/toggle_blue_off.png" alt="" id="webhook-view-toggle-image">
+          </button>
+          <button type="button" class="km-upload-button km-webhook-toggle" id="webhook-delete-toggle" role="switch" aria-checked="false" disabled>
+            <span>WH - delete</span><img src="../assets/icons/toggle_blue_off.png" alt="" id="webhook-delete-toggle-image">
+          </button>
+        </div>
       </header>
       <main class="km-content" id="km-content" tabindex="-1">
         <h2>Contrôles de format</h2>
-        <p>Contenu à venir</p>
+        <p>Consultez les rapports des contrôles déterministes. Le workflow est lancé manuellement dans n8n.</p>
+        <div id="report-notice" class="km-upload-message" role="status" aria-live="polite">Chargement de la configuration…</div>
+        <section class="km-upload-panel" aria-labelledby="reports-heading">
+          <div class="km-upload-toolbar">
+            <h3 id="reports-heading">Rapports disponibles</h3>
+            <button type="button" class="km-upload-button" id="refresh-reports" disabled>Actualiser</button>
+          </div>
+          <p class="km-upload-muted">Dossier : 02_format_controls/</p>
+          <p id="reports-state" role="status" aria-live="polite">Chargement…</p>
+          <ul id="reports-list" class="km-upload-list" aria-label="Rapports de contrôle"></ul>
+        </section>
+        <template id="report-detail-template">
+        <section id="report-detail" class="km-report-detail" aria-labelledby="report-heading">
+          <h3 id="report-heading" tabindex="-1"></h3>
+          <div id="report-summary" class="km-report-summary"></div>
+          <p class="km-upload-muted">La complétude compte « Non documenté » comme non renseigné. Ces scores ne constituent pas une validation métier ; aucun seuil OK/KO n’est défini ici.</p>
+          <div id="report-findings"></div>
+          <details><summary>Document contrôlé</summary><pre id="report-document"></pre></details>
+          <details><summary>Template utilisé</summary><pre id="report-template"></pre></details>
+          <details><summary>Rapport JSON</summary><pre id="report-json"></pre></details>
+        </section>
+        </template>
+        <p><a href="01b_processed_files.html">Consulter les sources traitées</a> · <a href="01a_upload_files.html">Consulter les fichiers à traiter</a></p>
+        <noscript>Activez JavaScript pour consulter les rapports.</noscript>
       </main>
     </div>
   </div>

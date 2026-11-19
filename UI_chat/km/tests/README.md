@@ -203,3 +203,24 @@ en OK, KO, confirmation invalide et timeout.
 Le premier écran Autocut demande l’accord IA/coût en tokens avec serpentin,
 sans aucun appel. Les tests vérifient Non/Échap sans réseau, l’accord avant
 step2 et la validation distincte des templates avant step3, sans appel step1.
+
+
+## Contrôles de format : consultation des rapports
+
+`python3 UI_chat/km/tests/format-controls-browser.py`
+
+Serveur localhost et Chrome isolé, réponses simulées, aucun webhook distant.
+Couvre liste, lecture du JSON en .rapport.md, scores, anomalies, contenu rendu
+comme texte, refus des rapports invalides, modes list/view indépendants et liste
+vide sur ordinateur et mobile. Les clés réelles restent à renseigner pour la
+recette EC2. Node.js est nécessaire pour les tests .mjs uniquement.
+
+La recette des contrôles de format couvre aussi deux rapports : détail dans la
+ligne sélectionnée, bordure épaisse en tirets, fermeture sans réseau, suppression
+du contenu précédent, nouvelle lecture sans cache à chaque réouverture, erreur
+locale avec nouvelle tentative et focus clavier. Vérifications en 1366 et 390 px.
+
+La recette des rapports couvre également Supprimer : confirmation nominative,
+annulation sans réseau, refus/conflit et nom de confirmation incorrect, absence
+de retrait sans confirmation, blocage concurrent, POST avec révision, bascule
+delete indépendante sans réseau, succès et fermeture du détail supprimé.

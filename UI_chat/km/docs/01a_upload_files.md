@@ -435,7 +435,7 @@ règles d'accord global, de remplacement annoncé et d'envoi séquentiel ci-dess
 ## Envoi vers Autocut
 
 Sur cette page uniquement, chaque fichier de `01_upload_legacy_files` porte
-un encadré bleu clair et un bouton « Autocut ». Les fichiers raw n’ont pas ce
+un encadré bleu soutenu et un bouton « Autocut ». Les fichiers raw n’ont pas ce
 bouton. Le webhook emploie la base commune `KM_WEBHOOK_BASE_URL` et la nouvelle
 clé `KM_FILES_AUTOCUT_WEBHOOK_PATH`, laissée vide pour configuration.
 

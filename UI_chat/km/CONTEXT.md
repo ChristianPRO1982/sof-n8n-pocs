@@ -54,7 +54,7 @@ menu, puis explique les cinq pastilles de développement.
 Les trois dépôts `pages/01a_upload_files.html`, `pages/00a_templates.html` et
 `pages/00b_upload_legacy_files.html` sont développés côté navigateur, ainsi que
 les listes de gestion `pages/00c_processed_legacy_files.html` et
-`pages/01b_processed_files.html` ; les neuf autres
+`pages/01b_processed_files.html` ; les huit autres
 écrans sont provisoires.
 Les statuts courants sont définis dans `statuses.json`. Les chemins des trois
 dépôts sont renseignés localement et des exports n8n sont présents, sans certifier
@@ -472,7 +472,7 @@ aucun workflow distant n’a été appelé ou modifié pendant cette adaptation.
 ### Bouton Autocut sur les sources historiques
 
 Sur `01a_upload_files`, les lignes de `01_upload_legacy_files` ont un fond bleu
-clair et un bouton Autocut. Clé dédiée `KM_FILES_AUTOCUT_WEBHOOK_PATH` (vide),
+soutenu et un bouton Autocut. Clé dédiée `KM_FILES_AUTOCUT_WEBHOOK_PATH` (vide),
 base n8n commune, bascule test indépendante OFF au chargement. Trois étapes : confirmation locale avant tout réseau, puis deux POST JSON au même webhook : step2 avec `{step:"step2",name,expected_revision}`
 pour obtenir `{ok:true,selected_templates:[{name,reason}],response_by:"IA"}`
 (objet ou tableau à un élément ; `comment` facultatif), puis popup
@@ -503,7 +503,7 @@ par l’identifiant de page. Nouvelles clés isolées
 La liste GET fusionne via n8n `01_processed_files` et `01_legacy_processed_files`.
 Entrées `{folder,name,size,revision}`, identité unique `(folder,name)`, dossier
 limité à ces deux valeurs ; objet ou tableau à un élément accepté. Le dossier
-est affiché, fond bleu clair pour legacy. Voir transmet folder/name en GET ;
+est affiché, fond bleu soutenu pour legacy. Voir transmet folder/name en GET ;
 suppression POST `{folder,name,expected_revision}` ; rejeu POST
 `{actualFolder,targetFolder,name,expected_revision}` sans champ folder.
 Correspondances fixes : `01_processed_files` → `01_upload_raw_files`,
@@ -528,3 +528,39 @@ puis nouvelle validation des templates ; step3 = exécution (ancien step2).
 Le workflow n8n doit router ces nouvelles valeurs ; aucun appel step1 n’est émis.
 Les deux appels restent sans folder, avec name/expected_revision, et templates
 uniquement pour step3. Deux accords distincts ; erreur IA : Fermer, aucun step3.
+
+
+### Consultation des contrôles de format — novembre 2026
+
+`02_format_controls` dispose d'une interface de liste et lecture des rapports de
+`02_format_controls/`, avec `assets/km-format-controls.js`,
+`assets/km-format-report.js` et styles dédiés. Les clés isolées
+`KM_FORMAT_CONTROLS_{LIST,VIEW}_WEBHOOK_PATH` restent vides, à raccorder.
+Liste GET `{ok:true,files:[{name,size,revision}]}` (objet ou tableau à un élément),
+lecture GET `name` renvoyant directement le JSON du rapport (objet ou tableau à
+un élément), y compris les fichiers `.rapport.md`. Scores, anomalies, document,
+template et JSON sont consultables sans déduire de seuil OK/KO. Deux toggles
+test indépendants OFF au chargement, délais 30 s, sans relance automatique.
+Le workflow utilisateur reste manuel et oneshot (LIMIT permanent, un document,
+un template), puis déplace la source après enregistrement des résultats et fin
+correcte. Aucun dossier error ni traitement distant ajouté. 01b reste inchangé.
+Voir `UI_chat/km/docs/02_format_controls.md` depuis la racine du dépôt pour les
+contrats et `UI_chat/km/tests/format-controls-browser.py` pour la recette locale.
+
+
+Le rapport s'ouvre dans l'encadré du fichier sélectionné, avec bordure de 3 px
+en tirets et fond bleu clair. Un seul rapport est ouvert ; changer de fichier
+supprime les résultats précédents. Fermer supprime le contenu sans réseau ;
+chaque réouverture relit le rapport sans cache. Attente et erreur restent dans
+l'encadré ; une erreur permet de réessayer manuellement. Actualiser ou changer
+de mode efface les résultats. Les boutons exposent leur ouverture au clavier
+et aux technologies d'assistance.
+
+
+La page 02 propose aussi Supprimer avec confirmation nominative, via
+`KM_FORMAT_CONTROLS_DELETE_WEBHOOK_PATH` (ajoutée vide). POST
+`{name,expected_revision}` et confirmation `ok:true` avec nom exact ; tableau
+à un élément accepté. Troisième toggle delete indépendant, OFF au chargement,
+sans appel ni fermeture du rapport à la bascule. Délais 30 s sans relance
+et actualisation selon le mode list après tentative. Aucun workflow distant
+créé ; la suppression ne concerne que le rapport de `02_format_controls/`.

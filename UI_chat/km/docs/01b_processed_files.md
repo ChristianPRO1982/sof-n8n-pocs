@@ -67,7 +67,7 @@ versions sources et reprise ; durée de conservation et droits d'accès.
 
 La page reprend 00c : liste serveur, Actualiser, Voir, Rejouer, Supprimer,
 sans upload. n8n scanne les deux dossiers et renvoie leur fusion en un seul GET.
-Les lignes affichent nom, taille, icône locale et dossier ; le legacy est bleu clair.
+Les lignes affichent nom, taille, icône locale et dossier ; le legacy est bleu soutenu.
 Chaque identité `(folder, name)` doit être unique ; un même nom dans les deux
 dossiers est accepté. Dossier obligatoire, limité aux deux valeurs ci-dessus.
 

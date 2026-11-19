@@ -1,0 +1,970 @@
+{
+  "name": "02 format control",
+  "nodes": [
+    {
+      "parameters": {
+        "command": "=node <<'JS'\nconst fs = require('node:fs');\nconst path = require('node:path');\n\nconst directory = '/files/km/02_format_controls';\n\nconst files = fs.readdirSync(directory, { withFileTypes: true })\n  .filter(entry => entry.isFile())\n  .map(entry => {\n    const stat = fs.statSync(path.join(directory, entry.name), {\n      bigint: true\n    });\n\n    const size = Number(stat.size);\n\n    if (!Number.isSafeInteger(size)) {\n      throw new Error(`Taille non représentable : ${entry.name}`);\n    }\n\n    return {\n      name: entry.name,\n      size,\n      revision: [\n        stat.dev,\n        stat.ino,\n        stat.size,\n        stat.mtimeNs,\n        stat.ctimeNs\n      ].join(':')\n    };\n  })\n  .sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);\n\nprocess.stdout.write(JSON.stringify(files));\nJS"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        -528
+      ],
+      "id": "67936b48-9cdd-4452-91bb-8d69d67a47d6",
+      "name": "CMD $ls"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { exitCode, stderr, stdout } = $input.first().json;\n\ntry {\n  if (exitCode !== 0) {\n    throw new Error(stderr?.trim() || 'Impossible de lire le dossier.');\n  }\n\n  const files = JSON.parse(stdout);\n  const names = new Set();\n\n  if (!Array.isArray(files)) {\n    throw new Error('La réponse doit contenir une liste de fichiers.');\n  }\n\n  for (const file of files) {\n    if (\n      !file ||\n      typeof file.name !== 'string' ||\n      file.name.length === 0 ||\n      !Number.isSafeInteger(file.size) ||\n      file.size < 0 ||\n      typeof file.revision !== 'string' ||\n      file.revision.length === 0 ||\n      names.has(file.name)\n    ) {\n      throw new Error('Liste de fichiers invalide.');\n    }\n\n    names.add(file.name);\n  }\n\n  return [{ json: { ok: true, files } }];\n} catch (error) {\n  return [{\n    json: {\n      ok: false,\n      message: error.message\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1312,
+        -528
+      ],
+      "id": "3d18eb3d-94ea-4b40-93e7-09bca87cf704",
+      "name": "CODE list"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1088,
+        -528
+      ],
+      "id": "14483299-4f6f-4290-9d8b-647be4ce412f",
+      "name": "Respond-list"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1088,
+        -304
+      ],
+      "id": "bac293bc-8dd1-4c4b-bad0-e858ac400915",
+      "name": "Respond delete"
+    },
+    {
+      "parameters": {
+        "command": "=rm -- \"/files/km/02_format_controls/{{ $json.body.name }}\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        -208
+      ],
+      "id": "57b2d59e-4312-4131-bca9-c2191fc9ed6d",
+      "name": "Execute Command",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1088,
+        -112
+      ],
+      "id": "6d8c9556-b78d-4212-b92d-cd89cae6fc39",
+      "name": "Respond delete KO"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
+              "name": "name",
+              "value": "={{ $('WH-delete').item.json.body.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1312,
+        -304
+      ],
+      "id": "8fe5f954-0c53-427b-be20-7df1a9cff867",
+      "name": "delete OK"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1312,
+        -112
+      ],
+      "id": "e04c7671-2a79-41d4-99e7-3dd256a8883b",
+      "name": "delete KO"
+    },
+    {
+      "parameters": {
+        "fileSelector": "=/files/km/02_format_controls/{{ $('WH-download file').item.json.query.name }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        -864,
+        208
+      ],
+      "id": "b83ad829-2058-4fd9-8982-9d53a8f3ebc7",
+      "name": "Read file"
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "={{ $('file params').item.json['Content-Type'] }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -640,
+        208
+      ],
+      "id": "e5900202-07bf-4148-819f-9fab783fd961",
+      "name": "Respond file"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "e367e9ef-ff7c-4567-a7c0-693d5db00efb",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1760,
+        -208
+      ],
+      "id": "4f2421c1-0c83-49a2-9a52-83c5a48a8707",
+      "name": "WH-delete",
+      "webhookId": "cec518e3-93c5-4a0b-b275-36a76cb16d53"
+    },
+    {
+      "parameters": {
+        "path": "4709e935-966d-4720-93ff-954901b33467",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1760,
+        208
+      ],
+      "id": "9e0840ab-113a-4f22-878d-1184bce69084",
+      "name": "WH-download file",
+      "webhookId": "bcb28442-1757-4ef2-baca-4f9173d987c6"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9c69a4d6-11cb-4dbf-9184-020d7c7d8c25",
+              "leftValue": "={{ $('WH-download file').item.json.query.name.endsWith('.md') }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1536,
+        208
+      ],
+      "id": "dc64225d-afc5-4cc6-a528-029cc8ed3e5c",
+      "name": "If name.endsWith \".md\""
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6a0c2924-e0d0-41b0-947e-70c55c722c87",
+              "name": "Content-Type",
+              "value": "text/markdown; charset=utf-8",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1312,
+        112
+      ],
+      "id": "520fa099-4017-4e68-ad15-97dcb8528649",
+      "name": "markdown file params"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "579e0fd0-81bb-4cf5-8b1b-ac8f0dabbd69",
+              "name": "Content-Type",
+              "value": "={{ $json['Content-Type'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1088,
+        208
+      ],
+      "id": "875936f3-c7df-4543-be83-af580d9f8044",
+      "name": "file params"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "58df6032-d5dc-4612-bf89-c34bc7ae5a8c",
+              "name": "Content-Type",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1312,
+        304
+      ],
+      "id": "8549dd95-0918-4da7-99e0-88d51c79b3b8",
+      "name": "other file params"
+    },
+    {
+      "parameters": {
+        "path": "b524f7d4-61e6-4ce1-addc-6fe4ddf6d0ee",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1760,
+        -528
+      ],
+      "id": "a42adcf7-a2fe-43d3-8268-b90e2f80d2c7",
+      "name": "WH-list",
+      "webhookId": "b524f7d4-61e6-4ce1-addc-6fe4ddf6d0ee"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "26090bb5-4a34-4850-8286-8cfbb0cad123",
+              "name": "folders",
+              "value": "/files/km/",
+              "type": "string"
+            },
+            {
+              "id": "3f6124be-9016-497a-914d-50d82b13580f",
+              "name": "templates",
+              "value": "00_templates/",
+              "type": "string"
+            },
+            {
+              "id": "6e987d33-8bdc-4fbc-a2f8-21594518690c",
+              "name": "upload_path",
+              "value": "01_upload_raw_files/",
+              "type": "string"
+            },
+            {
+              "id": "2b4a49d1-336f-4a16-909c-2122b12208a4",
+              "name": "processed_path",
+              "value": "01_processed_files/",
+              "type": "string"
+            },
+            {
+              "id": "1b9cc48c-f140-4345-a5ce-93a4624694b2",
+              "name": "format_controls",
+              "value": "02_format_controls/",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1536,
+        528
+      ],
+      "id": "5eb8867c-21a7-439e-b97c-9aac802e76d6",
+      "name": "init"
+    },
+    {
+      "parameters": {
+        "command": "=node <<'JS'\nconst fs = require('node:fs');\nconst path = require('node:path');\n\nconst directory = '{{ $('init').item.json.folders }}{{ $('init').item.json.upload_path }}';\n\nconst files = fs.readdirSync(directory, { withFileTypes: true })\n  .filter(entry => entry.isFile())\n  .map(entry => {\n    const stat = fs.statSync(path.join(directory, entry.name), {\n      bigint: true\n    });\n\n    const size = Number(stat.size);\n\n    if (!Number.isSafeInteger(size)) {\n      throw new Error(`Taille non représentable : ${entry.name}`);\n    }\n\n    return {\n      name: entry.name,\n      size,\n      revision: [\n        stat.dev,\n        stat.ino,\n        stat.size,\n        stat.mtimeNs,\n        stat.ctimeNs\n      ].join(':')\n    };\n  })\n  .sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);\n\nprocess.stdout.write(JSON.stringify(files));\nJS"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -1312,
+        528
+      ],
+      "id": "50ecbc83-d719-4780-a448-ed75c5f882b0",
+      "name": "$ls"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e8064d04-acf3-4404-8a0e-df01bba0ca9d",
+              "name": "stdout",
+              "value": "={{ $json.stdout }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1088,
+        528
+      ],
+      "id": "f50dd557-3c52-4f8e-b2be-4f1080281b63",
+      "name": "files"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "stdout",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -864,
+        528
+      ],
+      "id": "b1198047-e3f4-4ac4-981e-f904fdce9f71",
+      "name": "Split files"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        528
+      ],
+      "id": "a5086e79-4fc7-4f83-b4f6-1579b4ff14c9",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a3f77592-6487-48d2-a8af-db158c03573b",
+              "name": "name",
+              "value": "={{ $('Limit').item.json.name.split('__').pop().replace(/\\.md$/i, '') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        32,
+        528
+      ],
+      "id": "c505a534-985a-4df6-a743-fc9d985655c6",
+      "name": "template"
+    },
+    {
+      "parameters": {
+        "fileSelector": "={{ $('init').item.json.folders }}{{ $('init').item.json.templates }}template_*_{{ $json.name }}.pdf.md",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        256,
+        528
+      ],
+      "id": "c77a3876-3fc1-4b38-9fdd-2f4502bcfafd",
+      "name": "Read template"
+    },
+    {
+      "parameters": {
+        "fileSelector": "={{ $('init').item.json.folders }}{{ $('init').item.json.upload_path }}{{ $('Limit').item.json.name }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        -416,
+        528
+      ],
+      "id": "1125f95b-0dcc-406b-b401-366821c99ac2",
+      "name": "Read doc"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "destinationKey": "doc.text",
+        "options": {
+          "encoding": "utf8"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -192,
+        528
+      ],
+      "id": "d11e8da8-673d-490a-8bc0-fc07af85047a",
+      "name": "Extract doc"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "destinationKey": "template.text",
+        "options": {
+          "encoding": "utf8"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        528
+      ],
+      "id": "040bbd84-1498-44a0-971e-d2642db6de75",
+      "name": "Extract template"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst template = $('Extract template').first().json.template.text\nconst document = $('Extract doc').first().json.doc.text\n\nconst normalize = (text) => String(text)\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .trim()\n  .toLowerCase()\n  .replace(/\\s+/g, ' ');\n\nconst getLabel = (line) => {\n  const match = line.match(/^([^:]+?)\\s*:\\s*(.*)$/);\n  return match\n    ? { name: normalize(match[1]), value: match[2] }\n    : null;\n};\n\nconst getSections = (markdown) => {\n  const sections = {};\n  let current = '_root';\n\n  for (const line of markdown.split(/\\r?\\n/)) {\n    const heading = line.match(/^(#{1,6})\\s+(.+?)\\s*$/);\n\n    if (heading) {\n      current = `${heading[1].length}:${normalize(heading[2])}`;\n      sections[current] = [];\n    } else {\n      (sections[current] ??= []).push(line);\n    }\n  }\n\n  return sections;\n};\n\nconst templateSections = getSections(template);\nconst documentSections = getSections(document);\n\nconst expectedSections = Object.keys(templateSections)\n  .filter(key => key !== '_root');\n\nconst missingSections = expectedSections\n  .filter(key => !(key in documentSections));\n\nlet expectedFields = 0;\nlet presentFields = 0;\nlet filledFields = 0;\n\nconst missingFields = [];\nconst unfilledFields = [];\n\nfor (const section of expectedSections) {\n  const sourceLines = templateSections[section];\n  const documentLines = documentSections[section] ?? [];\n\n  const allLabels = new Set(\n    sourceLines.map(getLabel).filter(Boolean).map(f => f.name)\n  );\n\n  const fields = sourceLines\n    .map(getLabel)\n    .filter(f => f && /\\[[^\\]]*renseigner[^\\]]*\\]/.test(normalize(f.value)));\n\n  for (const field of fields) {\n    expectedFields++;\n\n    const index = documentLines.findIndex(line => {\n      const label = getLabel(line);\n      return label && label.name === field.name;\n    });\n\n    const fieldId = `${section} / ${field.name}`;\n\n    if (index === -1) {\n      missingFields.push(fieldId);\n      continue;\n    }\n\n    presentFields++;\n\n    const firstLine = getLabel(documentLines[index]).value;\n    const content = [firstLine];\n\n    for (let i = index + 1; i < documentLines.length; i++) {\n      const nextLabel = getLabel(documentLines[i]);\n\n      if (nextLabel && allLabels.has(nextLabel.name)) break;\n\n      content.push(documentLines[i]);\n    }\n\n    const value = normalize(content.join('\\n'));\n\n    const isFilled = value.length > 0\n      && value !== 'non documente'\n      && !/\\[[^\\]]*renseigner[^\\]]*\\]/.test(value);\n\n    if (isFilled) {\n      filledFields++;\n    } else {\n      unfilledFields.push(fieldId);\n    }\n  }\n}\n\nconst expectedStructure = expectedSections.length + expectedFields;\nconst presentStructure = expectedSections.length\n  - missingSections.length + presentFields;\n\nreturn {\n  json: {\n    ...$json,\n    quality: {\n      structure_score: expectedStructure\n        ? Math.round(100 * presentStructure / expectedStructure)\n        : 0,\n      completeness_score: expectedFields\n        ? Math.round(100 * filledFields / expectedFields)\n        : 0,\n      sections_expected: expectedSections.length,\n      sections_missing: missingSections,\n      fields_expected: expectedFields,\n      fields_present: presentFields,\n      fields_filled: filledFields,\n      fields_missing: missingFields,\n      fields_unfilled: unfilledFields\n    }\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        528
+      ],
+      "id": "38f62e1e-f39f-4398-abb4-7947154ee78e",
+      "name": "deterministic control"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {
+          "fileName": "={{ $('Limit').item.json.name.split('.md')[0] }}.rapport.md"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1152,
+        528
+      ],
+      "id": "c85e5904-9ddf-4641-a9a4-5d80ac1f987e",
+      "name": "Convert to json"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $('init').item.json.folders }}{{ $('init').item.json.format_controls }}{{ $('Limit').item.json.name.split('.md')[0] }}.rapport.md",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        1376,
+        528
+      ],
+      "id": "09b0d81b-f40f-4ada-b806-d46546060e0a",
+      "name": "write json"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e7e765c6-4230-4741-8983-1edcd97cc4d3",
+              "name": "template.text",
+              "value": "={{ $('Extract template').item.json.template.text }}",
+              "type": "string"
+            },
+            {
+              "id": "573d91cd-1f07-4acf-a2dc-ed847c1c8088",
+              "name": "doc.text",
+              "value": "={{ $('Extract doc').item.json.doc.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        704,
+        528
+      ],
+      "id": "e483688e-5bb6-4bce-987c-24ebb78545a3",
+      "name": "format control rapport"
+    },
+    {
+      "parameters": {
+        "command": "=mv '{{ $('init').item.json.folders }}{{ $('init').item.json.upload_path }}{{ $('Limit').item.json.name }}' '{{ $('init').item.json.folders }}{{ $('init').item.json.processed_path }}{{ $('Limit').item.json.name }}'"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        528
+      ],
+      "id": "92e67e9f-36c4-4d7b-90fc-b829d77c5b00",
+      "name": "$mv"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        528
+      ],
+      "id": "e75ab69f-1d95-4f68-a840-87df52dd3164",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "CMD $ls": {
+      "main": [
+        [
+          {
+            "node": "CODE list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CODE list": {
+      "main": [
+        [
+          {
+            "node": "Respond-list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Command": {
+      "main": [
+        [
+          {
+            "node": "delete OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "delete KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete OK": {
+      "main": [
+        [
+          {
+            "node": "Respond delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete KO": {
+      "main": [
+        [
+          {
+            "node": "Respond delete KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read file": {
+      "main": [
+        [
+          {
+            "node": "Respond file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-delete": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-download file": {
+      "main": [
+        [
+          {
+            "node": "If name.endsWith \".md\"",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If name.endsWith \".md\"": {
+      "main": [
+        [
+          {
+            "node": "markdown file params",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "other file params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "markdown file params": {
+      "main": [
+        [
+          {
+            "node": "file params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "file params": {
+      "main": [
+        [
+          {
+            "node": "Read file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "other file params": {
+      "main": [
+        [
+          {
+            "node": "file params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WH-list": {
+      "main": [
+        [
+          {
+            "node": "CMD $ls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "init": {
+      "main": [
+        [
+          {
+            "node": "$ls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "$ls": {
+      "main": [
+        [
+          {
+            "node": "files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "files": {
+      "main": [
+        [
+          {
+            "node": "Split files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split files": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Read doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "template": {
+      "main": [
+        [
+          {
+            "node": "Read template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read doc": {
+      "main": [
+        [
+          {
+            "node": "Extract doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract doc": {
+      "main": [
+        [
+          {
+            "node": "template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read template": {
+      "main": [
+        [
+          {
+            "node": "Extract template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract template": {
+      "main": [
+        [
+          {
+            "node": "format control rapport",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "deterministic control": {
+      "main": [
+        [
+          {
+            "node": "Convert to json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to json": {
+      "main": [
+        [
+          {
+            "node": "write json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "format control rapport": {
+      "main": [
+        [
+          {
+            "node": "deterministic control",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "write json": {
+      "main": [
+        [
+          {
+            "node": "$mv",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "init",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "611670c7-fc87-4a69-a433-44b1fed543ae",
+  "meta": {
+    "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
+  },
+  "nodeGroups": [],
+  "id": "dNeHnhzdOHFkOhVI",
+  "tags": [
+    {
+      "updatedAt": "2026-10-23T07:45:52.085Z",
+      "createdAt": "2026-10-23T07:45:52.085Z",
+      "id": "aTY4iOvJFOjQpknu",
+      "name": "KM"
+    }
+  ]
+}

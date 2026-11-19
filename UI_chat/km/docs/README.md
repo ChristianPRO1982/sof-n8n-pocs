@@ -2,7 +2,7 @@
 
 Cette documentation décrit le fonctionnement cible du POC et ses quatorze pages.
 Les interfaces de dépôt des sources, des templates et des historiques sont
-développées, ainsi que la gestion des fichiers traités (`00c` et `01b`) ; les neuf
+développées, ainsi que la gestion des fichiers traités (`00c` et `01b`) ; les huit
 autres pages sont provisoires. Les contrats des trois dépôts et des listes
 `00c` et `01b` sont définis côté front. Les clés sources, templates et dépôt historique
 sont renseignées localement, sans certification des workflows distants. Les
@@ -282,3 +282,21 @@ Le Nginx commun conserve l'entrée publique `/km/` et relaie vers ce service.
 La configuration KM dédiée est montée en lecture seule, sans données métier.
 Voir [le guide de déploiement](deployment.md) pour la migration initiale, les
 mises à jour indépendantes et les vérifications locales.
+
+
+### Consultation des contrôles de format — novembre 2026
+
+`02_format_controls` dispose d'une interface de liste et lecture des rapports de
+`02_format_controls/`, avec `assets/km-format-controls.js`,
+`assets/km-format-report.js` et styles dédiés. Les clés isolées
+`KM_FORMAT_CONTROLS_{LIST,VIEW}_WEBHOOK_PATH` restent vides, à raccorder.
+Liste GET `{ok:true,files:[{name,size,revision}]}` (objet ou tableau à un élément),
+lecture GET `name` renvoyant directement le JSON du rapport (objet ou tableau à
+un élément), y compris les fichiers `.rapport.md`. Scores, anomalies, document,
+template et JSON sont consultables sans déduire de seuil OK/KO. Deux toggles
+test indépendants OFF au chargement, délais 30 s, sans relance automatique.
+Le workflow utilisateur reste manuel et oneshot (LIMIT permanent, un document,
+un template), puis déplace la source après enregistrement des résultats et fin
+correcte. Aucun dossier error ni traitement distant ajouté. 01b reste inchangé.
+Voir `UI_chat/km/docs/02_format_controls.md` depuis la racine du dépôt pour les
+contrats et `UI_chat/km/tests/format-controls-browser.py` pour la recette locale.

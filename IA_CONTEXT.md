@@ -21,7 +21,7 @@ Site web professionnel hébergé sur AWS, servant de socle à plusieurs projets 
 
 Le principal cas d’usage présent est un assistant destiné aux conseillers clientèle sur les aides à la rénovation : MaPrimeRénov’, MaPrimeAdapt’, ANAH. La chaîne documentaire vise la sélection de sources, le scraping, les embeddings, la recherche RAG et la génération de réponses sourcées. Un autre module, **Taxon**, propose l’envoi de fichiers et la consultation des fichiers à traiter ou traités.
 
-**Knowledge Manager**, identifiant unique **`km`** en minuscules, est un module POC indépendant pour transformer les documents Sofinco en connaissances atomiques, normalisées, liées et validées humainement. Lire `UI_chat/km/CONTEXT.md` avant d'y intervenir. L'accueil présente la légende des cinq statuts de développement et les quatorze écrans partagent un gabarit responsive, un menu redimensionnable mémorisé dans le navigateur et un tiroir sur petits écrans. Le fichier `UI_chat/km/statuses.json`, monté séparément et relu sans cache toutes les 30 secondes, pilote les pastilles dans les deux menus ; les dépôts sources, templates et historiques disposent de leur interface, les listes des fichiers traités `00c` et `01b` disposent aussi de leur interface ; les neuf autres écrans restent provisoires. Les traitements historiques ne sont pas implémentés ; un export n8n des sources est présent sans certification de l’état distant. Les clés `KM_WEBHOOK_BASE_URL` et `KM_FILES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH` de `UI_chat/km/config.ini`, monté en lecture seule dans `km-front`, portent les chemins sources renseignés localement. Les contrats attendus, révisions et toggle test/production sont décrits dans la fiche de dépôt.
+**Knowledge Manager**, identifiant unique **`km`** en minuscules, est un module POC indépendant pour transformer les documents Sofinco en connaissances atomiques, normalisées, liées et validées humainement. Lire `UI_chat/km/CONTEXT.md` avant d'y intervenir. L'accueil présente la légende des cinq statuts de développement et les quatorze écrans partagent un gabarit responsive, un menu redimensionnable mémorisé dans le navigateur et un tiroir sur petits écrans. Le fichier `UI_chat/km/statuses.json`, monté séparément et relu sans cache toutes les 30 secondes, pilote les pastilles dans les deux menus ; les dépôts sources, templates et historiques disposent de leur interface, les listes des fichiers traités `00c` et `01b` disposent aussi de leur interface ; les huit autres écrans restent provisoires. Les traitements historiques ne sont pas implémentés ; un export n8n des sources est présent sans certification de l’état distant. Les clés `KM_WEBHOOK_BASE_URL` et `KM_FILES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH` de `UI_chat/km/config.ini`, monté en lecture seule dans `km-front`, portent les chemins sources renseignés localement. Les contrats attendus, révisions et toggle test/production sont décrits dans la fiche de dépôt.
 
 Le parcours fonctionnel documenté de `km` prend pour référence `UI_chat/km/docs/Poc_n8n.pdf` : Word relu → contrôles de format sans LLM → écarts et rapport → métadonnées par règles/LLM → validation métier → Word publié → conversion Markdown sans LLM → couple Markdown/JSON AI Ready, avec journal transversal. Lire [la vue d'ensemble et les quatorze fiches](UI_chat/km/docs/README.md) avant le développement métier. `01b_processed_files` est un ajout utilisateur : archivage des sources après prise en charge initiale, avant validation. La page `00a_templates`, placée juste après l’accueil, avant `00b_upload_legacy_files`, `00c_processed_legacy_files`, `01a_upload_files` puis `01b_processed_files` dans la navigation, reprend les fonctions du dépôt avec le contrôleur et les styles partagés ; elle utilise trois clés `KM_TEMPLATES_{LIST,UPLOAD,DELETE}_WEBHOOK_PATH` distinctes, sans repli vers les sources. La nouvelle codification des pages et fiches conserve les dossiers de stockage existants `01_upload_raw_files` et `01_processed_files`. Ses workflows, son stockage et la consommation des templates restent à définir. Le dépôt accepte une sélection multiformat ; les traitements de référence restent fondés sur Word et le découpage atomique reste une extension. Les interactions Microsoft 365 du PDF sont à adapter au POC INNO ; les schémas et règles encore absents sont explicitement signalés.
 
@@ -237,3 +237,30 @@ Rejouer transmet actualFolder/targetFolder/name/expected_revision (sans folder) 
 `01_processed_files` → `01_upload_raw_files`, `01_legacy_processed_files` →
 `01_upload_legacy_files`, avec confirmation nominative du départ et de la destination.
 Délais 30 s, quatre bascules test indépendantes, aucun workflow créé.
+
+
+### Consultation des contrôles de format — novembre 2026
+
+`02_format_controls` dispose d'une interface de liste et lecture des rapports de
+`02_format_controls/`, avec `assets/km-format-controls.js`,
+`assets/km-format-report.js` et styles dédiés. Les clés isolées
+`KM_FORMAT_CONTROLS_{LIST,VIEW}_WEBHOOK_PATH` restent vides, à raccorder.
+Liste GET `{ok:true,files:[{name,size,revision}]}` (objet ou tableau à un élément),
+lecture GET `name` renvoyant directement le JSON du rapport (objet ou tableau à
+un élément), y compris les fichiers `.rapport.md`. Scores, anomalies, document,
+template et JSON sont consultables sans déduire de seuil OK/KO. Deux toggles
+test indépendants OFF au chargement, délais 30 s, sans relance automatique.
+Le workflow utilisateur reste manuel et oneshot (LIMIT permanent, un document,
+un template), puis déplace la source après enregistrement des résultats et fin
+correcte. Aucun dossier error ni traitement distant ajouté. 01b reste inchangé.
+Voir `UI_chat/km/docs/02_format_controls.md` depuis la racine du dépôt pour les
+contrats et `UI_chat/km/tests/format-controls-browser.py` pour la recette locale.
+
+
+La page 02 propose aussi Supprimer avec confirmation nominative, via
+`KM_FORMAT_CONTROLS_DELETE_WEBHOOK_PATH` (ajoutée vide). POST
+`{name,expected_revision}` et confirmation `ok:true` avec nom exact ; tableau
+à un élément accepté. Troisième toggle delete indépendant, OFF au chargement,
+sans appel ni fermeture du rapport à la bascule. Délais 30 s sans relance
+et actualisation selon le mode list après tentative. Aucun workflow distant
+créé ; la suppression ne concerne que le rapport de `02_format_controls/`.

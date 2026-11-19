@@ -57,7 +57,7 @@
     },
     {
       "parameters": {
-        "command": "=rm -- \"/files/km/{{ $json.body.folder }}/{{ $json.body.name }}\""
+        "command": "=rm -- \"/files/km/02_format_controls/{{ $json.body.name }}2\""
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
@@ -150,7 +150,7 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1.1,
       "position": [
-        -224,
+        -448,
         704
       ],
       "id": "9441d0e9-3e58-4f03-8047-71bddd524bd8",
@@ -173,113 +173,11 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        0,
+        -224,
         704
       ],
       "id": "f49f61b7-b10b-49d4-b713-b4cfc4102a2e",
       "name": "Respond file"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
-              "name": "ok",
-              "value": true,
-              "type": "boolean"
-            },
-            {
-              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
-              "name": "name",
-              "value": "={{ $('WH-replay').item.json.body.name }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -896,
-        -224
-      ],
-      "id": "62363963-fa14-4d63-9ba7-9131a3078f37",
-      "name": "replay OK"
-    },
-    {
-      "parameters": {
-        "options": {
-          "responseCode": 200
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        -672,
-        -224
-      ],
-      "id": "f27ef60f-ec00-46ca-957c-1899efd2b537",
-      "name": "Respond replay OK"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
-              "name": "ok",
-              "value": false,
-              "type": "boolean"
-            },
-            {
-              "id": "3b2cbc1f-ac9a-44a7-ac9a-7e4a2982e2c8",
-              "name": "error",
-              "value": "={{ $json.error }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -896,
-        -32
-      ],
-      "id": "8c37cb28-3753-47ff-8b76-3771ebe3aebd",
-      "name": "replay KO"
-    },
-    {
-      "parameters": {
-        "options": {
-          "responseCode": 500
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        -672,
-        -32
-      ],
-      "id": "85801775-180b-409c-a3f8-20e39e905fea",
-      "name": "Respond replay KO"
-    },
-    {
-      "parameters": {
-        "command": "=mv /files/km/{{ $json.body.actualFolder }}/{{ $json.body.name }} /files/km/{{ $json.body.targetFolder }}/{{ $json.body.name }}"
-      },
-      "type": "n8n-nodes-base.executeCommand",
-      "typeVersion": 1,
-      "position": [
-        -1120,
-        -128
-      ],
-      "id": "f967b937-861d-4c55-9ea1-1f31b84152a2",
-      "name": "CMD replay",
-      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -300,24 +198,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "4a18382e-90f7-40b9-a406-b9a727176847",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
-      "position": [
-        -1344,
-        -128
-      ],
-      "id": "763c16cb-1938-4602-8a88-0bb2601dd80d",
-      "name": "WH-replay",
-      "webhookId": "4a18382e-90f7-40b9-a406-b9a727176847"
-    },
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "4118622f-4590-4143-af79-fde9ef04bd21",
+        "path": "158fa184-0909-43a9-9871-d75d123538da",
         "responseMode": "responseNode",
         "options": {}
       },
@@ -375,24 +256,11 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -896,
+        -1120,
         704
       ],
       "id": "4e2c948f-4b26-4dd1-b98e-4c0f0b73b0c5",
       "name": "If name.endsWith \".md\""
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -1120,
-        704
-      ],
-      "id": "42d37fdd-23dd-455d-aa8a-7fe09fa78195",
-      "name": "Edit Fields"
     },
     {
       "parameters": {
@@ -411,7 +279,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -672,
+        -896,
         608
       ],
       "id": "cdc57761-dc8f-49b1-9066-8adcdf00e552",
@@ -434,7 +302,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -448,
+        -672,
         704
       ],
       "id": "99b14e4f-f22f-435c-b3a5-d088e713f30a",
@@ -457,11 +325,130 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -672,
+        -896,
         800
       ],
       "id": "2b8501ab-b0ae-425f-bd54-ec30450341eb",
       "name": "other file params"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "4a18382e-90f7-40b9-a406-b9a727176847",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1344,
+        -128
+      ],
+      "id": "763c16cb-1938-4602-8a88-0bb2601dd80d",
+      "name": "WH-replay",
+      "webhookId": "4a18382e-90f7-40b9-a406-b9a727176847"
+    },
+    {
+      "parameters": {
+        "command": "=mv /files/km/{{ $json.body.actualFolder }}/{{ $json.body.name }} /files/km/{{ $json.body.targetFolder }}/{{ $json.body.name }}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        -128
+      ],
+      "id": "f967b937-861d-4c55-9ea1-1f31b84152a2",
+      "name": "CMD replay",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -672,
+        -32
+      ],
+      "id": "85801775-180b-409c-a3f8-20e39e905fea",
+      "name": "Respond replay KO"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "3b2cbc1f-ac9a-44a7-ac9a-7e4a2982e2c8",
+              "name": "error",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -896,
+        -32
+      ],
+      "id": "8c37cb28-3753-47ff-8b76-3771ebe3aebd",
+      "name": "replay KO"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -672,
+        -224
+      ],
+      "id": "f27ef60f-ec00-46ca-957c-1899efd2b537",
+      "name": "Respond replay OK"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39d54b92-a4f8-4994-a14f-30286d9c14a5",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "2c4b24ac-ecc5-4d6f-a79f-7115db6ea5ef",
+              "name": "name",
+              "value": "={{ $('WH-replay').item.json.body.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -896,
+        -224
+      ],
+      "id": "62363963-fa14-4d63-9ba7-9131a3078f37",
+      "name": "replay OK"
     }
   ],
   "pinData": {},
@@ -539,62 +526,11 @@
         ]
       ]
     },
-    "replay OK": {
-      "main": [
-        [
-          {
-            "node": "Respond replay OK",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "replay KO": {
-      "main": [
-        [
-          {
-            "node": "Respond replay KO",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "CMD replay": {
-      "main": [
-        [
-          {
-            "node": "replay OK",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "replay KO",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "WH-list": {
       "main": [
         [
           {
             "node": "CMD $ls",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "WH-replay": {
-      "main": [
-        [
-          {
-            "node": "CMD replay",
             "type": "main",
             "index": 0
           }
@@ -616,7 +552,7 @@
       "main": [
         [
           {
-            "node": "Edit Fields",
+            "node": "If name.endsWith \".md\"",
             "type": "main",
             "index": 0
           }
@@ -635,17 +571,6 @@
         [
           {
             "node": "other file params",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Edit Fields": {
-      "main": [
-        [
-          {
-            "node": "If name.endsWith \".md\"",
             "type": "main",
             "index": 0
           }
@@ -684,6 +609,57 @@
           }
         ]
       ]
+    },
+    "WH-replay": {
+      "main": [
+        [
+          {
+            "node": "CMD replay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CMD replay": {
+      "main": [
+        [
+          {
+            "node": "replay OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "replay KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "replay KO": {
+      "main": [
+        [
+          {
+            "node": "Respond replay KO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "replay OK": {
+      "main": [
+        [
+          {
+            "node": "Respond replay OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -692,7 +668,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "c98ed171-ec71-41d3-af68-a294c0a91ff8",
+  "versionId": "1e774553-9bb7-46ec-af98-00ec1967b2e1",
   "meta": {
     "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
   },
