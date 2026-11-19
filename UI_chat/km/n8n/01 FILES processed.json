@@ -57,7 +57,7 @@
     },
     {
       "parameters": {
-        "command": "=rm -- \"/files/km/02_format_controls/{{ $json.body.name }}2\""
+        "command": "=rm -- \"/files/km/{{ $json.body.folder }}/{{ $json.body.name }}\""
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
@@ -668,7 +668,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "1e774553-9bb7-46ec-af98-00ec1967b2e1",
+  "versionId": "5df04a2b-cf0e-469e-920c-874a2bf42c2d",
   "meta": {
     "instanceId": "fdc6a6b99867cd859d0192f5d1d7a4c043b201307ba78b8a47587635cde43563"
   },
