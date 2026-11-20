@@ -119,6 +119,20 @@ Des URLs de repli sont aussi codées dans certaines pages. Pour modifier une des
 KM charge séparément `/km/config.ini`, monté en lecture seule et servi sans cache.
 Les images et le logo sont embarqués dans son image Docker, sans accès GitHub.
 
+Le proxy commun `nginx/default.conf` autorise un corps HTTP de `20M` uniquement
+sur les trois webhooks d'upload KM (sources, templates, historiques), en production
+et en test. Cette limite inclut l'enveloppe multipart : un fichier de exactement
+20 Mio la dépasse. Les autres routes conservent leur limite existante. Les
+identifiants de cette location doivent suivre les clés d'upload de la configuration
+KM. Sur EC2, la source est `/home/ubuntu/n8n/nginx/default.conf` ; elle est copiée
+dans l'image, sans montage de configuration. Pour une application immédiate sans
+recréation, sauvegarder la source et le fichier actif, modifier la source puis la
+copier dans `nginx_front:/etc/nginx/conf.d/default.conf`, exécuter
+`docker exec nginx_front nginx -t` et, seulement si le test réussit,
+`docker exec nginx_front nginx -s reload`. Conserver également la correction dans
+les sources des prochaines images ; une ancienne image perdrait ce changement à
+la recréation. Un upload réel doit confirmer la résolution du HTTP 413.
+
 La page KM `01a_upload_files` reçoit désormais une liste n8n fusionnant
 `01_upload_raw_files` et `01_upload_legacy_files`, avec `folder` obligatoire par
 fichier et identité `(folder, name)`. Liste objet ou tableau à un élément ; Voir
